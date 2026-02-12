@@ -572,19 +572,38 @@ function applyTheme_(theme) {
   } catch (e) {}
 }
 
-function startApp_() {
+async function startApp_() {
 
   const params = new URLSearchParams(window.location.search);
   const clubFromUrl = params.get("clubId");
 
   // --- KOLOR ---
   if (!clubFromUrl) {
+
     // Fabryka = zawsze biało
     document.body.style.backgroundColor = "#ffffff";
+
   } else {
-    // Klub = jego theme
-    const t = loadTheme_();
-    if (t) applyTheme_(t);
+
+    try {
+      const branding = await apiClubGet("branding", {});
+
+      if (branding?.bg_color) {
+        document.body.style.backgroundColor = branding.bg_color;
+      }
+
+      if (branding?.logo_data) {
+        const logoImg =
+          document.querySelector("#loginView img.logo") ||
+          document.querySelector("#loginView img");
+
+        if (logoImg) logoImg.src = branding.logo_data;
+      }
+
+    } catch (e) {
+      console.warn("Branding load failed", e);
+    }
+
   }
 
   // --- ROUTER ---
@@ -1104,7 +1123,7 @@ lockCfg_();
 
 hideBusy();
 
-const base = window.location.origin + window.location.pathname;
+const base = window.location.origin + window.location.pathname.replace(/index\.html$/i, "");
 const clubLink = `${base}?clubId=${encodeURIComponent(String(r.clubId || "").trim())}`;
 
 if (msg) {
