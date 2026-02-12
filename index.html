@@ -638,23 +638,44 @@ async function apiClubGet(action, params = {}) {
   return res.json();
 }
 
+function extractGasError_(html) {
+  try {
+    // Najczęściej właściwy komunikat siedzi w <div class="errorMessage">...</div>
+    const m = String(html || "").match(/<div class="errorMessage"[^>]*>([\s\S]*?)<\/div>/i);
+    if (!m) return "";
+    // usuń tagi i zbij spacje
+    return m[1]
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+\n/g, "\n")
+      .replace(/\n\s+/g, "\n")
+      .trim();
+  } catch (e) {
+    return "";
+  }
+}
+
 async function apiClubPost(payload = {}) {
   requireClubId();
   const body = new URLSearchParams({ clubId, ...payload });
   const res = await fetch(CORE_URL, { method: "POST", body });
 
-  const text = await res.text(); // <-- najpierw tekst, bo czasem wpada HTML z błędem
+  const text = await res.text();
+
+  // 1) normalny JSON
   try {
     return JSON.parse(text);
-  } catch (e) {
-    // zwróć czytelny błąd zamiast "JSON.parse unexpected character"
-    return {
-      ok: false,
-      error: "Backend zwrócił nie-JSON (" + res.status + ").",
-      raw: text.slice(0, 400) // utnie, żeby nie zalało ekranu
-    };
-  }
+  } catch (e) {}
+
+  // 2) HTML z GAS — wyciągamy sensowny komunikat
+  const msg = extractGasError_(text);
+  return {
+    ok: false,
+    error: msg ? ("GAS ERROR: " + msg) : ("Backend zwrócił nie-JSON (" + res.status + ")."),
+    raw: text.slice(0, 600)
+  };
 }
+
 
 /* =================== 60 ORGHUB START / KONFIGURACJA =================== */
 // Tu masz dwa widoki: orgHubLandingView (start) i clubConfigView (panel)
