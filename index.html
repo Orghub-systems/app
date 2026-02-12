@@ -504,11 +504,14 @@ function initClubFromUrl_() {
     // 1) Priorytet: clubId z URL
     const urlClubId = params.get("clubId");
     if (urlClubId) {
-      saveClubId_(urlClubId);   // <- to ustawia i zmienną clubId, i localStorage
+      saveClubId_(urlClubId); // ustawia zmienną clubId + localStorage
       return;
     }
 
-    // 2) (na później) jeśli kiedyś przejdziemy na ?club=slug
+    // 2) Link główny (bez clubId) = FABRYKA KLUBÓW -> reset zapamiętanego clubId
+    saveClubId_("");
+
+    // 3) (na później) jeśli kiedyś przejdziemy na ?club=slug
     const slug = params.get("club");
     if (slug) {
       localStorage.setItem("orghub_clubSlug", slug);
@@ -1581,6 +1584,10 @@ window.addEventListener('load', () => {
   const wersja = document.getElementById("wersjaNum");
   if (wersja) wersja.textContent = WERSJA_APKI;
 
+  // START: najpierw ustaw clubId z URL (albo wyczyść na linku głównym)
+  initClubFromUrl_();
+
+  // dopiero teraz ustawiamy stan historii (bo clubId może się zmienić)
   try {
     history.replaceState(
       { view: (clubId && isCfgLocked_()) ? "loginView" : "orgHubLandingView" },
@@ -1589,10 +1596,8 @@ window.addEventListener('load', () => {
     );
   } catch (e) {}
 
-  // START aplikacji (router, theme itd.)
-  initClubFromUrl_();
+  // router + theme
   startApp_();
-
 
   // splash ma być zawsze widoczny minimalnie chwilę (żeby nie "mrugał")
   if (splash) {
