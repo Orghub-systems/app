@@ -642,7 +642,18 @@ async function apiClubPost(payload = {}) {
   requireClubId();
   const body = new URLSearchParams({ clubId, ...payload });
   const res = await fetch(CORE_URL, { method: "POST", body });
-  return res.json();
+
+  const text = await res.text(); // <-- najpierw tekst, bo czasem wpada HTML z błędem
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // zwróć czytelny błąd zamiast "JSON.parse unexpected character"
+    return {
+      ok: false,
+      error: "Backend zwrócił nie-JSON (" + res.status + ").",
+      raw: text.slice(0, 400) // utnie, żeby nie zalało ekranu
+    };
+  }
 }
 
 /* =================== 60 ORGHUB START / KONFIGURACJA =================== */
