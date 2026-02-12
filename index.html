@@ -1176,6 +1176,7 @@ function pokazLogowanie() {
 function pokazRejestracjaSelect() { goToView("registerSelectView"); }
 function pokazRejestracjaZawodnik() { goToView("registerZawodnikView"); }
 function pokazRejestracjaTrener() { goToView("rejestracjaTrenerView"); }
+  
 
 async function zaloguj() {
   const login = document.getElementById("numer").value.trim();
@@ -1230,25 +1231,27 @@ async function wyslijRejestracje() {
   const haslo = document.getElementById("regHaslo").value.trim();
   const msg = document.getElementById("regMsg");
 
-  if (!numer || !nazwisko || !haslo) { msg.innerText = "Wypełnij wszystkie pola."; return; }
+  if (!numer || !nazwisko || !haslo) {
+    msg.innerText = "Wypełnij wszystkie pola.";
+    return;
+  }
 
   msg.innerText = "⏳ Rejestracja...";
   try {
     const data = await apiClubPost({ mode: "rejestracja", numer, nazwisko, haslo });
 
-    if (data.ok) {
+    if (data && data.ok) {
       document.getElementById("regNumer").value = "";
       document.getElementById("regNazwisko").value = "";
       document.getElementById("regHaslo").value = "";
       msg.innerText = "✅ Rejestracja zakończona!";
       setTimeout(() => { msg.innerText = ""; pokazLogowanie(); }, 1500);
-} else {
-  msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
-}
-} catch (e) {
-  msg.innerText = "❌ " + (e?.message || e);
-}
-
+    } else {
+      msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+    }
+  } catch (e) {
+    msg.innerText = "❌ " + (e?.message || e);
+  }
 }
 
 async function wyslijRejestracjeTrener() {
@@ -1258,13 +1261,17 @@ async function wyslijRejestracjeTrener() {
 
   const nazwisko = poleNazw.value.trim();
   const haslo = poleHaslo.value.trim();
-  if (!nazwisko || !haslo) { msg.innerText = "Wypełnij wszystkie pola."; return; }
+
+  if (!nazwisko || !haslo) {
+    msg.innerText = "Wypełnij wszystkie pola.";
+    return;
+  }
 
   msg.innerText = "⏳ Rejestracja...";
   try {
     const data = await apiClubPost({ mode: "rejestracjaTrener", nazwisko, haslo });
 
-    if (data.ok) {
+    if (data && data.ok) {
       const inic = data.inic || "(?)";
       msg.innerHTML = `
         ✅ <b>Zarejestrowano trenera!</b><br>
@@ -1274,15 +1281,14 @@ async function wyslijRejestracjeTrener() {
       poleNazw.value = "";
       poleHaslo.value = "";
       setTimeout(() => { msg.innerText = ""; pokazLogowanie(); }, 8000);
-} else {
-  msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+    } else {
+      msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+    }
+  } catch (e) {
+    msg.innerText = "❌ " + (e?.message || e);
+  }
 }
 
-} catch (e) {
-  msg.innerText = "❌ " + (e?.message || e);
-}
-
-}
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
 function renderPlatnosci(lista) {
