@@ -1543,7 +1543,7 @@ async function trainerPokazZawodnicy() {
   box.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
 
   try {
-    const lista = await apiClubGet("statystykiSum", {});
+    const lista = await apiClubGet("listaZawodnikow", {});
     if (!Array.isArray(lista) || lista.length === 0) {
       box.innerHTML = "<div class='card' style='background:#111;'>Brak danych</div>";
       return;
