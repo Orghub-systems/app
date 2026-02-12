@@ -1309,10 +1309,19 @@ async function wyslijRejestracjeTrener() {
         ✅ <b>Zarejestrowano trenera!</b><br>
         Twój login: <b>${inic}</b><br><br>
         <button class="full-btn" onclick="navigator.clipboard.writeText('${inic}')">📋 Skopiuj login i przejdź dalej</button>
+        const btn = document.getElementById("copyLoginBtn");
+if (btn) {
+  btn.onclick = async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(inic); ok = true; } catch(e){}
+    btn.textContent = ok ? "✅ Skopiowano" : "❌ Błąd kopiowania";
+  };
+}
+
       `;
       poleNazw.value = "";
       poleHaslo.value = "";
-      setTimeout(() => { msg.innerText = ""; pokazLogowanie(); }, 8000);
+     
 } else {
   msg.innerText =
     "❌ " + (data?.error || data?.message || data?.msg || "Błąd") +
