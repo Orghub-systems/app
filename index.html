@@ -454,6 +454,37 @@ function odtworzIntroSound() {
 const WERSJA_APKI = window.WERSJA_APKI || "ORGHUB APP";
 const CORE_URL = "https://still-shape-2aa3.orghubsystems.workers.dev";
 
+// ===== DEBUG: pokaż błąd JS na ekranie (żeby nie stało "w ciszy") =====
+window.addEventListener("error", (ev) => {
+  try {
+    const splash = document.getElementById("splash");
+    const app = document.getElementById("app");
+    if (splash) splash.style.display = "none";
+    if (app) app.classList.remove("hidden");
+
+    const box = document.createElement("div");
+    box.style.position = "fixed";
+    box.style.inset = "0";
+    box.style.background = "#fff";
+    box.style.color = "#000";
+    box.style.padding = "16px";
+    box.style.zIndex = "999999";
+    box.style.overflow = "auto";
+    box.style.fontFamily = "monospace";
+    box.innerHTML =
+      `<h2 style="margin:0 0 10px 0;">❌ Błąd JS (apka nie wystartowała)</h2>
+       <div><b>${(ev && ev.message) ? ev.message : "unknown error"}</b></div>
+       <div style="margin-top:8px;">Plik: ${ev?.filename || "-"}</div>
+       <div>Linia: ${ev?.lineno || "-"}, Kolumna: ${ev?.colno || "-"}</div>
+       <pre style="white-space:pre-wrap;margin-top:12px;">${(ev && ev.error && ev.error.stack) ? ev.error.stack : ""}</pre>`;
+    document.body.appendChild(box);
+  } catch (e) {}
+});
+
+window.addEventListener("unhandledrejection", (ev) => {
+  try { alert("Unhandled Promise Rejection: " + (ev?.reason?.message || ev?.reason || ev)); } catch (e) {}
+});
+
 // stan aplikacji
 let clubId = localStorage.getItem("orghub_clubId") || "";
 let numerZalogowanego = null;
