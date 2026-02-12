@@ -570,12 +570,20 @@ function applyTheme_(theme) {
 }
 
 function startApp_() {
+
+  const params = new URLSearchParams(window.location.search);
+  const clubFromUrl = params.get("clubId");
+
+  if (!clubFromUrl) {
+    localStorage.removeItem("orghub_clubId");
+  }
+
   // zastosuj theme jeśli jest
   const t = loadTheme_();
   if (t) applyTheme_(t);
 
-refreshClubBadge_();
-goToView((clubId && isCfgLocked_()) ? "loginView" : "orgHubLandingView", { replace: true });
+  refreshClubBadge_();
+  goToView(clubId ? "loginView" : "orgHubLandingView", { replace: true });
 }
 
 /* =================== 50 API (CORE / CLUB) =================== */
