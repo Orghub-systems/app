@@ -1242,12 +1242,13 @@ async function wyslijRejestracje() {
       document.getElementById("regHaslo").value = "";
       msg.innerText = "✅ Rejestracja zakończona!";
       setTimeout(() => { msg.innerText = ""; pokazLogowanie(); }, 1500);
-    } else {
-      msg.innerText = "❌ " + (data.msg || "Błąd");
-    }
-  } catch (e) {
-    msg.innerText = "Błąd połączenia.";
-  }
+} else {
+  msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+}
+} catch (e) {
+  msg.innerText = "❌ " + (e?.message || e);
+}
+
 }
 
 async function wyslijRejestracjeTrener() {
@@ -1273,12 +1274,14 @@ async function wyslijRejestracjeTrener() {
       poleNazw.value = "";
       poleHaslo.value = "";
       setTimeout(() => { msg.innerText = ""; pokazLogowanie(); }, 8000);
-    } else {
-      msg.innerText = "❌ " + (data.msg || "Błąd");
-    }
-  } catch (e) {
-    msg.innerText = "Błąd połączenia.";
-  }
+} else {
+  msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+}
+
+} catch (e) {
+  msg.innerText = "❌ " + (e?.message || e);
+}
+
 }
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
