@@ -504,12 +504,9 @@ function initClubFromUrl_() {
     const urlClubId = params.get("clubId");
 
     if (urlClubId) {
-      // Link klubowy -> ustaw clubId
-      saveClubId_(urlClubId);
+      saveClubId_(urlClubId);   // klub z linku
     } else {
-      // Link ogólny -> wyczyść clubId i wymuś biały kolor
-      saveClubId_("");
-      document.body.style.backgroundColor = "#ffffff";
+      saveClubId_("");          // link ogólny = reset
     }
   } catch (e) {}
 }
@@ -580,24 +577,19 @@ function startApp_() {
   const params = new URLSearchParams(window.location.search);
   const clubFromUrl = params.get("clubId");
 
+  // --- KOLOR ---
   if (!clubFromUrl) {
-    localStorage.removeItem("orghub_clubId");
+    // Fabryka = zawsze biało
+    document.body.style.backgroundColor = "#ffffff";
+  } else {
+    // Klub = jego theme
+    const t = loadTheme_();
+    if (t) applyTheme_(t);
   }
 
-  // zastosuj theme jeśli jest
-const params = new URLSearchParams(window.location.search);
-const clubFromUrl = params.get("clubId");
-
-// Fabryka klubów = zawsze biały ekran
-if (!clubFromUrl) {
-  document.body.style.backgroundColor = "#ffffff";
-} else {
-  const t = loadTheme_();
-  if (t) applyTheme_(t);
-}
-
+  // --- ROUTER ---
   refreshClubBadge_();
-  goToView(clubId ? "loginView" : "orgHubLandingView", { replace: true });
+  goToView(clubFromUrl ? "loginView" : "orgHubLandingView", { replace: true });
 }
 
 /* =================== 50 API (CORE / CLUB) =================== */
