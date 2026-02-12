@@ -591,8 +591,16 @@ function startApp_() {
   }
 
   // zastosuj theme jeśli jest
+const params = new URLSearchParams(window.location.search);
+const clubFromUrl = params.get("clubId");
+
+// Fabryka klubów = zawsze biały ekran
+if (!clubFromUrl) {
+  document.body.style.backgroundColor = "#ffffff";
+} else {
   const t = loadTheme_();
   if (t) applyTheme_(t);
+}
 
   refreshClubBadge_();
   goToView(clubId ? "loginView" : "orgHubLandingView", { replace: true });
