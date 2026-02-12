@@ -1331,53 +1331,69 @@ async function wyslijRejestracjeTrener() {
   }
 
   msg.innerText = "⏳ Rejestracja...";
+
   try {
-    const data = await apiClubPost({ mode: "rejestracjaTrener", nazwisko, haslo });
+    const data = await apiClubPost({
+      mode: "rejestracjaTrener",
+      nazwisko,
+      haslo
+    });
 
-if (data && data.ok) {
-  const inic = String(data.inic || "").toUpperCase() || "(?)";
+    if (data && data.ok) {
+      const inic = String(data.inic || "").toUpperCase() || "(?)";
 
-  // Wyświetl UI
-  msg.innerHTML = `
-    ✅ <b>Zarejestrowano trenera!</b><br>
-    Login do systemu:<br>
-    <div style="font-size:22px;font-weight:800;letter-spacing:2px;margin:10px 0 14px 0;">${inic}</div>
+      msg.innerHTML = `
+        ✅ <b>Zarejestrowano trenera!</b><br>
+        Login do systemu:<br>
+        <div style="font-size:22px;font-weight:800;letter-spacing:2px;margin:10px 0 14px 0;">
+          ${inic}
+        </div>
 
-    <button class="full-btn" id="btnCopyInic">📋 Skopiuj login</button>
-    <button class="full-btn alt" id="btnGoLogin" disabled>➡️ Przejdź do logowania</button>
+        <button class="full-btn" id="btnCopyInic">📋 Skopiuj login</button>
+        <button class="full-btn alt" id="btnGoLogin" disabled>
+          ➡️ Przejdź do logowania
+        </button>
 
-    <div id="copyInfo" style="opacity:.8;margin-top:10px;font-size:13px;"></div>
-  `;
+        <div id="copyInfo" style="opacity:.8;margin-top:10px;font-size:13px;"></div>
+      `;
 
-  poleNazw.value = "";
-  poleHaslo.value = "";
+      poleNazw.value = "";
+      poleHaslo.value = "";
 
-  // Listener (bez inline onclick)
-  const btnCopy = document.getElementById("btnCopyInic");
-  const btnGo = document.getElementById("btnGoLogin");
-  const info = document.getElementById("copyInfo");
+      const btnCopy = document.getElementById("btnCopyInic");
+      const btnGo = document.getElementById("btnGoLogin");
+      const info = document.getElementById("copyInfo");
 
-  if (btnCopy) {
-    btnCopy.onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(inic);
-        btnCopy.textContent = "✅ Skopiowano";
-        if (info) info.textContent = "Możesz teraz przejść do logowania.";
-        if (btnGo) btnGo.disabled = false;
-      } catch (e) {
-        if (info) info.textContent =
-          "❌ Nie udało się skopiować (przeglądarka blokuje schowek). Zaznacz login ręcznie: " + inic;
+      if (btnCopy) {
+        btnCopy.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(inic);
+            btnCopy.textContent = "✅ Skopiowano";
+            if (info) info.textContent = "Możesz teraz przejść do logowania.";
+            if (btnGo) btnGo.disabled = false;
+          } catch (e) {
+            if (info) {
+              info.textContent =
+                "❌ Nie udało się skopiować. Zaznacz login ręcznie: " + inic;
+            }
+          }
+        };
       }
-    };
-  }
 
-  if (btnGo) {
-    btnGo.onclick = () => pokazLogowanie();
-  }
+      if (btnGo) {
+        btnGo.onclick = () => pokazLogowanie();
+      }
 
-} else {
-  msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+    } else {
+      msg.innerText =
+        "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
+    }
+
+  } catch (e) {
+    msg.innerText = "❌ " + (e?.message || e);
+  }
 }
+
 
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
