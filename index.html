@@ -497,7 +497,8 @@ function loadTheme_() {
   try { return JSON.parse(localStorage.getItem(LS_KEY_THEME) || "null"); }
   catch { return null; }
 }
-function initClubFromUrl_() {
+
+  function initClubFromUrl_() {
   try {
     const params = new URLSearchParams(window.location.search);
 
