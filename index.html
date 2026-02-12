@@ -498,24 +498,18 @@ function loadTheme_() {
   catch { return null; }
 }
 
-  function initClubFromUrl_() {
+function initClubFromUrl_() {
   try {
     const params = new URLSearchParams(window.location.search);
-
-    // 1) Priorytet: clubId z URL
     const urlClubId = params.get("clubId");
+
     if (urlClubId) {
-      saveClubId_(urlClubId); // ustawia zmienną clubId + localStorage
-      return;
-    }
-
-    // 2) Link główny (bez clubId) = FABRYKA KLUBÓW -> reset zapamiętanego clubId
-    saveClubId_("");
-
-    // 3) (na później) jeśli kiedyś przejdziemy na ?club=slug
-    const slug = params.get("club");
-    if (slug) {
-      localStorage.setItem("orghub_clubSlug", slug);
+      // Link klubowy -> ustaw clubId
+      saveClubId_(urlClubId);
+    } else {
+      // Link ogólny -> wyczyść clubId i wymuś biały kolor
+      saveClubId_("");
+      document.body.style.backgroundColor = "#ffffff";
     }
   } catch (e) {}
 }
