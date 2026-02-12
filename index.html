@@ -497,6 +497,16 @@ function loadTheme_() {
   try { return JSON.parse(localStorage.getItem(LS_KEY_THEME) || "null"); }
   catch { return null; }
 }
+function initClubFromUrl_() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("club");
+
+    if (slug) {
+      localStorage.setItem("orghub_clubSlug", slug);
+    }
+  } catch (e) {}
+}
 
 /* =================== 30 BUSY OVERLAY =================== */
 function showBusy(text) {
@@ -1078,11 +1088,39 @@ lockCfg_();
     // utrwal config (z clubId)
     saveLocalClubConfig({ ...cfgDraft, clubId: r.clubId });
 
-    hideBusy();
-    if (msg) msg.textContent = "✅ Gotowe. Przechodzę do logowania…";
+hideBusy();
 
-    refreshClubBadge_();
-    setTimeout(() => goToView("loginView", { replace:true }), 400);
+const base = window.location.origin + window.location.pathname;
+const clubLink = `${base}?clubId=${encodeURIComponent(String(r.clubId || "").trim())}`;
+
+if (msg) {
+  msg.innerHTML = `
+    ✅ <b>Klub utworzony.</b><br><br>
+
+    <div class="card" style="text-align:left; word-break:break-all;">
+      <div style="opacity:.75; font-size:13px; margin-bottom:6px;">Link do Twojego klubu:</div>
+      <div style="font-size:13px; line-height:1.35;">${clubLink}</div>
+    </div>
+
+    <button class="full-btn" id="btnCopyClubLink">📋 Kopiuj link</button>
+    <button class="full-btn alt" id="btnGoClubLink">➡️ Otwórz klub</button>
+  `;
+
+  const btnCopy = document.getElementById("btnCopyClubLink");
+  if (btnCopy) btnCopy.onclick = async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(clubLink); ok = true; } catch (e) {}
+    btnCopy.textContent = ok ? "✅ Skopiowano" : "❌ Nie udało się skopiować";
+    setTimeout(() => (btnCopy.textContent = "📋 Kopiuj link"), 1500);
+  };
+
+  const btnGo = document.getElementById("btnGoClubLink");
+  if (btnGo) btnGo.onclick = () => (window.location.href = clubLink);
+}
+
+// ❌ NIE przechodzimy automatycznie do loginView, bo chcemy pokazać link
+refreshClubBadge_();
+
 
   } catch (e) {
     hideBusy();
@@ -1536,7 +1574,9 @@ window.addEventListener('load', () => {
   } catch (e) {}
 
   // START aplikacji (router, theme itd.)
+  initClubFromUrl_();
   startApp_();
+
 
   // splash ma być zawsze widoczny minimalnie chwilę (żeby nie "mrugał")
   if (splash) {
