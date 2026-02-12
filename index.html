@@ -1303,34 +1303,49 @@ async function wyslijRejestracjeTrener() {
   try {
     const data = await apiClubPost({ mode: "rejestracjaTrener", nazwisko, haslo });
 
-    if (data && data.ok) {
-      const inic = data.inic || "(?)";
-      msg.innerHTML = `
-        ✅ <b>Zarejestrowano trenera!</b><br>
-        Twój login: <b>${inic}</b><br><br>
-        <button class="full-btn" onclick="navigator.clipboard.writeText('${inic}')">📋 Skopiuj login i przejdź dalej</button>
-        const btn = document.getElementById("copyLoginBtn");
-if (btn) {
-  btn.onclick = async () => {
-    let ok = false;
-    try { await navigator.clipboard.writeText(inic); ok = true; } catch(e){}
-    btn.textContent = ok ? "✅ Skopiowano" : "❌ Błąd kopiowania";
-  };
-}
+if (data && data.ok) {
+  const inic = String(data.inic || "").toUpperCase() || "(?)";
 
-      `;
-      poleNazw.value = "";
-      poleHaslo.value = "";
-     
-} else {
-  msg.innerText =
-    "❌ " + (data?.error || data?.message || data?.msg || "Błąd") +
-    (data?.raw ? ("\n\nRAW:\n" + data.raw) : "");
-}
+  // Wyświetl UI
+  msg.innerHTML = `
+    ✅ <b>Zarejestrowano trenera!</b><br>
+    Login do systemu:<br>
+    <div style="font-size:22px;font-weight:800;letter-spacing:2px;margin:10px 0 14px 0;">${inic}</div>
 
-  } catch (e) {
-    msg.innerText = "❌ " + (e?.message || e);
+    <button class="full-btn" id="btnCopyInic">📋 Skopiuj login</button>
+    <button class="full-btn alt" id="btnGoLogin" disabled>➡️ Przejdź do logowania</button>
+
+    <div id="copyInfo" style="opacity:.8;margin-top:10px;font-size:13px;"></div>
+  `;
+
+  poleNazw.value = "";
+  poleHaslo.value = "";
+
+  // Listener (bez inline onclick)
+  const btnCopy = document.getElementById("btnCopyInic");
+  const btnGo = document.getElementById("btnGoLogin");
+  const info = document.getElementById("copyInfo");
+
+  if (btnCopy) {
+    btnCopy.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(inic);
+        btnCopy.textContent = "✅ Skopiowano";
+        if (info) info.textContent = "Możesz teraz przejść do logowania.";
+        if (btnGo) btnGo.disabled = false;
+      } catch (e) {
+        if (info) info.textContent =
+          "❌ Nie udało się skopiować (przeglądarka blokuje schowek). Zaznacz login ręcznie: " + inic;
+      }
+    };
   }
+
+  if (btnGo) {
+    btnGo.onclick = () => pokazLogowanie();
+  }
+
+} else {
+  msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
 }
 
 
