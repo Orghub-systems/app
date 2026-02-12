@@ -1292,9 +1292,12 @@ async function wyslijRejestracjeTrener() {
       poleNazw.value = "";
       poleHaslo.value = "";
       setTimeout(() => { msg.innerText = ""; pokazLogowanie(); }, 8000);
-    } else {
-      msg.innerText = "❌ " + (data?.error || data?.message || data?.msg || JSON.stringify(data));
-    }
+} else {
+  msg.innerText =
+    "❌ " + (data?.error || data?.message || data?.msg || "Błąd") +
+    (data?.raw ? ("\n\nRAW:\n" + data.raw) : "");
+}
+
   } catch (e) {
     msg.innerText = "❌ " + (e?.message || e);
   }
