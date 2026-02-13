@@ -364,28 +364,28 @@
         <input id="eventEnd" type="time">
         <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
 
-        <select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
-          <option value="">— wybierz trenera —</option>
-        </select>
-        
-        <div id="trener2Wrap" class="hidden">
-          <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
-            <option value="">— kolejny trener —</option>
-          </select>
-        </div>
-        
-        <div id="trener3Wrap" class="hidden">
-          <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
-            <option value="">— kolejny trener —</option>
-          </select>
-        </div>
-        
-        <div id="trener4Wrap" class="hidden">
-          <select id="eventTrener4" class="select-like-input">
-            <option value="">— kolejny trener —</option>
-          </select>
-        </div>
+<!-- TRENERZY (kaskadowo, max 4) -->
+<select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
+  <option value="">— wybierz trenera —</option>
+</select>
 
+<div id="trener2Wrap" class="hidden">
+  <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
+    <option value="">— kolejny trener —</option>
+  </select>
+</div>
+
+<div id="trener3Wrap" class="hidden">
+  <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
+    <option value="">— kolejny trener —</option>
+  </select>
+</div>
+
+<div id="trener4Wrap" class="hidden">
+  <select id="eventTrener4" class="select-like-input">
+    <option value="">— kolejny trener —</option>
+  </select>
+</div>
 
       <div style="display:flex; justify-content:center; gap:25px; margin:20px auto 10px auto; width:260px;">
         <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G1"><span>G1</span></label>
