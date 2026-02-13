@@ -473,6 +473,35 @@
       </div>
     </div>
 
+    <!-- Popup edycji wydarzenia -->
+<div id="trainerEditPopup" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 2100;
+  display: none;
+">
+  <div class="popup-card" style="max-width:320px;">
+    <p style="margin:0 0 10px 0;"><b>Edytuj wydarzenie</b></p>
+
+    <div class="login-box" style="margin-top:10px;">
+      <input id="editEventData" type="date">
+      <input id="editEventStart" type="time">
+      <input id="editEventEnd" type="time">
+      <input id="editEventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
+    </div>
+
+    <div style="margin-top:10px;">
+      <button class="full-btn" id="btnEditSave">💾 Zapisz zmiany</button>
+      <button class="full-btn alt" onclick="trainerHideEditPopup()">Anuluj</button>
+    </div>
+
+    <p id="editEventMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
+
   </div><!-- /app -->
 
 <script>
@@ -1602,6 +1631,7 @@ async function trainerPokazWydarzenia() {
 }
 
 function renderTreningiTrainer(lista) {
+  window._trainerEventsCache = Array.isArray(lista) ? lista : [];
   const div = document.getElementById("trainerListaWydarzen");
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
 
@@ -1837,6 +1867,73 @@ async function trainerConfirmDeleteYes() {
   } catch (err) {
     if (card) card.innerHTML = `<div class="card" style="background:#522;text-align:center;">❌ ${err}</div>`;
   }
+}
+  
+/* --- edycja wydarzenia (popup) --- */
+let editEventId = null; // np. "Styczeń-25"
+
+function trainerShowEditPopup(eventId) {
+  editEventId = eventId;
+
+  const popup = document.getElementById("trainerEditPopup");
+  const msg = document.getElementById("editEventMsg");
+  if (msg) msg.textContent = "";
+
+  // znajdź kartę i wyciągnij dane z tekstu na ekranie (na razie prosto)
+  // docelowo: backend zwróci szczegóły po ID (zrobimy w kroku 4/5)
+  const card = document.querySelector(`#trainerWydarzeniaView .card [data-event-id]`) ? null : null; 
+  // ^ zostawiamy, nie używamy - tylko żeby nie było "pusto". Nie ruszaj.
+
+  // Pobieramy z listy, którą już renderujemy: najlepiej trzymać ją w globalu.
+  // Dodamy global: window._trainerEventsCache
+  const cache = window._trainerEventsCache || [];
+  const ev = cache.find(x => String(x.id) === String(eventId));
+
+  if (!ev) {
+    if (msg) msg.textContent = "❌ Nie znaleziono wydarzenia w pamięci. Odśwież listę.";
+    if (popup) popup.style.display = "flex";
+    return;
+  }
+
+  // ustaw pola
+  const fData = document.getElementById("editEventData");
+  const fS = document.getElementById("editEventStart");
+  const fE = document.getElementById("editEventEnd");
+  const fR = document.getElementById("editEventRodzaj");
+
+  // ev.data zwykle jest w formacie typu 12.02.2026 / 2026-02-12 zależnie od display
+  // więc robimy best-effort konwersję do YYYY-MM-DD
+  if (fData) fData.value = toISODate_(ev.data);
+  if (fS) fS.value = (ev.godzStart || "").slice(0,5);
+  if (fE) fE.value = (ev.godzKoniec || "").slice(0,5);
+  if (fR) fR.value = ev.rodzaj || "";
+
+  if (popup) popup.style.display = "flex";
+}
+
+function trainerHideEditPopup() {
+  const popup = document.getElementById("trainerEditPopup");
+  if (popup) popup.style.display = "none";
+  editEventId = null;
+}
+
+// helper: próba zamiany "dd.mm.yyyy" -> "yyyy-mm-dd"
+function toISODate_(txt) {
+  const s = String(txt || "").trim();
+
+  // yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // dd.mm.yyyy
+  const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (m) {
+    const dd = String(m[1]).padStart(2, "0");
+    const mm = String(m[2]).padStart(2, "0");
+    const yy = m[3];
+    return `${yy}-${mm}-${dd}`;
+  }
+
+  return ""; // jeśli nie rozpoznaliśmy
 }
 
 /* =================== 99 START APLIKACJI =================== */
