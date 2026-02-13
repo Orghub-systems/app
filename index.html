@@ -230,7 +230,6 @@
   ORGHUB SYSTEMS
 </div>
 
-
       <button class="full-btn" onclick="goToConfig()">Skonfiguruj klub</button>
     </div>
 
@@ -355,54 +354,59 @@
       <p id="regMsgTrener"></p>
     </div>
 
-    <!-- DODAJ WYDARZENIE (TRENER) -->
-    <div id="trainerDodajWydarzenieView" class="container hidden">
-      <h1>Dodaj wydarzenie</h1>
-      <div class="login-box">
-        <input id="eventData" type="date">
-        <input id="eventStart" type="time">
-        <input id="eventEnd" type="time">
-        <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
+<!-- DODAJ WYDARZENIE (TRENER) -->
+<div id="trainerDodajWydarzenieView" class="container hidden">
+  <h1>Dodaj wydarzenie</h1>
 
-<!-- TRENERZY (kaskadowo, max 4) -->
-<select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
-  <option value="">— wybierz trenera —</option>
-</select>
+  <div class="login-box">
+    <input id="eventData" type="date">
+    <input id="eventStart" type="time">
+    <input id="eventEnd" type="time">
+    <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
 
-<div id="trener2Wrap" class="hidden">
-  <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
-    <option value="">— kolejny trener —</option>
-  </select>
-</div>
+    <!-- TRENERZY (kaskadowo, max 4) -->
+    <select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
+      <option value="">— wybierz trenera —</option>
+    </select>
 
-<div id="trener3Wrap" class="hidden">
-  <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
-    <option value="">— kolejny trener —</option>
-  </select>
-</div>
-
-<div id="trener4Wrap" class="hidden">
-  <select id="eventTrener4" class="select-like-input">
-    <option value="">— kolejny trener —</option>
-  </select>
-</div>
-
-      <div style="display:flex; justify-content:center; gap:25px; margin:20px auto 10px auto; width:260px;">
-        <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G1"><span>G1</span></label>
-        <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G2"><span>G2</span></label>
-        <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G3"><span>G3</span></label>
-        <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G4"><span>G4</span></label>
-        <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G5"><span>G5</span></label>
-      </div>
-
-      <div style="margin-top:10px;">
-        <label><input id="eventStat" type="checkbox"> Liczyć do statystyk</label>
-      </div>
-
-      <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
-      <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-      <p id="eventMsg" style="margin-top:10px;"></p>
+    <div id="trener2Wrap" class="hidden">
+      <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
+        <option value="">— kolejny trener —</option>
+      </select>
     </div>
+
+    <div id="trener3Wrap" class="hidden">
+      <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
+        <option value="">— kolejny trener —</option>
+      </select>
+    </div>
+
+    <div id="trener4Wrap" class="hidden">
+      <select id="eventTrener4" class="select-like-input">
+        <option value="">— kolejny trener —</option>
+      </select>
+    </div>
+  </div><!-- ✅ domknięcie login-box -->
+
+  <!-- CHECKBOXY GRUP -->
+  <div style="display:flex; justify-content:center; gap:25px; margin:20px auto 10px auto; width:260px;">
+    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G1"><span>G1</span></label>
+    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G2"><span>G2</span></label>
+    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G3"><span>G3</span></label>
+    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G4"><span>G4</span></label>
+    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G5"><span>G5</span></label>
+  </div>
+
+  <div style="margin-top:10px;">
+    <label><input id="eventStat" type="checkbox"> Liczyć do statystyk</label>
+  </div>
+
+  <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="eventMsg" style="margin-top:10px;"></p>
+</div>
+
 
     <!-- PŁATNOŚCI -->
     <div id="platnosciView" class="container hidden">
