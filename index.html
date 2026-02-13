@@ -388,14 +388,26 @@
     </div>
   </div><!-- ✅ domknięcie login-box -->
 
-  <!-- CHECKBOXY GRUP -->
-  <div style="display:flex; justify-content:center; gap:25px; margin:20px auto 10px auto; width:260px;">
-    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G1"><span>G1</span></label>
-    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G2"><span>G2</span></label>
-    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G3"><span>G3</span></label>
-    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G4"><span>G4</span></label>
-    <label class="grupa-check"><input type="checkbox" class="eventGrupa" value="G5"><span>G5</span></label>
+<!-- GRUPY: przycisk + popup -->
+<button class="full-btn alt" id="btnPickGroups" onclick="openGroupsPopup()">Wybierz grupy</button>
+<div id="groupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
+
+<div id="groupsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:3000; padding:18px;
+">
+  <div class="card" style="max-width:320px;width:100%; text-align:left;">
+    <div style="font-weight:800; font-size:16px; margin-bottom:10px;">Wybierz grupy</div>
+
+    <div id="groupsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" onclick="closeGroupsPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" onclick="applyGroupsPopup()">Zapisz</button>
+    </div>
   </div>
+</div>
 
   <div style="margin-top:10px;">
     <label><input id="eventStat" type="checkbox"> Liczyć do statystyk</label>
@@ -1676,7 +1688,63 @@ function onTrenerPick(n) {
 function pokazDodajWydarzenie() {
   goToView("trainerDodajWydarzenieView");
   resetTrenerSelects_();
+  resetGroups_();
   zaladujListeTrenerow();
+}
+
+  /* ===== GRUPY: popup G1–G10 ===== */
+let selectedGroups = new Set(); // np. "G1","G2"...
+
+function renderGroupsList_() {
+  const box = document.getElementById("groupsList");
+  if (!box) return;
+
+  const groups = Array.from({ length: 10 }, (_, i) => `G${i + 1}`);
+
+  box.innerHTML = groups.map(g => {
+    const checked = selectedGroups.has(g) ? "checked" : "";
+    return `
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:1px solid #333;border-radius:10px;background:#111;">
+        <span style="font-weight:700;">${g}</span>
+        <input type="checkbox" class="grpPick" value="${g}" ${checked} style="transform:scale(1.25);">
+      </label>
+    `;
+  }).join("");
+}
+
+function openGroupsPopup() {
+  renderGroupsList_();
+  const pop = document.getElementById("groupsPopup");
+  if (pop) pop.classList.remove("hidden");
+}
+
+function closeGroupsPopup() {
+  const pop = document.getElementById("groupsPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+function applyGroupsPopup() {
+  const picks = document.querySelectorAll("#groupsList .grpPick");
+  selectedGroups = new Set();
+  picks.forEach(ch => { if (ch.checked) selectedGroups.add(ch.value); });
+
+  updateGroupsSummary_();
+  closeGroupsPopup();
+}
+
+function updateGroupsSummary_() {
+  const el = document.getElementById("groupsSummary");
+  if (!el) return;
+
+  const arr = Array.from(selectedGroups);
+  arr.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+
+  el.textContent = arr.length ? `✅ Wybrane: ${arr.join(", ")}` : "—";
+}
+
+function resetGroups_() {
+  selectedGroups = new Set();
+  updateGroupsSummary_();
 }
 
 function validHour(hhmm) { return /^\d{2}:\d{2}$/.test(hhmm); }
@@ -1688,8 +1756,7 @@ async function wyslijNoweWydarzenie() {
   const rodzaj = document.getElementById("eventRodzaj").value;
   const trener1 = document.getElementById("eventTrener1").value;
   const trener2 = document.getElementById("eventTrener2").value;
-
-  const grupy = [...document.querySelectorAll(".eventGrupa:checked")].map(c => c.value).join(",");
+  const grupy = Array.from(selectedGroups).join(",");
   const liczDoStat = document.getElementById("eventStat").checked;
   const msg = document.getElementById("eventMsg");
 
