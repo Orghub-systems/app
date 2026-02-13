@@ -1642,10 +1642,39 @@ async function zaladujListeTrenerow() {
   } catch {}
 }
 
+  function resetTrenerSelects_() {
+  // ukryj kolejne selecty
+  ["trener2Wrap","trener3Wrap","trener4Wrap"].forEach(id => {
+    const w = document.getElementById(id);
+    if (w) w.classList.add("hidden");
+  });
+
+  // wyczyść wartości (żeby nie “pamiętało”)
+  ["eventTrener1","eventTrener2","eventTrener3","eventTrener4"].forEach(id => {
+    const s = document.getElementById(id);
+    if (s) s.value = "";
+  });
+}
+
+// pokazuj kolejny select dopiero gdy wybrano poprzedni
+function onTrenerPick(n) {
+  const cur = document.getElementById(`eventTrener${n}`);
+  const nextWrap = document.getElementById(`trener${n+1}Wrap`);
+  if (!cur) return;
+
+  const picked = String(cur.value || "").trim();
+  if (nextWrap) {
+    if (picked) nextWrap.classList.remove("hidden");
+    else nextWrap.classList.add("hidden");
+  }
+}
+
 function pokazDodajWydarzenie() {
   goToView("trainerDodajWydarzenieView");
+  resetTrenerSelects_();
   zaladujListeTrenerow();
 }
+
 function validHour(hhmm) { return /^\d{2}:\d{2}$/.test(hhmm); }
 
 async function wyslijNoweWydarzenie() {
