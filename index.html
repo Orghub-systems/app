@@ -1935,6 +1935,105 @@ function toISODate_(txt) {
 
   return ""; // jeśli nie rozpoznaliśmy
 }
+/* =================== 90B TRENER: EDYCJA WYDARZENIA (POPUP) =================== */
+
+// stan edycji
+let editMiesiac = null;
+let editCol5 = null;
+
+// otwarcie popupu + wypełnienie pól
+function trainerShowEditPopup(miesiac, col5, payload = {}) {
+  editMiesiac = miesiac;
+  editCol5 = Number(col5);
+
+  const pop = document.getElementById("trainerEditPopup");
+  const msg = document.getElementById("editMsg");
+  if (msg) msg.textContent = "";
+
+  // payload: { dataISO, start, end, rodzaj }
+  const d = document.getElementById("editData");
+  const s = document.getElementById("editStart");
+  const e = document.getElementById("editEnd");
+  const r = document.getElementById("editRodzaj");
+
+  if (d) d.value = payload.dataISO || "";
+  if (s) s.value = payload.start || "";
+  if (e) e.value = payload.end || "";
+  if (r) r.value = payload.rodzaj || "";
+
+  if (pop) {
+    pop.classList.remove("hidden");
+    // jeśli używasz klasy .show zamiast hidden, zamień odpowiednio
+    // pop.classList.add("show");
+  }
+}
+
+function zamknijEditPopup() {
+  const pop = document.getElementById("trainerEditPopup");
+  if (pop) pop.classList.add("hidden");
+  // pop.classList.remove("show");
+  editMiesiac = null;
+  editCol5 = null;
+}
+
+// walidacja HH:MM
+function validHour_(hhmm) { return /^\d{2}:\d{2}$/.test(String(hhmm || "")); }
+
+// zapis do backendu
+async function zapiszEdytowaneWydarzenie() {
+  const msg = document.getElementById("editMsg");
+
+  if (!editMiesiac || !editCol5) {
+    if (msg) msg.textContent = "❌ Brak danych wydarzenia do edycji.";
+    return;
+  }
+
+  const dataISO = (document.getElementById("editData")?.value || "").trim();
+  const start = (document.getElementById("editStart")?.value || "").trim();
+  const end = (document.getElementById("editEnd")?.value || "").trim();
+  const rodzaj = (document.getElementById("editRodzaj")?.value || "").trim();
+
+  if (!dataISO || !start || !end || !rodzaj) {
+    if (msg) msg.textContent = "❌ Uzupełnij: data, start, koniec, rodzaj.";
+    return;
+  }
+  if (!validHour_(start) || !validHour_(end)) {
+    if (msg) msg.textContent = "❌ Godziny muszą być HH:MM.";
+    return;
+  }
+  if (start >= end) {
+    if (msg) msg.textContent = "❌ Koniec musi być później niż start.";
+    return;
+  }
+
+  if (msg) msg.textContent = "⏳ Zapisuję zmiany...";
+
+  try {
+    // identyfikator wydarzenia = miesiac + col5 (u Ciebie standard: `${miesiac}-${col5}`)
+    const treningId = `${editMiesiac}-${editCol5}`;
+
+    const r = await apiClubPost({
+      action: "edytujWydarzenie",
+      treningId,
+      data: dataISO,
+      godzStart: start,
+      godzKoniec: end,
+      rodzaj
+    });
+
+    if (r && r.success) {
+      if (msg) msg.textContent = "✅ Zapisano.";
+      setTimeout(() => {
+        zamknijEditPopup();
+        trainerPokazWydarzenia(); // odśwież listę
+      }, 400);
+    } else {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
+    }
+  } catch (e) {
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
+}
 
 /* =================== 99 START APLIKACJI =================== */
 window.addEventListener('load', () => {
