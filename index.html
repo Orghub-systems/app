@@ -1624,31 +1624,50 @@ async function trainerPokazZawodnicy() {
   }
 }
 
-async function trainerPokazWydarzenia() {
-  goToView("trainerWydarzeniaView");
-  const lista = await apiClubGet("treningiTrener", { grupa: window.grupyTrenera || "" });
-  renderTreningiTrainer(lista);
-}
-
 function renderTreningiTrainer(lista) {
-  window._trainerEventsCache = Array.isArray(lista) ? lista : [];
   const div = document.getElementById("trainerListaWydarzen");
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
 
-  div.innerHTML = lista.map(t => `
-    <div class="card" data-event-id="${t.miesiac}-${t.czasCol}">
-      <b>${t.rodzaj}</b> ${t.data} (${t.dzien})<br>
-      Godzina: <b>${t.godzStart}</b> – <b>${t.godzKoniec}</b><br>
-      Trener: <b>${t.trener}</b> | Zapisanych: ${t.zapisanych}<br><br>
-           <button class="btn" onclick="trainerToggleZapisani('${t.id}')">👥 Zapisani</button>
+  // lokalny parser "dd.mm.yyyy" albo "dd-mm-yyyy" -> "yyyy-mm-dd"
+  function toISO_(dataTxt) {
+    const s = String(dataTxt || "").trim();
+    // jeśli backend kiedyś poda ISO, to przepuść
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
-          <button class="btn" onclick="trainerShowEditPopup('${t.id}')">✏️ Edytuj</button>
+    const m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
+    if (!m) return "";
+    const dd = String(m[1]).padStart(2, "0");
+    const mm = String(m[2]).padStart(2, "0");
+    const yyyy = m[3];
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  div.innerHTML = lista.map(t => {
+    const dataISO = toISO_(t.data);
+
+    return `
+      <div class="card" data-event-id="${t.miesiac}-${t.czasCol}">
+        <b>${t.rodzaj}</b> ${t.data} (${t.dzien})<br>
+        Godzina: <b>${t.godzStart}</b> – <b>${t.godzKoniec}</b><br>
+        Trener: <b>${t.trener || "—"}</b> | Zapisanych: ${t.zapisanych}<br><br>
+
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+          <button class="btn" onclick="trainerToggleZapisani('${t.id}')">👥 Zapisani</button>
+
+          <button class="btn" onclick="trainerShowEditPopup('${t.miesiac}', ${t.czasCol}, {
+            dataISO: '${dataISO}',
+            start: '${String(t.godzStart || "")}',
+            end: '${String(t.godzKoniec || "")}',
+            rodzaj: '${String(t.rodzaj || "").replace(/'/g, "\\'")}'
+          })">✏️ Edytuj</button>
 
           <button class="btn danger" onclick="trainerShowDeletePopup('${t.miesiac}', ${t.czasCol})">🗑️ Usuń</button>
+        </div>
 
-      <div id="trainer-zapisani-${t.id}" class="hidden"></div>
-    </div>
-  `).join('');
+        <div id="trainer-zapisani-${t.id}" class="hidden"></div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function trainerToggleZapisani(id) {
@@ -1837,6 +1856,68 @@ async function wyslijNoweWydarzenie() {
   }
 }
 
+ // ===== EDYCJA WYDARZENIA =====
+async function zapiszEdycjeWydarzenia() {
+  const msg = document.getElementById("editEventMsg");
+
+  const treningId = window.editTreningId;
+  const data = document.getElementById("editEventData").value;
+  const start = document.getElementById("editEventStart").value;
+  const end = document.getElementById("editEventEnd").value;
+  const rodzaj = document.getElementById("editEventRodzaj").value;
+
+  const trenerzy = [
+    document.getElementById("editTrener1")?.value,
+    document.getElementById("editTrener2")?.value,
+    document.getElementById("editTrener3")?.value,
+    document.getElementById("editTrener4")?.value
+  ].map(v => String(v || "").trim()).filter(Boolean).join(", ");
+
+  const grupy = Array.from(document.querySelectorAll(".editEventGrupa:checked"))
+    .map(cb => cb.value)
+    .join(",");
+
+  const liczDoStat = document.getElementById("editEventStat")?.checked || false;
+
+  if (!data || !start || !rodzaj) {
+    msg.innerText = "Uzupełnij: Data, Godzina, Rodzaj.";
+    return;
+  }
+  if (start >= end) {
+    msg.innerText = "❌ Koniec musi być później niż start.";
+    return;
+  }
+
+  msg.innerText = "⏳ Zapisywanie zmian...";
+
+  try {
+    const r = await apiClubPost({
+      action: "edytujWydarzenie",
+      treningId,
+      data,
+      godzStart: start,
+      godzKoniec: end,
+      rodzaj,
+      grupy,
+      trenerzy,
+      liczDoStatystyk: String(liczDoStat)
+    });
+
+    if (r && r.success) {
+      msg.innerText = "✅ Zapisano zmiany";
+      setTimeout(() => {
+        closeEditEventPopup();
+        trainerPokazWydarzenia();
+      }, 600);
+    } else {
+      msg.innerText = "❌ " + (r?.message || r?.error || "Błąd zapisu");
+    }
+
+  } catch (e) {
+    msg.innerText = "❌ Błąd połączenia: " + (e?.message || e);
+  }
+}
+ 
 /* --- usuwanie wydarzenia --- */
 let deleteMiesiac = null;
 let deleteCzasCol = null;
