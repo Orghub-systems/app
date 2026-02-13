@@ -1754,8 +1754,12 @@ async function wyslijNoweWydarzenie() {
   const start = document.getElementById("eventStart").value;
   const end = document.getElementById("eventEnd").value;
   const rodzaj = document.getElementById("eventRodzaj").value;
+
   const trener1 = document.getElementById("eventTrener1").value;
-  const trener2 = document.getElementById("eventTrener2").value;
+  const trener2 = document.getElementById("eventTrener2")?.value || "";
+  const trener3 = document.getElementById("eventTrener3")?.value || "";
+  const trener4 = document.getElementById("eventTrener4")?.value || "";
+
   const grupy = Array.from(selectedGroups).join(",");
   const liczDoStat = document.getElementById("eventStat").checked;
   const msg = document.getElementById("eventMsg");
@@ -1774,25 +1778,25 @@ async function wyslijNoweWydarzenie() {
       rodzaj,
       trener1,
       trener2,
+      trener3,
+      trener4,
       grupy,
       liczDoStatystyk: String(liczDoStat)
     });
 
     msg.innerText = r.message || "Nieznany wynik.";
 
-if (r.success) {
-  // wyczyść pola tekstowe/czas/datę
-  document.querySelectorAll("#trainerDodajWydarzenieView input").forEach(i => {
-    if (i.type !== "checkbox") i.value = "";
-    else i.checked = false; // zostaje tylko dla eventStat
-  });
+    if (r.success) {
+      document.querySelectorAll("#trainerDodajWydarzenieView input").forEach(i => {
+        if (i.type !== "checkbox") i.value = "";
+        else i.checked = false;
+      });
 
-  // wyczyść trenerów + grupy (popup)
-  resetTrenerSelects_();
-  resetGroups_();
+      resetTrenerSelects_();
+      resetGroups_();
 
-  setTimeout(() => trainerPokazWydarzenia(), 800);
-}
+      setTimeout(() => trainerPokazWydarzenia(), 800);
+    }
 
   } catch (err) {
     msg.innerText = "❌ Błąd połączenia: " + err;
