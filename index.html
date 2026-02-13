@@ -1610,8 +1610,12 @@ function renderTreningiTrainer(lista) {
       <b>${t.rodzaj}</b> ${t.data} (${t.dzien})<br>
       Godzina: <b>${t.godzStart}</b> – <b>${t.godzKoniec}</b><br>
       Trener: <b>${t.trener}</b> | Zapisanych: ${t.zapisanych}<br><br>
-      <button class="btn" onclick="trainerToggleZapisani('${t.id}')">👥 Zapisani</button>
-      <button class="btn danger" onclick="trainerShowDeletePopup('${t.miesiac}', ${t.czasCol})">🗑️ Usuń</button>
+           <button class="btn" onclick="trainerToggleZapisani('${t.id}')">👥 Zapisani</button>
+
+          <button class="btn" onclick="trainerShowEditPopup('${t.id}')">✏️ Edytuj</button>
+
+          <button class="btn danger" onclick="trainerShowDeletePopup('${t.miesiac}', ${t.czasCol})">🗑️ Usuń</button>
+
       <div id="trainer-zapisani-${t.id}" class="hidden"></div>
     </div>
   `).join('');
