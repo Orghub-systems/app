@@ -1780,13 +1780,20 @@ async function wyslijNoweWydarzenie() {
 
     msg.innerText = r.message || "Nieznany wynik.";
 
-    if (r.success) {
-      document.querySelectorAll("#trainerDodajWydarzenieView input").forEach(i => {
-        if (i.type !== "checkbox") i.value = "";
-        else i.checked = false;
-      });
-      setTimeout(() => trainerPokazWydarzenia(), 800);
-    }
+if (r.success) {
+  // wyczyść pola tekstowe/czas/datę
+  document.querySelectorAll("#trainerDodajWydarzenieView input").forEach(i => {
+    if (i.type !== "checkbox") i.value = "";
+    else i.checked = false; // zostaje tylko dla eventStat
+  });
+
+  // wyczyść trenerów + grupy (popup)
+  resetTrenerSelects_();
+  resetGroups_();
+
+  setTimeout(() => trainerPokazWydarzenia(), 800);
+}
+
   } catch (err) {
     msg.innerText = "❌ Błąd połączenia: " + err;
   }
