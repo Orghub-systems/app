@@ -1640,10 +1640,12 @@ function renderTreningiTrainer(lista) {
   const div = document.getElementById("trainerListaWydarzen");
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
 
+  // ✅ Globalna mapa eventów dla popupu edycji
+  window.__trainerEventsByKey = {};
+
   // lokalny parser "dd.mm.yyyy" albo "dd-mm-yyyy" -> "yyyy-mm-dd"
   function toISO_(dataTxt) {
     const s = String(dataTxt || "").trim();
-    // jeśli backend kiedyś poda ISO, to przepuść
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
     const m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
@@ -1655,24 +1657,29 @@ function renderTreningiTrainer(lista) {
   }
 
   div.innerHTML = lista.map(t => {
+    const key = `${t.miesiac}-${t.czasCol}`;
     const dataISO = toISO_(t.data);
 
+    // ✅ zapisz dane do edycji (bez wrzucania obiektów do onclick)
+    window.__trainerEventsByKey[key] = {
+      key,
+      miesiac: t.miesiac,
+      czasCol: t.czasCol,
+      dataISO,
+      start: String(t.godzStart || ""),
+      end: String(t.godzKoniec || ""),
+      rodzaj: String(t.rodzaj || ""),
+    };
+
     return `
-      <div class="card" data-event-id="${t.miesiac}-${t.czasCol}">
+      <div class="card" data-event-id="${key}">
         <b>${t.rodzaj}</b> ${t.data} (${t.dzien})<br>
         Godzina: <b>${t.godzStart}</b> – <b>${t.godzKoniec}</b><br>
         Trener: <b>${t.trener || "—"}</b> | Zapisanych: ${t.zapisanych}<br><br>
 
         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
           <button class="btn" onclick="trainerToggleZapisani('${t.id}')">👥 Zapisani</button>
-
-          <button class="btn" onclick="trainerShowEditPopup('${t.miesiac}', ${t.czasCol}, {
-            dataISO: '${dataISO}',
-            start: '${String(t.godzStart || "")}',
-            end: '${String(t.godzKoniec || "")}',
-            rodzaj: '${String(t.rodzaj || "").replace(/'/g, "\\'")}'
-          })">✏️ Edytuj</button>
-
+          <button class="btn" onclick="trainerShowEditPopup('${t.miesiac}', ${t.czasCol})">✏️ Edytuj</button>
           <button class="btn danger" onclick="trainerShowDeletePopup('${t.miesiac}', ${t.czasCol})">🗑️ Usuń</button>
         </div>
 
@@ -1681,6 +1688,7 @@ function renderTreningiTrainer(lista) {
     `;
   }).join('');
 }
+
 
 async function trainerToggleZapisani(id) {
   const box = document.getElementById(`trainer-zapisani-${id}`);
