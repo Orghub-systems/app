@@ -1601,6 +1601,18 @@ async function odswiezListeZapisanych(id) {
 /* =================== 90 TRENER: LISTA / WYDARZENIA / DODAWANIE / USUWANIE =================== */
 function trainerPowrot() { appBack(); }
 
+  // ✅ MUSI być globalne dla onclick w HTML
+window.trainerPokazWydarzenia = async function trainerPokazWydarzenia() {
+  goToView("trainerWydarzeniaView");
+  try {
+    const lista = await apiClubGet("treningiTrener", { grupa: window.grupyTrenera || "" });
+    renderTreningiTrainer(lista);
+  } catch (e) {
+    const div = document.getElementById("trainerListaWydarzen");
+    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+  }
+};
+
 async function trainerPokazZawodnicy() {
   goToView("trainerZawodnicyView");
   const box = document.getElementById("trainerListaZawodnikow");
