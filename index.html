@@ -2249,7 +2249,7 @@ function setEditTrenerzy_(arr) {
   if (s3) s3.value = t[2] || "";
   if (s4) s4.value = t[3] || "";
 
-  // pokaż wrapy zależnie od ilości
+  // ✅ pokaż wrapy zależnie od tego, czy poprzedni trener istnieje
   const w2 = document.getElementById("editTrener2Wrap");
   const w3 = document.getElementById("editTrener3Wrap");
   const w4 = document.getElementById("editTrener4Wrap");
@@ -2257,13 +2257,23 @@ function setEditTrenerzy_(arr) {
   if (w2) (t[0] ? w2.classList.remove("hidden") : w2.classList.add("hidden"));
   if (w3) (t[1] ? w3.classList.remove("hidden") : w3.classList.add("hidden"));
   if (w4) (t[2] ? w4.classList.remove("hidden") : w4.classList.add("hidden"));
-}
 
+  // ✅ wymuś “refresh” dla selectów (czasem Safari/Chrome na mobile lubi nie przerysować)
+  [s1, s2, s3, s4].forEach(sel => {
+    if (!sel) return;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
 function setEditGroups_(arr) {
   selectedEditGroups = new Set((arr || []).map(x => String(x||"").trim()).filter(Boolean));
+
+  // ✅ od razu pokaż summary na ekranie (bez klikania w "Wybierz grupy")
   updateEditGroupsSummary_();
+
+  // ✅ i od razu przygotuj listę (żeby po otwarciu popupu checkboxy były już gotowe)
+  renderEditGroupsList_();
 }
-  
+
 // zapis do backendu
 async function trainerSaveEditEvent() {
   const msg = document.getElementById("editEventMsg");
