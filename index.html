@@ -2176,34 +2176,34 @@ async function trainerShowEditPopup(miesiac, col5) {
   resetEditTrenerSelects_();
   resetEditGroups_();
 
-  // 3) pokaż popup od razu (żeby user widział, że “coś się dzieje”)
-  if (pop) pop.style.display = "flex";
-
-  // 4) wczytaj listę trenerów do selectów (opcje)
+  // 3) wczytaj listę trenerów do selectów (opcje) – potrzebne zanim ustawimy wartości
   await zaladujListeTrenerowDoEdycji();
 
-  // 5) dociągnij szczegóły wydarzenia z backendu: trenerzy + grupy
-  //    UWAGA: endpoint musi istnieć w CORE/GAS. Nazwa action niżej to propozycja.
-  //    Jeśli masz inną nazwę w backendzie – zmienimy w 10 sekund.
+  // 4) dociągnij szczegóły wydarzenia z backendu: trenerzy + grupy
+  let loaded = false;
   try {
     const treningId = `${editMiesiac}-${editCol5}`;
     const details = await apiClubGet("wydarzenieDetails", { treningId });
 
-    // spodziewamy się np:
-    // details.trenerzy = ["Jan Kowalski","..."] albo "Jan, Adam"
-    // details.grupy = "G1,G5" albo ["G1","G5"]
-    const trenerArr = normalizeTrenerzy_(details?.trenerzy);
-    const grupyArr  = normalizeGrupy_(details?.grupy);
+    if (details?.success) {
+      const trenerArr = normalizeTrenerzy_(details?.trenerzy);
+      const grupyArr  = normalizeGrupy_(details?.grupy);
 
-    setEditTrenerzy_(trenerArr);
-    setEditGroups_(grupyArr);
-
+      setEditTrenerzy_(trenerArr);
+      setEditGroups_(grupyArr);
+      loaded = true;
+    } else {
+      console.warn("wydarzenieDetails error:", details);
+      if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup.";
+    }
   } catch (err) {
-    // fallback: nic nie ustawiamy, ale nie psujemy edycji podstawowych pól
     console.warn("Brak szczegółów wydarzenia (trenerzy/grupy):", err);
-    if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup (sprawdź backend action).";
+    if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup.";
   }
-}
+
+  // 5) pokaż popup dopiero gdy mamy selecty + (najlepiej) szczegóły
+  //    Jeśli backend padnie, i tak pokażemy popup (żeby dało się ręcznie edytować).
+  if (pop) pop.style.display = "flex";
 
 function trainerHideEditPopup() {
   const pop = document.getElementById("trainerEditPopup");
