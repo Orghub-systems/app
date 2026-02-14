@@ -494,7 +494,7 @@
     </div>
 
     <div style="margin-top:10px;">
-      <button class="full-btn" id="btnEditSave">💾 Zapisz zmiany</button>
+     <button class="full-btn" id="btnEditSave" onclick="zapiszEdycjeWydarzenia()">💾 Zapisz zmiany</button>
       <button class="full-btn alt" onclick="trainerHideEditPopup()">Anuluj</button>
     </div>
 
@@ -1916,6 +1916,11 @@ async function zapiszEdycjeWydarzenia() {
   } catch (e) {
     msg.innerText = "❌ Błąd połączenia: " + (e?.message || e);
   }
+}
+
+  function trainerHideEditPopup() {
+  const el = document.getElementById("trainerEditPopup");
+  if (el) el.style.display = "none";
 }
  
 /* --- usuwanie wydarzenia --- */
