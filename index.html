@@ -2150,15 +2150,16 @@ let editCol5 = null;
 // otwarcie popupu + wypełnienie pól
 // otwarcie popupu + wypełnienie pól + dociągnięcie trenerów i grup
   
+// otwarcie popupu + wypełnienie pól + dociągnięcie trenerów i grup (bez psucia startu apki)
 async function trainerShowEditPopup(miesiac, col5) {
   editMiesiac = String(miesiac || "");
   editCol5 = Number(col5);
 
   const pop = document.getElementById("trainerEditPopup");
   const msg = document.getElementById("editEventMsg");
-  if (msg) msg.textContent = "";
+  if (msg) msg.textContent = "⏳ Ładuję trenerów i grupy...";
 
-  // 1) podstawowe pola (z cache z renderu)
+  // 1) podstawowe pola z cache listy (od razu)
   const key = `${editMiesiac}-${editCol5}`;
   const cached = window.__trainerEventsByKey ? window.__trainerEventsByKey[key] : null;
 
@@ -2172,15 +2173,17 @@ async function trainerShowEditPopup(miesiac, col5) {
   if (e) e.value = cached?.end || "";
   if (r) r.value = cached?.rodzaj || "";
 
-  // 2) reset UI trenerów i grup (żeby nie “pamiętało” poprzedniej edycji)
+  // 2) reset UI (żeby nie pamiętało)
   resetEditTrenerSelects_();
   resetEditGroups_();
 
-  // 3) wczytaj listę trenerów do selectów (opcje) – potrzebne zanim ustawimy wartości
+  // 3) pokaż popup od razu, ale z komunikatem "ładuję"
+  if (pop) pop.style.display = "flex";
+
+  // 4) załaduj opcje trenerów do selectów
   await zaladujListeTrenerowDoEdycji();
 
-  // 4) dociągnij szczegóły wydarzenia z backendu: trenerzy + grupy
-  let loaded = false;
+  // 5) pobierz szczegóły wydarzenia (trenerzy + grupy)
   try {
     const treningId = `${editMiesiac}-${editCol5}`;
     const details = await apiClubGet("wydarzenieDetails", { treningId });
@@ -2191,19 +2194,17 @@ async function trainerShowEditPopup(miesiac, col5) {
 
       setEditTrenerzy_(trenerArr);
       setEditGroups_(grupyArr);
-      loaded = true;
+
+      if (msg) msg.textContent = ""; // gotowe
     } else {
-      console.warn("wydarzenieDetails error:", details);
       if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup.";
+      console.warn("wydarzenieDetails:", details);
     }
   } catch (err) {
-    console.warn("Brak szczegółów wydarzenia (trenerzy/grupy):", err);
-    if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup.";
+    if (msg) msg.textContent = "⚠️ Błąd pobierania trenerów i grup.";
+    console.warn(err);
   }
-
-  // 5) pokaż popup dopiero gdy mamy selecty + (najlepiej) szczegóły
-  //    Jeśli backend padnie, i tak pokażemy popup (żeby dało się ręcznie edytować).
-  if (pop) pop.style.display = "flex";
+}
 
 function trainerHideEditPopup() {
   const pop = document.getElementById("trainerEditPopup");
