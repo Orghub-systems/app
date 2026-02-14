@@ -2278,36 +2278,34 @@ function setEditGroups_(arr) {
 // zapis do backendu
 async function trainerSaveEditEvent() {
   const msg = document.getElementById("editEventMsg");
+  if (msg) msg.textContent = "";
 
-  if (!editMiesiac || !editCol5) {
-    if (msg) msg.textContent = "❌ Brak danych wydarzenia do edycji.";
-    return;
-  }
-
-  const dataISO = (document.getElementById("editEventData")?.value || "").trim();
-  const start   = (document.getElementById("editEventStart")?.value || "").trim();
-  const end     = (document.getElementById("editEventEnd")?.value || "").trim();
-  const rodzaj  = (document.getElementById("editEventRodzaj")?.value || "").trim();
-
-  if (!dataISO || !start || !end || !rodzaj) {
-    if (msg) msg.textContent = "❌ Uzupełnij: data, start, koniec, rodzaj.";
-    return;
-  }
-  if (!validHour_(start) || !validHour_(end)) {
-    if (msg) msg.textContent = "❌ Godziny muszą być HH:MM.";
-    return;
-  }
-  if (start >= end) {
-    if (msg) msg.textContent = "❌ Koniec musi być później niż start.";
-    return;
-  }
-
-  if (msg) msg.textContent = "⏳ Zapisuję zmiany...";
+  const btn = document.getElementById("btnEditSave");
+  if (btn) { btn.classList.add("loading"); btn.disabled = true; }
 
   try {
+    if (!editMiesiac || !editCol5) {
+      if (msg) msg.textContent = "❌ Brak identyfikatora wydarzenia.";
+      return;
+    }
+
+    const dataISO = (document.getElementById("editEventData")?.value || "").trim();
+    const start = (document.getElementById("editEventStart")?.value || "").trim();
+    const end   = (document.getElementById("editEventEnd")?.value || "").trim();
+    const rodzaj = (document.getElementById("editEventRodzaj")?.value || "").trim();
+
+    if (!dataISO || !start || !end) {
+      if (msg) msg.textContent = "❌ Uzupełnij datę i godziny.";
+      return;
+    }
+    if (start >= end) {
+      if (msg) msg.textContent = "❌ Godzina końca musi być później niż start.";
+      return;
+    }
+
     const treningId = `${editMiesiac}-${editCol5}`;
 
-    // trenerzy z selectów (1–4), bez pustych
+    // trenerzy z selectów
     const trenerzyArr = [
       document.getElementById("editTrener1")?.value,
       document.getElementById("editTrener2")?.value,
@@ -2315,7 +2313,7 @@ async function trainerSaveEditEvent() {
       document.getElementById("editTrener4")?.value
     ].map(v => String(v || "").trim()).filter(Boolean);
 
-    // grupy z popupu (Set -> CSV)
+    // grupy z popupu
     const grupyArr = Array.from(selectedEditGroups || []);
     grupyArr.sort((a,b) => Number(a.slice(1)) - Number(b.slice(1)));
     const grupyCsv = grupyArr.join(",");
@@ -2327,25 +2325,26 @@ async function trainerSaveEditEvent() {
       godzStart: start,
       godzKoniec: end,
       rodzaj,
-
-      // NOWE:
-      trenerzy: trenerzyArr.join(","), // backend może rozbić na A5–E5
-      grupy: grupyCsv                // backend wpisze do B6
+      trenerzy: trenerzyArr.join(", "),
+      grupy: grupyCsv
     });
 
-    if (r && r.success) {
-      if (msg) msg.textContent = "✅ Zapisano.";
-      setTimeout(() => {
-        trainerHideEditPopup();
-        trainerPokazWydarzenia(); // odśwież listę
-      }, 350);
+    if (r && (r.success || r.ok)) {
+      if (msg) msg.textContent = "💾 Zapisano zmiany.";
+      await trainerReloadEventsKeepView();
+      setTimeout(trainerHideEditPopup, 500);
     } else {
-      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
+      if (msg) msg.textContent = "❌ Nie udało się zapisać zmian.";
     }
-  } catch (e) {
-    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+
+  } catch (err) {
+    console.error(err);
+    if (msg) msg.textContent = "❌ Błąd zapisu (sprawdź konsolę).";
+  } finally {
+    if (btn) { btn.classList.remove("loading"); btn.disabled = false; }
   }
 }
+
 
 /* =================== 99 START APLIKACJI =================== */
 window.addEventListener('load', () => {
