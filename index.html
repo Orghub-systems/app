@@ -2049,55 +2049,53 @@ let editCol5 = null;
 
 // otwarcie popupu + wypełnienie pól
 function trainerShowEditPopup(miesiac, col5, payload = {}) {
-  editMiesiac = miesiac;
-  editCol5 = Number(col5);
+  editMiesiac = String(miesiac || "");
+  editCol5 = Number(col5 || 0);
 
   const pop = document.getElementById("trainerEditPopup");
-  const msg = document.getElementById("editMsg");
+  const msg = document.getElementById("editEventMsg");
   if (msg) msg.textContent = "";
 
-  // payload: { dataISO, start, end, rodzaj }
-  const d = document.getElementById("editData");
-  const s = document.getElementById("editStart");
-  const e = document.getElementById("editEnd");
-  const r = document.getElementById("editRodzaj");
+  // pola z Twojego HTML
+  const d = document.getElementById("editEventData");
+  const s = document.getElementById("editEventStart");
+  const e = document.getElementById("editEventEnd");
+  const r = document.getElementById("editEventRodzaj");
 
   if (d) d.value = payload.dataISO || "";
   if (s) s.value = payload.start || "";
   if (e) e.value = payload.end || "";
   if (r) r.value = payload.rodzaj || "";
 
-  if (pop) {
-    pop.classList.remove("hidden");
-    // jeśli używasz klasy .show zamiast hidden, zamień odpowiednio
-    // pop.classList.add("show");
-  }
+  // pokaż popup (u Ciebie: display:none)
+  if (pop) pop.style.display = "flex";
 }
 
-function zamknijEditPopup() {
+function trainerHideEditPopup() {
   const pop = document.getElementById("trainerEditPopup");
-  if (pop) pop.classList.add("hidden");
-  // pop.classList.remove("show");
+  if (pop) pop.style.display = "none";
   editMiesiac = null;
   editCol5 = null;
+
+  const msg = document.getElementById("editEventMsg");
+  if (msg) msg.textContent = "";
 }
 
-// walidacja HH:MM
 function validHour_(hhmm) { return /^\d{2}:\d{2}$/.test(String(hhmm || "")); }
 
 // zapis do backendu
-async function zapiszEdytowaneWydarzenie() {
-  const msg = document.getElementById("editMsg");
+async function trainerSaveEditEvent() {
+  const msg = document.getElementById("editEventMsg");
 
   if (!editMiesiac || !editCol5) {
     if (msg) msg.textContent = "❌ Brak danych wydarzenia do edycji.";
     return;
   }
 
-  const dataISO = (document.getElementById("editData")?.value || "").trim();
-  const start = (document.getElementById("editStart")?.value || "").trim();
-  const end = (document.getElementById("editEnd")?.value || "").trim();
-  const rodzaj = (document.getElementById("editRodzaj")?.value || "").trim();
+  const dataISO = (document.getElementById("editEventData")?.value || "").trim();
+  const start   = (document.getElementById("editEventStart")?.value || "").trim();
+  const end     = (document.getElementById("editEventEnd")?.value || "").trim();
+  const rodzaj  = (document.getElementById("editEventRodzaj")?.value || "").trim();
 
   if (!dataISO || !start || !end || !rodzaj) {
     if (msg) msg.textContent = "❌ Uzupełnij: data, start, koniec, rodzaj.";
@@ -2115,7 +2113,6 @@ async function zapiszEdytowaneWydarzenie() {
   if (msg) msg.textContent = "⏳ Zapisuję zmiany...";
 
   try {
-    // identyfikator wydarzenia = miesiac + col5 (u Ciebie standard: `${miesiac}-${col5}`)
     const treningId = `${editMiesiac}-${editCol5}`;
 
     const r = await apiClubPost({
@@ -2130,9 +2127,9 @@ async function zapiszEdytowaneWydarzenie() {
     if (r && r.success) {
       if (msg) msg.textContent = "✅ Zapisano.";
       setTimeout(() => {
-        zamknijEditPopup();
+        trainerHideEditPopup();
         trainerPokazWydarzenia(); // odśwież listę
-      }, 400);
+      }, 350);
     } else {
       if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
     }
@@ -2167,6 +2164,8 @@ window.addEventListener('load', () => {
 
   // router + theme
   startApp_();
+  const btn = document.getElementById("btnEditSave");
+if (btn) btn.onclick = trainerSaveEditEvent;
 
   // splash ma być zawsze widoczny minimalnie chwilę (żeby nie "mrugał")
   if (splash) {
