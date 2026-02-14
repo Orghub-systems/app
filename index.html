@@ -485,12 +485,58 @@
 ">
   <div class="popup-card" style="max-width:320px;">
     <p style="margin:0 0 10px 0;"><b>Edytuj wydarzenie</b></p>
-
     <div class="login-box" style="margin-top:10px;">
       <input id="editEventData" type="date">
       <input id="editEventStart" type="time">
       <input id="editEventEnd" type="time">
       <input id="editEventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
+
+      <!-- TRENERZY (kaskadowo, max 4) -->
+      <select id="editTrener1" class="select-like-input" onchange="onEditTrenerPick(1)">
+        <option value="">— wybierz trenera —</option>
+      </select>
+
+      <div id="editTrener2Wrap" class="hidden">
+        <select id="editTrener2" class="select-like-input" onchange="onEditTrenerPick(2)">
+          <option value="">— kolejny trener —</option>
+        </select>
+      </div>
+
+      <div id="editTrener3Wrap" class="hidden">
+        <select id="editTrener3" class="select-like-input" onchange="onEditTrenerPick(3)">
+          <option value="">— kolejny trener —</option>
+        </select>
+      </div>
+
+      <div id="editTrener4Wrap" class="hidden">
+        <select id="editTrener4" class="select-like-input">
+          <option value="">— kolejny trener —</option>
+        </select>
+      </div>
+
+      <!-- GRUPY -->
+      <button class="full-btn alt" id="btnEditPickGroups" type="button" onclick="openEditGroupsPopup()">
+        Wybierz grupy
+      </button>
+      <div id="editGroupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
+    </div>
+
+    <!-- POPUP GRUP (edycja) -->
+    <div id="editGroupsPopup" class="hidden" style="
+      position:fixed; inset:0; background:rgba(0,0,0,0.7);
+      display:flex; justify-content:center; align-items:center;
+      z-index:3001; padding:18px;
+    ">
+      <div class="card" style="max-width:320px;width:100%; text-align:left;">
+        <div style="font-weight:800; font-size:16px; margin-bottom:10px;">Wybierz grupy (edycja)</div>
+
+        <div id="editGroupsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="full-btn alt" style="flex:1;" type="button" onclick="closeEditGroupsPopup()">Anuluj</button>
+          <button class="full-btn" style="flex:1;" type="button" onclick="applyEditGroupsPopup()">Zapisz</button>
+        </div>
+      </div>
     </div>
 
     <div style="margin-top:10px;">
@@ -1758,6 +1804,107 @@ function onTrenerPick(n) {
   }
 }
 
+  /* ===== EDYCJA: TRENERZY (selecty) ===== */
+async function zaladujListeTrenerowDoEdycji() {
+  try {
+    const lista = await apiClubGet("getTrenerzy", {});
+    const ids = ["editTrener1","editTrener2","editTrener3","editTrener4"];
+
+    ids.forEach((id, idx) => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+
+      // pierwsza lista ma "wybierz", kolejne mają "kolejny"
+      const firstOpt = (idx === 0)
+        ? "<option value=''>— wybierz trenera —</option>"
+        : "<option value=''>— kolejny trener —</option>";
+
+      sel.innerHTML = firstOpt + (lista || []).map(n => `<option value="${n}">${n}</option>`).join("");
+    });
+  } catch (e) {
+    console.warn("Nie udało się wczytać trenerów do edycji", e);
+  }
+}
+
+function resetEditTrenerSelects_() {
+  ["editTrener2Wrap","editTrener3Wrap","editTrener4Wrap"].forEach(id => {
+    const w = document.getElementById(id);
+    if (w) w.classList.add("hidden");
+  });
+
+  ["editTrener1","editTrener2","editTrener3","editTrener4"].forEach(id => {
+    const s = document.getElementById(id);
+    if (s) s.value = "";
+  });
+}
+
+function onEditTrenerPick(n) {
+  const cur = document.getElementById(`editTrener${n}`);
+  const nextWrap = document.getElementById(`editTrener${n+1}Wrap`);
+  if (!cur) return;
+
+  const picked = String(cur.value || "").trim();
+  if (nextWrap) {
+    if (picked) nextWrap.classList.remove("hidden");
+    else nextWrap.classList.add("hidden");
+  }
+}
+
+/* ===== EDYCJA: GRUPY (popup G1–G10) ===== */
+let selectedEditGroups = new Set(); // np. "G1","G2"...
+
+function renderEditGroupsList_() {
+  const box = document.getElementById("editGroupsList");
+  if (!box) return;
+
+  const groups = Array.from({ length: 10 }, (_, i) => `G${i + 1}`);
+
+  box.innerHTML = groups.map(g => {
+    const checked = selectedEditGroups.has(g) ? "checked" : "";
+    return `
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:1px solid #333;border-radius:10px;background:#111;">
+        <span style="font-weight:700;">${g}</span>
+        <input type="checkbox" class="editGrpPick" value="${g}" ${checked} style="transform:scale(1.25);">
+      </label>
+    `;
+  }).join("");
+}
+
+function openEditGroupsPopup() {
+  renderEditGroupsList_();
+  const pop = document.getElementById("editGroupsPopup");
+  if (pop) pop.classList.remove("hidden");
+}
+
+function closeEditGroupsPopup() {
+  const pop = document.getElementById("editGroupsPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+function applyEditGroupsPopup() {
+  const picks = document.querySelectorAll("#editGroupsList .editGrpPick");
+  selectedEditGroups = new Set();
+  picks.forEach(ch => { if (ch.checked) selectedEditGroups.add(ch.value); });
+
+  updateEditGroupsSummary_();
+  closeEditGroupsPopup();
+}
+
+function updateEditGroupsSummary_() {
+  const el = document.getElementById("editGroupsSummary");
+  if (!el) return;
+
+  const arr = Array.from(selectedEditGroups);
+  arr.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+
+  el.textContent = arr.length ? `✅ Wybrane: ${arr.join(", ")}` : "—";
+}
+
+function resetEditGroups_() {
+  selectedEditGroups = new Set();
+  updateEditGroupsSummary_();
+}
+
 function pokazDodajWydarzenie() {
   goToView("trainerDodajWydarzenieView");
   resetTrenerSelects_();
@@ -1975,72 +2122,25 @@ async function trainerConfirmDeleteYes() {
   }
 }
   
-/* --- edycja wydarzenia (popup) --- */
-let editEventId = null; // np. "Styczeń-25"
+/* --- edycja wydarzenia (popup) — OLD (wyłączone, bo mamy 90B) --- */
+let editEventId = null;
 
-function trainerShowEditPopup(eventId) {
-  editEventId = eventId;
-
-  const popup = document.getElementById("trainerEditPopup");
-  const msg = document.getElementById("editEventMsg");
-  if (msg) msg.textContent = "";
-
-  // znajdź kartę i wyciągnij dane z tekstu na ekranie (na razie prosto)
-  // docelowo: backend zwróci szczegóły po ID (zrobimy w kroku 4/5)
-  const card = document.querySelector(`#trainerWydarzeniaView .card [data-event-id]`) ? null : null; 
-  // ^ zostawiamy, nie używamy - tylko żeby nie było "pusto". Nie ruszaj.
-
-  // Pobieramy z listy, którą już renderujemy: najlepiej trzymać ją w globalu.
-  // Dodamy global: window._trainerEventsCache
-  const cache = window._trainerEventsCache || [];
-  const ev = cache.find(x => String(x.id) === String(eventId));
-
-  if (!ev) {
-    if (msg) msg.textContent = "❌ Nie znaleziono wydarzenia w pamięci. Odśwież listę.";
-    if (popup) popup.style.display = "flex";
-    return;
-  }
-
-  // ustaw pola
-  const fData = document.getElementById("editEventData");
-  const fS = document.getElementById("editEventStart");
-  const fE = document.getElementById("editEventEnd");
-  const fR = document.getElementById("editEventRodzaj");
-
-  // ev.data zwykle jest w formacie typu 12.02.2026 / 2026-02-12 zależnie od display
-  // więc robimy best-effort konwersję do YYYY-MM-DD
-  if (fData) fData.value = toISODate_(ev.data);
-  if (fS) fS.value = (ev.godzStart || "").slice(0,5);
-  if (fE) fE.value = (ev.godzKoniec || "").slice(0,5);
-  if (fR) fR.value = ev.rodzaj || "";
-
-  if (popup) popup.style.display = "flex";
+function trainerShowEditPopup_OLD(eventId) {
+  console.warn("trainerShowEditPopup_OLD wyłączone. Używamy trainerShowEditPopup(miesiac, col5, payload).", eventId);
 }
 
-function trainerHideEditPopup() {
-  const popup = document.getElementById("trainerEditPopup");
-  if (popup) popup.style.display = "none";
-  editEventId = null;
+function trainerHideEditPopup_OLD() {
+  // no-op
 }
 
-// helper: próba zamiany "dd.mm.yyyy" -> "yyyy-mm-dd"
-function toISODate_(txt) {
+function toISODate_OLD(txt) {
   const s = String(txt || "").trim();
-
-  // yyyy-mm-dd
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-
-  // dd.mm.yyyy
   const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (m) {
-    const dd = String(m[1]).padStart(2, "0");
-    const mm = String(m[2]).padStart(2, "0");
-    const yy = m[3];
-    return `${yy}-${mm}-${dd}`;
-  }
-
-  return ""; // jeśli nie rozpoznaliśmy
+  if (m) return `${m[3]}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+  return "";
 }
+  
 /* =================== 90B TRENER: EDYCJA WYDARZENIA (POPUP) =================== */
 
 // stan edycji
@@ -2048,27 +2148,61 @@ let editMiesiac = null;
 let editCol5 = null;
 
 // otwarcie popupu + wypełnienie pól
-function trainerShowEditPopup(miesiac, col5, payload = {}) {
+// otwarcie popupu + wypełnienie pól + dociągnięcie trenerów i grup
+  
+async function trainerShowEditPopup(miesiac, col5) {
   editMiesiac = String(miesiac || "");
-  editCol5 = Number(col5 || 0);
+  editCol5 = Number(col5);
 
   const pop = document.getElementById("trainerEditPopup");
   const msg = document.getElementById("editEventMsg");
   if (msg) msg.textContent = "";
 
-  // pola z Twojego HTML
+  // 1) podstawowe pola (z cache z renderu)
+  const key = `${editMiesiac}-${editCol5}`;
+  const cached = window.__trainerEventsByKey ? window.__trainerEventsByKey[key] : null;
+
   const d = document.getElementById("editEventData");
   const s = document.getElementById("editEventStart");
   const e = document.getElementById("editEventEnd");
   const r = document.getElementById("editEventRodzaj");
 
-  if (d) d.value = payload.dataISO || "";
-  if (s) s.value = payload.start || "";
-  if (e) e.value = payload.end || "";
-  if (r) r.value = payload.rodzaj || "";
+  if (d) d.value = cached?.dataISO || "";
+  if (s) s.value = cached?.start || "";
+  if (e) e.value = cached?.end || "";
+  if (r) r.value = cached?.rodzaj || "";
 
-  // pokaż popup (u Ciebie: display:none)
+  // 2) reset UI trenerów i grup (żeby nie “pamiętało” poprzedniej edycji)
+  resetEditTrenerSelects_();
+  resetEditGroups_();
+
+  // 3) pokaż popup od razu (żeby user widział, że “coś się dzieje”)
   if (pop) pop.style.display = "flex";
+
+  // 4) wczytaj listę trenerów do selectów (opcje)
+  await zaladujListeTrenerowDoEdycji();
+
+  // 5) dociągnij szczegóły wydarzenia z backendu: trenerzy + grupy
+  //    UWAGA: endpoint musi istnieć w CORE/GAS. Nazwa action niżej to propozycja.
+  //    Jeśli masz inną nazwę w backendzie – zmienimy w 10 sekund.
+  try {
+    const treningId = `${editMiesiac}-${editCol5}`;
+    const details = await apiClubGet("wydarzenieDetails", { treningId });
+
+    // spodziewamy się np:
+    // details.trenerzy = ["Jan Kowalski","..."] albo "Jan, Adam"
+    // details.grupy = "G1,G5" albo ["G1","G5"]
+    const trenerArr = normalizeTrenerzy_(details?.trenerzy);
+    const grupyArr  = normalizeGrupy_(details?.grupy);
+
+    setEditTrenerzy_(trenerArr);
+    setEditGroups_(grupyArr);
+
+  } catch (err) {
+    // fallback: nic nie ustawiamy, ale nie psujemy edycji podstawowych pól
+    console.warn("Brak szczegółów wydarzenia (trenerzy/grupy):", err);
+    if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup (sprawdź backend action).";
+  }
 }
 
 function trainerHideEditPopup() {
@@ -2083,6 +2217,53 @@ function trainerHideEditPopup() {
 
 function validHour_(hhmm) { return /^\d{2}:\d{2}$/.test(String(hhmm || "")); }
 
+function normalizeTrenerzy_(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) return input.map(x => String(x||"").trim()).filter(Boolean);
+  // string: "A, B" albo "A;B"
+  return String(input)
+    .split(/[,;]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function normalizeGrupy_(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) return input.map(x => String(x||"").trim()).filter(Boolean);
+  return String(input)
+    .split(/[,;]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function setEditTrenerzy_(arr) {
+  const t = (arr || []).slice(0, 4);
+
+  const s1 = document.getElementById("editTrener1");
+  const s2 = document.getElementById("editTrener2");
+  const s3 = document.getElementById("editTrener3");
+  const s4 = document.getElementById("editTrener4");
+
+  if (s1) s1.value = t[0] || "";
+  if (s2) s2.value = t[1] || "";
+  if (s3) s3.value = t[2] || "";
+  if (s4) s4.value = t[3] || "";
+
+  // pokaż wrapy zależnie od ilości
+  const w2 = document.getElementById("editTrener2Wrap");
+  const w3 = document.getElementById("editTrener3Wrap");
+  const w4 = document.getElementById("editTrener4Wrap");
+
+  if (w2) (t[0] ? w2.classList.remove("hidden") : w2.classList.add("hidden"));
+  if (w3) (t[1] ? w3.classList.remove("hidden") : w3.classList.add("hidden"));
+  if (w4) (t[2] ? w4.classList.remove("hidden") : w4.classList.add("hidden"));
+}
+
+function setEditGroups_(arr) {
+  selectedEditGroups = new Set((arr || []).map(x => String(x||"").trim()).filter(Boolean));
+  updateEditGroupsSummary_();
+}
+  
 // zapis do backendu
 async function trainerSaveEditEvent() {
   const msg = document.getElementById("editEventMsg");
@@ -2115,13 +2296,30 @@ async function trainerSaveEditEvent() {
   try {
     const treningId = `${editMiesiac}-${editCol5}`;
 
+    // trenerzy z selectów (1–4), bez pustych
+    const trenerzyArr = [
+      document.getElementById("editTrener1")?.value,
+      document.getElementById("editTrener2")?.value,
+      document.getElementById("editTrener3")?.value,
+      document.getElementById("editTrener4")?.value
+    ].map(v => String(v || "").trim()).filter(Boolean);
+
+    // grupy z popupu (Set -> CSV)
+    const grupyArr = Array.from(selectedEditGroups || []);
+    grupyArr.sort((a,b) => Number(a.slice(1)) - Number(b.slice(1)));
+    const grupyCsv = grupyArr.join(",");
+
     const r = await apiClubPost({
       action: "edytujWydarzenie",
       treningId,
       data: dataISO,
       godzStart: start,
       godzKoniec: end,
-      rodzaj
+      rodzaj,
+
+      // NOWE:
+      trenerzy: trenerzyArr.join(","), // backend może rozbić na A5–E5
+      grupy: grupyCsv                // backend wpisze do B6
     });
 
     if (r && r.success) {
