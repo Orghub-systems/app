@@ -835,112 +835,83 @@ async function apiClubPost(payload = {}) {
 }
 
 
+
 /* =================== 60 ORGHUB START / KONFIGURACJA =================== */
-// Tu masz dwa widoki: orgHubLandingView (start) i clubConfigView (panel)
-// Docelowo zrobimy “przycisk zamienia się w input” — ale to będzie kolejny krok.
+
+/**
+ * Panel 1: logo + nazwa + kolor + email (bez sezonu)
+ * Panel 2: sezon + płatności
+ */
 
 let cfgDraft = {
   clubName: "",
   email: "",
-  sezonStart: "", // YYYY-MM-01
-  sezonEnd: "",   // YYYY-MM-30 (tymczasowo)
   bgColor: "#000000",
   logoDataUrl: "" // dataURL
 };
 
-// paleta (więcej kolorów zrobimy w następnym kroku)
+// Panel 2 (uzupełnienie po utworzeniu klubu)
+let setupDraft = {
+  sezonStart: "", // YYYY-MM-DD
+  sezonEnd: "",   // YYYY-MM-DD
+  months: [],     // ["Maj 2026", ...] — wyliczymy po ustawieniu sezonu
+  fees: {},       // { "Maj 2026": 200, ... }  (na razie placeholder)
+  singleTrainingPrice: "" // na razie placeholder
+};
+
+// paleta
 const COLOR_PRESETS = [
-  // Czarne / szarości (2 odcienie)
   "#000000", "#1a1a1a",
-
-  // Granat (2)
   "#0b1b2b", "#123a5a",
-
-  // Niebieski (2)
   "#0b2b5a", "#1a4fa3",
-
-  // Turkus (2)
   "#0b2b2b", "#118a8a",
-
-  // Zieleń (2)
   "#0b2b1b", "#1f7a3a",
-
-  // Oliwka (2)
   "#2b2b0b", "#7a7a1f",
-
-  // Pomarańcz/brąz (2)
   "#2b1b0b", "#a35a1a",
-
-  // Bordo/fiolet (2)
   "#2b0b1b", "#6a1b3a"
 ];
 
-  const COLOR_NAMES = {
-  // Czarne / szarości
+const COLOR_NAMES = {
   "#000000": "Czarny",
   "#1a1a1a": "Grafit",
-
-  // Granat
   "#0b1b2b": "Granat",
   "#123a5a": "Granat jasny",
-
-  // Niebieski
   "#0b2b5a": "Niebieski",
   "#1a4fa3": "Niebieski jasny",
-
-  // Turkus
   "#0b2b2b": "Turkus",
   "#118a8a": "Turkus jasny",
-
-  // Zieleń
   "#0b2b1b": "Zieleń",
   "#1f7a3a": "Zieleń jasna",
-
-  // Oliwka
   "#2b2b0b": "Oliwka",
   "#7a7a1f": "Oliwka jasna",
-
-  // Pomarańcz/brąz
   "#2b1b0b": "Brąz",
   "#a35a1a": "Pomarańcz",
-
-  // Bordo/fiolet
   "#2b0b1b": "Bordo",
   "#6a1b3a": "Fiolet"
 };
 
-
- function clubNameEditStart() {
+/* ---------- Panel 1: Nazwa ---------- */
+function clubNameEditStart() {
   const btn = document.getElementById("btnClubName");
   const span = document.getElementById("clubNameText");
   const input = document.getElementById("clubNameInput");
   if (!btn || !span || !input) return;
 
-  // pokaż input w klawiszu
   span.classList.add("hidden");
   input.classList.remove("hidden");
   input.value = cfgDraft.clubName || "";
   input.focus();
   input.select();
 
-  // podpinamy handlery tylko raz
   if (input.dataset.bound === "1") return;
   input.dataset.bound = "1";
 
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      clubNameEditCommit();
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      clubNameEditCancel();
-    }
+    if (e.key === "Enter") { e.preventDefault(); clubNameEditCommit(); }
+    if (e.key === "Escape") { e.preventDefault(); clubNameEditCancel(); }
   });
 
-  input.addEventListener("blur", () => {
-    clubNameEditCommit();
-  });
+  input.addEventListener("blur", () => clubNameEditCommit());
 }
 
 function clubNameEditCommit() {
@@ -951,11 +922,8 @@ function clubNameEditCommit() {
   const v = String(input.value || "").trim();
   cfgDraft.clubName = v;
 
-  // wróć do trybu "klawisz"
   input.classList.add("hidden");
   span.classList.remove("hidden");
-
-  // tekst w klawiszu
   span.textContent = v ? v : "Podaj nazwę klubu";
 }
 
@@ -969,77 +937,7 @@ function clubNameEditCancel() {
   span.textContent = cfgDraft.clubName ? cfgDraft.clubName : "Podaj nazwę klubu";
 }
 
-function seasonStartPick() {
-  const span = document.getElementById("seasonStartText");
-  const input = document.getElementById("seasonStartInput");
-  if (!span || !input) return;
-
-  // pokaż input (kalendarz) w klawiszu
-  span.classList.add("hidden");
-  input.classList.remove("hidden");
-
-  // ustaw aktualną wartość jeśli jest
-  input.value = cfgDraft.sezonStart ? String(cfgDraft.sezonStart).slice(0, 10) : "";
-
-  // otwórz picker (jeśli przeglądarka pozwala)
-  try { input.showPicker && input.showPicker(); } catch (e) {}
-
-  if (input.dataset.bound === "1") return;
-  input.dataset.bound = "1";
-
-  input.addEventListener("change", () => {
-    const v = String(input.value || "").trim(); // YYYY-MM-DD
-    cfgDraft.sezonStart = v; // trzymamy pełną datę
-
-    // wróć do klawisza z datą
-    input.classList.add("hidden");
-    span.classList.remove("hidden");
-    span.textContent = v ? v : "Początek sezonu";
-  });
-
-  input.addEventListener("blur", () => {
-    // jak user wyjdzie bez wyboru, wróć do trybu klawisza
-    input.classList.add("hidden");
-    span.classList.remove("hidden");
-    span.textContent = cfgDraft.sezonStart ? cfgDraft.sezonStart : "Początek sezonu";
-  });
-}
-
-  function seasonEndPick() {
-  const span = document.getElementById("seasonEndText");
-  const input = document.getElementById("seasonEndInput");
-  if (!span || !input) return;
-
-  // pokaż input (kalendarz) w klawiszu
-  span.classList.add("hidden");
-  input.classList.remove("hidden");
-
-  // ustaw aktualną wartość jeśli jest
-  input.value = cfgDraft.sezonEnd ? String(cfgDraft.sezonEnd).slice(0, 10) : "";
-
-  // otwórz picker (jeśli przeglądarka pozwala)
-  try { input.showPicker && input.showPicker(); } catch (e) {}
-
-  if (input.dataset.bound === "1") return;
-  input.dataset.bound = "1";
-
-  input.addEventListener("change", () => {
-    const v = String(input.value || "").trim(); // YYYY-MM-DD
-    cfgDraft.sezonEnd = v;
-
-    // wróć do klawisza z datą
-    input.classList.add("hidden");
-    span.classList.remove("hidden");
-    span.textContent = v ? v : "Koniec sezonu";
-  });
-
-  input.addEventListener("blur", () => {
-    input.classList.add("hidden");
-    span.classList.remove("hidden");
-    span.textContent = cfgDraft.sezonEnd ? cfgDraft.sezonEnd : "Koniec sezonu";
-  });
-}
-
+/* ---------- Panel 1: Email ---------- */
 function emailEditStart() {
   const span = document.getElementById("emailText");
   const input = document.getElementById("emailInput");
@@ -1055,19 +953,11 @@ function emailEditStart() {
   input.dataset.bound = "1";
 
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      emailEditCommit();
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      emailEditCancel();
-    }
+    if (e.key === "Enter") { e.preventDefault(); emailEditCommit(); }
+    if (e.key === "Escape") { e.preventDefault(); emailEditCancel(); }
   });
 
-  input.addEventListener("blur", () => {
-    emailEditCommit();
-  });
+  input.addEventListener("blur", () => emailEditCommit());
 }
 
 function emailEditCommit() {
@@ -1092,66 +982,8 @@ function emailEditCancel() {
   span.classList.remove("hidden");
   span.textContent = cfgDraft.email ? cfgDraft.email : "Twój email";
 }
-  
-function renderConfigUI_() {
-  const nameEl = document.getElementById("cfgClubNameLabel");
-  const ssEl = document.getElementById("cfgSeasonStartLabel");
-  const seEl = document.getElementById("cfgSeasonEndLabel");
-  const emEl = document.getElementById("cfgEmailLabel");
-  const colEl = document.getElementById("cfgColorLabel");
-  const prev = document.getElementById("cfgLogoPreview");
-  const grid = document.getElementById("cfgColorGrid");
 
-  // POD PRZYCISKAMI ZAWSZE PUSTO
-  if (nameEl) nameEl.textContent = "";
-  if (ssEl) ssEl.textContent = "";
-  if (seEl) seEl.textContent = "";
-  if (emEl) emEl.textContent = "";
-  if (colEl) colEl.textContent = "";
-
-  // LOGO – bez zmian
-  if (prev) {
-    if (cfgDraft.logoDataUrl) {
-      prev.src = cfgDraft.logoDataUrl;
-      prev.style.display = "inline-block";
-    } else {
-      prev.style.display = "none";
-    }
-  }
-
-  // SIATKA KOLORÓW – bez opisu tekstowego
-  if (grid) {
-    grid.innerHTML = COLOR_PRESETS.map(c => `
-      <div onclick="setBgColor('${c}')" style="
-        width:100%;
-        aspect-ratio:1/1;
-        border-radius:10px;
-        border:1px solid #444;
-        background:${c};
-        cursor:pointer;">
-      </div>
-    `).join("");
-  }
-}
-
-function goToConfig() {
-  // jeśli klub już skonfigurowany i config zablokowany – nie pokazuj panelu
-  if (clubId && isCfgLocked_()) {
-    goToView("loginView");
-    return;
-  }
-
-  const saved = loadLocalClubConfig();
-  if (saved) cfgDraft = { ...cfgDraft, ...saved };
-
-  renderConfigUI_();
-  goToView("clubConfigView");
-}
-
-function goBackFromConfig() {
-  goToView(clubId ? "loginView" : "orgHubLandingView");
-}
-
+/* ---------- Panel 1: Kolory ---------- */
 function toggleColorPicker(show) {
   const grid = document.getElementById("cfgColorGrid");
   if (!grid) return;
@@ -1175,10 +1007,10 @@ function setBgColor(color) {
     btn.classList.add("alt");
   }
 
-  // opcjonalnie: schowaj siatkę po wyborze
   toggleColorPicker(false);
 }
 
+/* ---------- Panel 1: Logo ---------- */
 function pickLogo() {
   const input = document.getElementById("cfgLogoInput");
   if (!input) return;
@@ -1187,14 +1019,16 @@ function pickLogo() {
     const file = input.files && input.files[0];
     if (!file) return;
 
+    const msg = document.getElementById("cfgMsg");
+
     if (file.size > 2 * 1024 * 1024) {
-      const msg = document.getElementById("cfgMsg");
       if (msg) msg.textContent = "❌ Logo za duże (max ~2MB).";
       return;
     }
 
     cfgDraft.logoDataUrl = await fileToDataUrl_(file);
     renderConfigUI_();
+    if (msg) msg.textContent = "";
   };
 
   input.click();
@@ -1209,16 +1043,88 @@ function fileToDataUrl_(file) {
   });
 }
 
+/* ---------- Render Panel 1 ---------- */
+function renderConfigUI_() {
+  const nameEl = document.getElementById("cfgClubNameLabel");
+  const emEl = document.getElementById("cfgEmailLabel");
+  const colEl = document.getElementById("cfgColorLabel");
+  const prev = document.getElementById("cfgLogoPreview");
+  const grid = document.getElementById("cfgColorGrid");
+
+  // POD PRZYCISKAMI ZAWSZE PUSTO
+  if (nameEl) nameEl.textContent = "";
+  if (emEl) emEl.textContent = "";
+  if (colEl) colEl.textContent = "";
+
+  // LOGO
+  if (prev) {
+    if (cfgDraft.logoDataUrl) {
+      prev.src = cfgDraft.logoDataUrl;
+      prev.style.display = "inline-block";
+    } else {
+      prev.style.display = "none";
+    }
+  }
+
+  // SIATKA KOLORÓW
+  if (grid) {
+    grid.innerHTML = COLOR_PRESETS.map(c => `
+      <div onclick="setBgColor('${c}')" style="
+        width:100%;
+        aspect-ratio:1/1;
+        border-radius:10px;
+        border:1px solid #444;
+        background:${c};
+        cursor:pointer;">
+      </div>
+    `).join("");
+  }
+
+  // Nazwa na przycisku
+  const cn = document.getElementById("clubNameText");
+  if (cn) cn.textContent = cfgDraft.clubName ? cfgDraft.clubName : "Podaj nazwę klubu";
+
+  // Email na przycisku
+  const em = document.getElementById("emailText");
+  if (em) em.textContent = cfgDraft.email ? cfgDraft.email : "Twój email";
+
+  // Kolor na przycisku
+  const btn = document.querySelector("#clubConfigView button[onclick*='toggleColorPicker']");
+  if (btn) {
+    const name = (COLOR_NAMES && COLOR_NAMES[cfgDraft.bgColor]) ? COLOR_NAMES[cfgDraft.bgColor] : "Wybierz kolor tła";
+    btn.textContent = name;
+    btn.classList.add("alt");
+  }
+}
+
+/* ---------- Wejście/Wyjście ---------- */
+function goToConfig() {
+  // jeśli klub już skonfigurowany i config zablokowany – nie pokazuj panelu
+  if (clubId && isCfgLocked_()) {
+    goToView("loginView");
+    return;
+  }
+
+  const saved = loadLocalClubConfig();
+  if (saved) {
+    cfgDraft = { ...cfgDraft, ...saved };
+  }
+
+  renderConfigUI_();
+  goToView("clubConfigView");
+}
+
+function goBackFromConfig() {
+  goToView(clubId ? "loginView" : "orgHubLandingView");
+}
 
 /* =================== 61 WYSŁANIE KONFIGURACJI -> CREATECLUB =================== */
+
 function validateCfg_() {
   if (!cfgDraft.logoDataUrl) return "Wgraj logo.";
   if (!cfgDraft.clubName) return "Podaj nazwę klubu.";
-  if (!cfgDraft.sezonStart) return "Podaj początek sezonu.";
-  if (!cfgDraft.sezonEnd) return "Podaj koniec sezonu.";
   if (!cfgDraft.bgColor) return "Wybierz kolor tła.";
   if (!cfgDraft.email) return "Podaj email admina.";
-  if (cfgDraft.sezonStart > cfgDraft.sezonEnd) return "Początek sezonu nie może być po końcu sezonu.";
   return "";
 }
 
@@ -1232,17 +1138,18 @@ async function submitClubConfig() {
     return;
   }
 
-  // zapis roboczy lokalnie (żeby nie zginęło po odświeżeniu)
+  // zapis roboczy lokalnie
   saveLocalClubConfig({ ...cfgDraft });
 
-  showBusy("Tworzę pliki klubu i konfigurację sezonu…");
+  showBusy("Konfiguruję klub…");
 
   try {
     const r = await apiCorePost({
       action: "createClub",
       clubName: cfgDraft.clubName,
-      sezonStart: cfgDraft.sezonStart,
-      sezonEnd: cfgDraft.sezonEnd,
+      // sezonStart/end przeniesione do Panelu 2 -> na tym etapie nie wysyłamy
+      sezonStart: "",
+      sezonEnd: "",
       bgColor: cfgDraft.bgColor,
       ownerEmail: cfgDraft.email,
       logoBase64: cfgDraft.logoDataUrl
@@ -1260,16 +1167,16 @@ async function submitClubConfig() {
       return;
     }
 
-// ustaw clubId
-saveClubId_(r.clubId);
+    // ustaw clubId
+    saveClubId_(r.clubId);
 
-// zablokuj panel konfiguracyjny na tym urządzeniu
-lockCfg_();
+    // zablokuj panel konfiguracyjny na tym urządzeniu
+    lockCfg_();
 
     // theme
     const theme = {
       bgColor: r.bgColor || cfgDraft.bgColor,
-      logoUrl: r.logoUrl || cfgDraft.logoDataUrl, // jeśli CORE nie hostuje jeszcze logo, użyj dataUrl
+      logoUrl: r.logoUrl || cfgDraft.logoDataUrl,
       clubName: r.clubName || cfgDraft.clubName
     };
     saveTheme_(theme);
@@ -1278,24 +1185,134 @@ lockCfg_();
     // utrwal config (z clubId)
     saveLocalClubConfig({ ...cfgDraft, clubId: r.clubId });
 
-hideBusy();
+    hideBusy();
 
-goToConfig2();
-refreshClubBadge_();    
+    refreshClubBadge_();
+    goToConfig2(); // -> Panel 2
 
-    } catch (e) {
+  } catch (e) {
     hideBusy();
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
   }
 }
 
 function goToConfig2() {
+  // reset Panelu 2 przy wejściu
+  setupDraft = {
+    sezonStart: "",
+    sezonEnd: "",
+    months: [],
+    fees: {},
+    singleTrainingPrice: ""
+  };
+  renderSetupUI_();
   goToView("clubSetupView");
 }
 
-// możesz od razu dodać też funkcję powrotu (opcjonalnie, ale warto)
 function goBackFromSetup() {
   goToView("clubConfigView");
+}
+
+/* =================== 62 PANEL 2: SEZON + (PÓŹNIEJ) PŁATNOŚCI =================== */
+
+function renderSetupUI_() {
+  const ssLabel = document.getElementById("setupSeasonStartLabel");
+  const seLabel = document.getElementById("setupSeasonEndLabel");
+  const msg = document.getElementById("setupMsg");
+  const btnPay = document.getElementById("btnSetupPayments");
+  const btnSubmit = document.getElementById("btnSetupSubmit");
+
+  if (ssLabel) ssLabel.textContent = "";
+  if (seLabel) seLabel.textContent = "";
+  if (msg) msg.textContent = "";
+
+  const ssText = document.getElementById("setupSeasonStartText");
+  const seText = document.getElementById("setupSeasonEndText");
+  if (ssText) ssText.textContent = setupDraft.sezonStart ? setupDraft.sezonStart : "Początek sezonu";
+  if (seText) seText.textContent = setupDraft.sezonEnd ? setupDraft.sezonEnd : "Koniec sezonu";
+
+  const ready = !!setupDraft.sezonStart && !!setupDraft.sezonEnd && (setupDraft.sezonStart <= setupDraft.sezonEnd);
+  if (btnPay) {
+    btnPay.disabled = !ready;
+    btnPay.textContent = ready ? "Płatności" : "Płatności (jeszcze nieaktywne)";
+  }
+  if (btnSubmit) {
+    btnSubmit.disabled = !ready; // na razie odblokuj tylko po sezonie
+  }
+}
+
+function setupSeasonStartPick() {
+  const span = document.getElementById("setupSeasonStartText");
+  const input = document.getElementById("setupSeasonStartInput");
+  if (!span || !input) return;
+
+  span.classList.add("hidden");
+  input.classList.remove("hidden");
+  input.value = setupDraft.sezonStart ? String(setupDraft.sezonStart).slice(0, 10) : "";
+
+  try { input.showPicker && input.showPicker(); } catch (e) {}
+
+  if (input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+
+  input.addEventListener("change", () => {
+    const v = String(input.value || "").trim();
+    setupDraft.sezonStart = v;
+
+    input.classList.add("hidden");
+    span.classList.remove("hidden");
+    span.textContent = v ? v : "Początek sezonu";
+
+    // po zmianie sezonu czyścimy miesiące/płatności (żeby nie zostały stare)
+    setupDraft.months = [];
+    setupDraft.fees = {};
+    setupDraft.singleTrainingPrice = "";
+
+    renderSetupUI_();
+  });
+
+  input.addEventListener("blur", () => {
+    input.classList.add("hidden");
+    span.classList.remove("hidden");
+    span.textContent = setupDraft.sezonStart ? setupDraft.sezonStart : "Początek sezonu";
+  });
+}
+
+function setupSeasonEndPick() {
+  const span = document.getElementById("setupSeasonEndText");
+  const input = document.getElementById("setupSeasonEndInput");
+  if (!span || !input) return;
+
+  span.classList.add("hidden");
+  input.classList.remove("hidden");
+  input.value = setupDraft.sezonEnd ? String(setupDraft.sezonEnd).slice(0, 10) : "";
+
+  try { input.showPicker && input.showPicker(); } catch (e) {}
+
+  if (input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+
+  input.addEventListener("change", () => {
+    const v = String(input.value || "").trim();
+    setupDraft.sezonEnd = v;
+
+    input.classList.add("hidden");
+    span.classList.remove("hidden");
+    span.textContent = v ? v : "Koniec sezonu";
+
+    // po zmianie sezonu czyścimy miesiące/płatności
+    setupDraft.months = [];
+    setupDraft.fees = {};
+    setupDraft.singleTrainingPrice = "";
+
+    renderSetupUI_();
+  });
+
+  input.addEventListener("blur", () => {
+    input.classList.add("hidden");
+    span.classList.remove("hidden");
+    span.textContent = setupDraft.sezonEnd ? setupDraft.sezonEnd : "Koniec sezonu";
+  });
 }
     
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
