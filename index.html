@@ -692,18 +692,10 @@ function ukryjWszystkie() {
 
 function goToView(viewId, options = {}) {
   const { replace = false } = options;
-
-  // NAJPIERW znajdź i pokaż docelowy widok
-  const el = document.getElementById(viewId);
-  if (el) {
-    el.classList.remove("hidden");
-  }
-
-  // DOPIERO POTEM ukryj wszystkie pozostałe
   ukryjWszystkie();
-
+  const el = document.getElementById(viewId);
+  if (el) el.classList.remove("hidden");
   currentView = viewId;
-
   const state = { view: viewId };
   try {
     if (replace) history.replaceState(state, "", "");
