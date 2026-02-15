@@ -540,7 +540,7 @@
     </div>
 
     <div style="margin-top:10px;">
-     <button class="full-btn" id="btnEditSave" onclick="zapiszEdycjeWydarzenia()">💾 Zapisz zmiany</button>
+     <button class="full-btn" id="btnEditSave">💾 Zapisz zmiany</button>
       <button class="full-btn alt" onclick="trainerHideEditPopup()">Anuluj</button>
     </div>
 
@@ -1987,15 +1987,6 @@ async function wyslijNoweWydarzenie() {
 }
 
  // ===== EDYCJA WYDARZENIA =====
-
-  function trainerHideEditPopup() {
-  const el = document.getElementById("trainerEditPopup");
-  if (el) el.style.display = "none";
-}
- 
-/* --- usuwanie wydarzenia --- */
-let deleteMiesiac = null;
-let deleteCzasCol = null;
 
 function trainerShowDeletePopup(miesiac, czasCol) {
   deleteMiesiac = miesiac;
