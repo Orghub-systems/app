@@ -326,8 +326,34 @@
 
     <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
   </div>
-</div>
+  <!-- POPUP PŁATNOŚCI -->
+<div id="paymentsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4000; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:800; font-size:16px; margin-bottom:10px;">Ustal płatności</div>
 
+    <div id="paymentsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+    <div style="height:1px;background:#333;margin:14px 0;"></div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <div style="font-weight:700;">Cena za pojedynczy trening</div>
+      <input id="singleTrainingPriceInput" type="number" inputmode="decimal" min="0" step="0.01"
+             placeholder="np. 30"
+             style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="closePaymentsPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="applyPaymentsPopup()">Zapisz</button>
+    </div>
+
+    <p id="paymentsMsg" style="margin-top:12px; min-height:1.2em;"></p>
+  </div>
+</div>
 
     <!-- LOGOWANIE -->
     <div id="loginView" class="container hidden">
@@ -1237,6 +1263,137 @@ function goBackFromSetup() {
   goToView("clubConfigView");
 }
 
+// =================== PANEL 2: PŁATNOŚCI (POPUP) ===================
+
+// helper: PL miesiące
+const MONTHS_PL = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
+
+// start/end: "YYYY-MM-DD" -> lista miesięcy inclusive
+function buildSeasonMonths_(startISO, endISO) {
+  const s = new Date(startISO);
+  const e = new Date(endISO);
+  if (isNaN(s) || isNaN(e)) return [];
+
+  // ustaw na 1 dzień miesiąca
+  const cur = new Date(s.getFullYear(), s.getMonth(), 1);
+  const end = new Date(e.getFullYear(), e.getMonth(), 1);
+
+  const out = [];
+  while (cur <= end) {
+    const y = cur.getFullYear();
+    const m = cur.getMonth(); // 0..11
+    const key = `${y}-${String(m+1).padStart(2,"0")}`;  // np. 2026-08
+    const label = `${MONTHS_PL[m]} ${y}`;              // np. Sierpień 2026
+    out.push({ key, label, year: y, monthIndex: m });
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return out;
+}
+
+function openPaymentsPopup() {
+  const msg = document.getElementById("setupMsg");
+  if (msg) msg.textContent = "";
+
+  const s = String(setupDraft?.sezonStart || "").trim();
+  const e = String(setupDraft?.sezonEnd || "").trim();
+  if (!s || !e || s > e) {
+    if (msg) msg.textContent = "Ustaw poprawnie daty sezonu, żeby wejść w płatności.";
+    return;
+  }
+
+  // wygeneruj miesiące tylko raz / albo przy każdej zmianie dat
+  setupDraft.months = buildSeasonMonths_(s, e);
+
+  renderPaymentsPopup_();
+
+  const pop = document.getElementById("paymentsPopup");
+  if (pop) pop.classList.remove("hidden");
+}
+
+function closePaymentsPopup() {
+  const pop = document.getElementById("paymentsPopup");
+  if (pop) pop.classList.add("hidden");
+
+  const m = document.getElementById("paymentsMsg");
+  if (m) m.textContent = "";
+}
+
+function renderPaymentsPopup_() {
+  const list = document.getElementById("paymentsList");
+  const pmsg = document.getElementById("paymentsMsg");
+  if (pmsg) pmsg.textContent = "";
+
+  const months = setupDraft.months || [];
+  if (!list) return;
+
+  list.innerHTML = months.map(m => {
+    const val = (setupDraft.fees && setupDraft.fees[m.key] != null) ? setupDraft.fees[m.key] : "";
+    return `
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-weight:700;">${m.label}</div>
+        <input data-monthkey="${m.key}" type="number" inputmode="decimal" min="0" step="0.01"
+               placeholder="Kwota składki (np. 200)"
+               value="${String(val).replace(/"/g,'&quot;')}"
+               style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+      </div>
+    `;
+  }).join("");
+
+  // wstaw cenę treningu
+  const single = document.getElementById("singleTrainingPriceInput");
+  if (single) single.value = setupDraft.singleTrainingPrice || "";
+}
+
+function applyPaymentsPopup() {
+  const pmsg = document.getElementById("paymentsMsg");
+  if (pmsg) pmsg.textContent = "";
+
+  const inputs = Array.from(document.querySelectorAll(`#paymentsList input[data-monthkey]`));
+  const fees = {};
+  for (const inp of inputs) {
+    const k = inp.getAttribute("data-monthkey");
+    const raw = String(inp.value || "").trim();
+
+    // dopuszczamy puste (jeśli chcesz wymusić wszystkie, zmienimy)
+    if (raw === "") continue;
+
+    const v = Number(raw.replace(",", "."));
+    if (!isFinite(v) || v < 0) {
+      if (pmsg) pmsg.textContent = "❌ Nieprawidłowa kwota w jednym z miesięcy.";
+      inp.focus();
+      return;
+    }
+    fees[k] = v;
+  }
+
+  const singleInp = document.getElementById("singleTrainingPriceInput");
+  const singleRaw = String(singleInp?.value || "").trim();
+  if (singleRaw !== "") {
+    const v = Number(singleRaw.replace(",", "."));
+    if (!isFinite(v) || v < 0) {
+      if (pmsg) pmsg.textContent = "❌ Nieprawidłowa cena pojedynczego treningu.";
+      if (singleInp) singleInp.focus();
+      return;
+    }
+    setupDraft.singleTrainingPrice = v;
+  } else {
+    setupDraft.singleTrainingPrice = "";
+  }
+
+  setupDraft.fees = fees;
+
+  // ✅ UI: oznacz że płatności uzupełnione i odblokuj submit
+  const btnPay = document.getElementById("btnSetupPayments");
+  if (btnPay) btnPay.textContent = "Płatności ✅";
+
+  const btnSubmit = document.getElementById("btnSetupSubmit");
+  if (btnSubmit) btnSubmit.disabled = false;
+
+  closePaymentsPopup();
+  const smsg = document.getElementById("setupMsg");
+  if (smsg) smsg.textContent = "✅ Płatności zapisane. Możesz kliknąć „Wyślij i aktywuj klub”.";
+}
+  
 /* =================== 62 PANEL 2: SEZON -> AKTYWACJA PŁATNOŚCI =================== */
 function setupSeasonStartPick() {
   const span = document.getElementById("setupSeasonStartText");
@@ -1315,6 +1472,9 @@ function updateSetupPaymentsState_() {
   const okOrder = okBoth && (s <= e);
 
   const enablePayments = okOrder;
+  if (okOrder) {
+  setupDraft.months = buildSeasonMonths_(s, e);
+}
 
   if (btnPay) {
     btnPay.disabled = !enablePayments;
