@@ -1280,44 +1280,22 @@ lockCfg_();
 
 hideBusy();
 
-const base = window.location.origin + window.location.pathname.replace(/index\.html$/i, "");
-const clubLink = `${base}?clubId=${encodeURIComponent(String(r.clubId || "").trim())}`;
-
-if (msg) {
-  msg.innerHTML = `
-    ✅ <b>Klub utworzony.</b><br><br>
-
-    <div class="card" style="text-align:left; word-break:break-all;">
-      <div style="opacity:.75; font-size:13px; margin-bottom:6px;">Link do Twojego klubu:</div>
-      <div style="font-size:13px; line-height:1.35;">${clubLink}</div>
-    </div>
-
-    <button class="full-btn" id="btnCopyClubLink">📋 Kopiuj link</button>
-    <button class="full-btn alt" id="btnGoClubLink">➡️ Otwórz klub</button>
-  `;
-
-  const btnCopy = document.getElementById("btnCopyClubLink");
-  if (btnCopy) btnCopy.onclick = async () => {
-    let ok = false;
-    try { await navigator.clipboard.writeText(clubLink); ok = true; } catch (e) {}
-    btnCopy.textContent = ok ? "✅ Skopiowano" : "❌ Nie udało się skopiować";
-    setTimeout(() => (btnCopy.textContent = "📋 Kopiuj link"), 1500);
-  };
-
-  const btnGo = document.getElementById("btnGoClubLink");
-  if (btnGo) btnGo.onclick = () => (window.location.href = clubLink);
+function goToConfig2() {
+  // Opcjonalnie: można tu wczytać cfgDraft jeśli potrzeba, ale na razie nie
+  goToView("clubSetupView");
+}
+    
+function goBackFromSetup() {
+  // Na razie wracamy do Panelu 1 – później możemy zmienić na landing lub blokadę
+  goToView("clubConfigView");
 }
 
-// ❌ NIE przechodzimy automatycznie do loginView, bo chcemy pokazać link
-refreshClubBadge_();
-
-
-  } catch (e) {
+    } catch (e) {
     hideBusy();
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
   }
 }
-
+    
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
   numerZalogowanego = null;
