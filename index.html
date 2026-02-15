@@ -1280,20 +1280,22 @@ lockCfg_();
 
 hideBusy();
 
-function goToConfig2() {
-  // Opcjonalnie: można tu wczytać cfgDraft jeśli potrzeba, ale na razie nie
-  goToView("clubSetupView");
-}
-    
-function goBackFromSetup() {
-  // Na razie wracamy do Panelu 1 – później możemy zmienić na landing lub blokadę
-  goToView("clubConfigView");
-}
+goToConfig2();
+refreshClubBadge_();    
 
     } catch (e) {
     hideBusy();
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
   }
+}
+
+function goToConfig2() {
+  goToView("clubSetupView");
+}
+
+// możesz od razu dodać też funkcję powrotu (opcjonalnie, ale warto)
+function goBackFromSetup() {
+  goToView("clubConfigView");
 }
     
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
