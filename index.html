@@ -2022,9 +2022,6 @@ async function trainerConfirmDeleteYes() {
 let editMiesiac = null;
 let editCol5 = null;
 
-// otwarcie popupu + wypełnienie pól
-// otwarcie popupu + wypełnienie pól + dociągnięcie trenerów i grup
-  
 // otwarcie popupu + wypełnienie pól + dociągnięcie trenerów i grup (bez psucia startu apki)
 async function trainerShowEditPopup(miesiac, col5) {
   editMiesiac = String(miesiac || "");
@@ -2207,21 +2204,19 @@ async function trainerSaveEditEvent() {
 if (r && (r.success || r.ok)) {
   if (msg) msg.textContent = "✅ Zapisano. Odświeżam listę…";
 
-  // ODŚWIEŻANIE NIE MOŻE WYWOŁAĆ "BŁĘDU ZAPISU"
   try {
-    await trainerPokazWydarzenia();   // albo to, co realnie u Ciebie odświeża listę
-    setTimeout(trainerHideEditPopup, 300);
-    if (msg) msg.textContent = "";
+    await trainerPokazWydarzenia();     // odśwież listę
+    setTimeout(trainerHideEditPopup, 300); // zamknij popup po krótkiej chwili
   } catch (refreshErr) {
     console.error("Refresh after save failed:", refreshErr);
     if (msg) msg.textContent = "✅ Zapisano, ale nie udało się odświeżyć listy.";
-    // popup zostaje otwarty, żeby user widział, że zapis był OK
+    // popup zostaje otwarty — i dobrze
   }
 
+  return;
 } else {
   if (msg) msg.textContent = "❌ Nie udało się zapisać zmian: " + (r?.error || r?.message || "");
 }
-
 
   } catch (err) {
     console.error(err);
@@ -2230,7 +2225,6 @@ if (r && (r.success || r.ok)) {
     if (btn) { btn.classList.remove("loading"); btn.disabled = false; }
   }
 }
-
 
 /* =================== 99 START APLIKACJI =================== */
 window.addEventListener('load', () => {
