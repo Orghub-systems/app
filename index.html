@@ -1197,7 +1197,6 @@ async function submitClubConfig() {
 }
 
 function goToConfig2() {
-  // reset Panelu 2 przy wejściu
   setupDraft = {
     sezonStart: "",
     sezonEnd: "",
@@ -1207,39 +1206,14 @@ function goToConfig2() {
   };
   renderSetupUI_();
   goToView("clubSetupView");
+  updateSetupPaymentsState_();
 }
 
 function goBackFromSetup() {
   goToView("clubConfigView");
 }
 
-/* =================== 62 PANEL 2: SEZON + (PÓŹNIEJ) PŁATNOŚCI =================== */
-
-function renderSetupUI_() {
-  const ssLabel = document.getElementById("setupSeasonStartLabel");
-  const seLabel = document.getElementById("setupSeasonEndLabel");
-  const msg = document.getElementById("setupMsg");
-  const btnPay = document.getElementById("btnSetupPayments");
-  const btnSubmit = document.getElementById("btnSetupSubmit");
-
-  if (ssLabel) ssLabel.textContent = "";
-  if (seLabel) seLabel.textContent = "";
-  if (msg) msg.textContent = "";
-
-  const ssText = document.getElementById("setupSeasonStartText");
-  const seText = document.getElementById("setupSeasonEndText");
-  if (ssText) ssText.textContent = setupDraft.sezonStart ? setupDraft.sezonStart : "Początek sezonu";
-  if (seText) seText.textContent = setupDraft.sezonEnd ? setupDraft.sezonEnd : "Koniec sezonu";
-
-  const ready = !!setupDraft.sezonStart && !!setupDraft.sezonEnd && (setupDraft.sezonStart <= setupDraft.sezonEnd);
-  if (btnPay) {
-    btnPay.disabled = !ready;
-    btnPay.textContent = ready ? "Płatności" : "Płatności (jeszcze nieaktywne)";
-  }
-  if (btnSubmit) {
-    btnSubmit.disabled = !ready; // na razie odblokuj tylko po sezonie
-  }
-}
+/* =================== 62 PANEL 2: SEZON -> AKTYWACJA PŁATNOŚCI =================== */
 
 function setupSeasonStartPick() {
   const span = document.getElementById("setupSeasonStartText");
@@ -1248,33 +1222,31 @@ function setupSeasonStartPick() {
 
   span.classList.add("hidden");
   input.classList.remove("hidden");
-  input.value = setupDraft.sezonStart ? String(setupDraft.sezonStart).slice(0, 10) : "";
+  input.value = cfgDraft.sezonStart ? String(cfgDraft.sezonStart).slice(0, 10) : "";
 
-  try { input.showPicker && input.showPicker(); } catch (e) {}
+  try { input.showPicker && input.showPicker(); } catch(e) {}
 
   if (input.dataset.bound === "1") return;
   input.dataset.bound = "1";
 
   input.addEventListener("change", () => {
     const v = String(input.value || "").trim();
-    setupDraft.sezonStart = v;
+    cfgDraft.sezonStart = v;
 
     input.classList.add("hidden");
     span.classList.remove("hidden");
     span.textContent = v ? v : "Początek sezonu";
 
-    // po zmianie sezonu czyścimy miesiące/płatności (żeby nie zostały stare)
-    setupDraft.months = [];
-    setupDraft.fees = {};
-    setupDraft.singleTrainingPrice = "";
-
-    renderSetupUI_();
+    const lab = document.getElementById("setupSeasonStartLabel");
+    if (lab) lab.textContent = "";
+    updateSetupPaymentsState_();
   });
 
   input.addEventListener("blur", () => {
     input.classList.add("hidden");
     span.classList.remove("hidden");
-    span.textContent = setupDraft.sezonStart ? setupDraft.sezonStart : "Początek sezonu";
+    span.textContent = cfgDraft.sezonStart ? cfgDraft.sezonStart : "Początek sezonu";
+    updateSetupPaymentsState_();
   });
 }
 
@@ -1285,36 +1257,66 @@ function setupSeasonEndPick() {
 
   span.classList.add("hidden");
   input.classList.remove("hidden");
-  input.value = setupDraft.sezonEnd ? String(setupDraft.sezonEnd).slice(0, 10) : "";
+  input.value = cfgDraft.sezonEnd ? String(cfgDraft.sezonEnd).slice(0, 10) : "";
 
-  try { input.showPicker && input.showPicker(); } catch (e) {}
+  try { input.showPicker && input.showPicker(); } catch(e) {}
 
   if (input.dataset.bound === "1") return;
   input.dataset.bound = "1";
 
   input.addEventListener("change", () => {
     const v = String(input.value || "").trim();
-    setupDraft.sezonEnd = v;
+    cfgDraft.sezonEnd = v;
 
     input.classList.add("hidden");
     span.classList.remove("hidden");
     span.textContent = v ? v : "Koniec sezonu";
 
-    // po zmianie sezonu czyścimy miesiące/płatności
-    setupDraft.months = [];
-    setupDraft.fees = {};
-    setupDraft.singleTrainingPrice = "";
-
-    renderSetupUI_();
+    const lab = document.getElementById("setupSeasonEndLabel");
+    if (lab) lab.textContent = "";
+    updateSetupPaymentsState_();
   });
 
   input.addEventListener("blur", () => {
     input.classList.add("hidden");
     span.classList.remove("hidden");
-    span.textContent = setupDraft.sezonEnd ? setupDraft.sezonEnd : "Koniec sezonu";
+    span.textContent = cfgDraft.sezonEnd ? cfgDraft.sezonEnd : "Koniec sezonu";
+    updateSetupPaymentsState_();
   });
 }
-    
+
+function updateSetupPaymentsState_() {
+  const btnPay = document.getElementById("btnSetupPayments");
+  const btnSubmit = document.getElementById("btnSetupSubmit");
+  const msg = document.getElementById("setupMsg");
+
+  const s = String(cfgDraft.sezonStart || "").trim();
+  const e = String(cfgDraft.sezonEnd || "").trim();
+
+  const okBoth = !!s && !!e;
+  const okOrder = okBoth && (s <= e);
+
+  // Płatności: aktywne dopiero gdy obie daty i poprawna kolejność
+  const enablePayments = okOrder;
+
+  if (btnPay) {
+    btnPay.disabled = !enablePayments;
+    btnPay.textContent = enablePayments ? "Płatności" : "Płatności (ustaw daty sezonu)";
+  }
+
+  // Na tym etapie zostawiamy "Wyślij i aktywuj klub" nadal disabled,
+  // bo odblokujemy go dopiero po zapisaniu płatności w popupie.
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+  }
+
+  if (msg) {
+    if (!okBoth) msg.textContent = "Ustaw początek i koniec sezonu, żeby odblokować płatności.";
+    else if (!okOrder) msg.textContent = "❌ Koniec sezonu nie może być przed początkiem.";
+    else msg.textContent = ""; // wszystko OK
+  }
+}
+
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
   numerZalogowanego = null;
