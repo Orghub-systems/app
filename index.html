@@ -1192,43 +1192,6 @@ function fileToDataUrl_(file) {
   });
 }
 
-// Tymczasowo jeszcze używamy promptów. Ty chcesz inline-input w przycisku — zrobimy w kolejnym kroku.
-function editClubName() {
-  const v = prompt("Podaj nazwę klubu:", cfgDraft.clubName || "");
-  if (v === null) return;
-  cfgDraft.clubName = v.trim();
-  renderConfigUI_();
-}
-function editEmail() {
-  const v = prompt("Podaj email admina:", cfgDraft.email || "");
-  if (v === null) return;
-  cfgDraft.email = v.trim();
-  renderConfigUI_();
-}
-function editSeasonStart() {
-  const v = prompt("Początek sezonu (RRRR-MM), np. 2026-09:", cfgDraft.sezonStart ? cfgDraft.sezonStart.slice(0,7) : "");
-  if (v === null) return;
-  const m = String(v).trim();
-  if (!/^\d{4}-\d{2}$/.test(m)) {
-    const msg = document.getElementById("cfgMsg");
-    if (msg) msg.textContent = "❌ Zły format. Użyj RRRR-MM.";
-    return;
-  }
-  cfgDraft.sezonStart = `${m}-01`;
-  renderConfigUI_();
-}
-function editSeasonEnd() {
-  const v = prompt("Koniec sezonu (RRRR-MM), np. 2027-04:", cfgDraft.sezonEnd ? cfgDraft.sezonEnd.slice(0,7) : "");
-  if (v === null) return;
-  const m = String(v).trim();
-  if (!/^\d{4}-\d{2}$/.test(m)) {
-    const msg = document.getElementById("cfgMsg");
-    if (msg) msg.textContent = "❌ Zły format. Użyj RRRR-MM.";
-    return;
-  }
-  cfgDraft.sezonEnd = `${m}-30`; // backend doprecyzuje
-  renderConfigUI_();
-}
 
 /* =================== 61 WYSŁANIE KONFIGURACJI -> CREATECLUB =================== */
 function validateCfg_() {
