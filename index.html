@@ -258,24 +258,6 @@
 
         <div id="cfgClubNameLabel" style="margin-top:6px;opacity:0.9;"></div>
 
-        <!-- SEZON START -->
-        <button class="full-btn alt" id="btnSeasonStart" onclick="seasonStartPick()">
-        <span id="seasonStartText">Początek sezonu</span>
-        <input id="seasonStartInput" type="date" class="hidden"
-         style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;">
-      </button>
-
-        <div id="cfgSeasonStartLabel" style="margin-top:6px;opacity:0.9;"></div>
-
-        <!-- SEZON END -->
-        <button class="full-btn alt" id="btnSeasonEnd" onclick="seasonEndPick()">
-        <span id="seasonEndText">Koniec sezonu</span>
-        <input id="seasonEndInput" type="date" class="hidden"
-         style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:none;">
-      </button>
-
-        <div id="cfgSeasonEndLabel" style="margin-top:6px;opacity:0.9;"></div>
-
         <!-- KOLOR TŁA -->
         <button class="full-btn alt" onclick="toggleColorPicker(true)">Wybierz kolor tła</button>
         <div id="cfgColorLabel" style="margin-top:6px;opacity:0.9;"></div>
@@ -299,7 +281,42 @@
 
         <p id="cfgMsg" style="margin-top:10px;"></p>
       </div>
-    </div>
+
+      <!-- PANEL 2 - UZUPEŁNIENIE DANYCH KLUBU -->
+<div id="clubSetupView" class="container hidden">
+  <h1>Uzupełnij dane klubu</h1>
+  <div class="card" style="max-width:320px; margin:12px auto; padding:16px;">
+
+    <!-- POCZĄTEK SEZONU -->
+    <button class="full-btn alt" id="btnSetupSeasonStart" onclick="setupSeasonStartPick()">
+      <span id="setupSeasonStartText">Początek sezonu</span>
+      <input id="setupSeasonStartInput" type="date" class="hidden"
+             style="width:100%; box-sizing:border-box; padding:8px; border-radius:6px; border:none;">
+    </button>
+    <div id="setupSeasonStartLabel" style="margin-top:6px; opacity:0.9; min-height:1.2em;"></div>
+
+    <!-- KONIEC SEZONU -->
+    <button class="full-btn alt" id="btnSetupSeasonEnd" onclick="setupSeasonEndPick()">
+      <span id="setupSeasonEndText">Koniec sezonu</span>
+      <input id="setupSeasonEndInput" type="date" class="hidden"
+             style="width:100%; box-sizing:border-box; padding:8px; border-radius:6px; border:none;">
+    </button>
+    <div id="setupSeasonEndLabel" style="margin-top:6px; opacity:0.9; min-height:1.2em;"></div>
+
+    <!-- PRZYCISKI -->
+    <button class="full-btn alt" id="btnSetupPayments" disabled
+            style="margin-top:20px; width:100%;">Płatności (jeszcze nieaktywne)</button>
+
+    <button class="full-btn" id="btnSetupSubmit" disabled
+            style="margin-top:12px; width:100%;">Wyślij i aktywuj klub</button>
+
+    <button class="full-btn alt" onclick="goBackFromSetup()" 
+            style="margin-top:12px; width:100%;">⬅ Powrót</button>
+
+    <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
+  </div>
+</div>
+
 
     <!-- LOGOWANIE -->
     <div id="loginView" class="container hidden">
