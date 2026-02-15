@@ -2204,13 +2204,24 @@ async function trainerSaveEditEvent() {
       grupy: grupyCsv
     });
 
-    if (r && (r.success || r.ok)) {
-      if (msg) msg.textContent = "💾 Zapisano zmiany.";
-      await trainerReloadEventsKeepView();
-      setTimeout(trainerHideEditPopup, 500);
-    } else {
-      if (msg) msg.textContent = "❌ Nie udało się zapisać zmian.";
-    }
+if (r && (r.success || r.ok)) {
+  if (msg) msg.textContent = "✅ Zapisano. Odświeżam listę…";
+
+  // ODŚWIEŻANIE NIE MOŻE WYWOŁAĆ "BŁĘDU ZAPISU"
+  try {
+    await trainerPokazWydarzenia();   // albo to, co realnie u Ciebie odświeża listę
+    setTimeout(trainerHideEditPopup, 300);
+    if (msg) msg.textContent = "";
+  } catch (refreshErr) {
+    console.error("Refresh after save failed:", refreshErr);
+    if (msg) msg.textContent = "✅ Zapisano, ale nie udało się odświeżyć listy.";
+    // popup zostaje otwarty, żeby user widział, że zapis był OK
+  }
+
+} else {
+  if (msg) msg.textContent = "❌ Nie udało się zapisać zmian: " + (r?.error || r?.message || "");
+}
+
 
   } catch (err) {
     console.error(err);
