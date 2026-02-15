@@ -1208,6 +1208,20 @@ function goToConfig2() {
   goToView("clubSetupView");
   updateSetupPaymentsState_();
 }
+  
+  function renderSetupUI_() {
+  // Minimalny renderer: tylko odświeża etykiety na przyciskach panelu 2
+  const s = document.getElementById("setupSeasonStartText");
+  const e = document.getElementById("setupSeasonEndText");
+
+  if (s) s.textContent = setupDraft?.sezonStart ? setupDraft.sezonStart : "Początek sezonu";
+  if (e) e.textContent = setupDraft?.sezonEnd ? setupDraft.sezonEnd : "Koniec sezonu";
+
+  // od razu pilnujemy stanu przycisków
+  if (typeof updateSetupPaymentsState_ === "function") {
+    updateSetupPaymentsState_();
+  }
+}
 
 function goBackFromSetup() {
   goToView("clubConfigView");
