@@ -692,15 +692,9 @@ function ukryjWszystkie() {
 
 function goToView(viewId, options = {}) {
   const { replace = false } = options;
-
+  ukryjWszystkie();
   const el = document.getElementById(viewId);
-  if (el) {
-    // Najpierw pokaż nowy widok (żeby nie został ukryty przez ukryjWszystkie)
-    el.classList.remove("hidden");
-  }
-
-  ukryjWszystkie();  // Teraz ukryj resztę – nowy widok już jest widoczny
-
+  if (el) el.classList.remove("hidden");
   currentView = viewId;
   const state = { view: viewId };
   try {
