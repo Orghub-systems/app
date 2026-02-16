@@ -189,11 +189,11 @@ input[type="number"] {
   </style>
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.WERSJA_APKI = '1.05.10.04';
+  window.APP_BUILD = '1.05.10.04';
 
   const poprzednia = localStorage.getItem('wersjaApki');
-  if (poprzednia !== window.WERSJA_APKI) {
-    localStorage.setItem('wersjaApki', window.WERSJA_APKI);
+  if (poprzednia !== window.APP_BUILD) {
+    localStorage.setItem('wersjaApki', window.APP_BUILD);
     location.reload(); // bez (true) — to już jest przestarzałe
   }
 
@@ -630,7 +630,7 @@ function odtworzIntroSound() {
 }
 
 /* =================== 10 KONFIG / GLOBALNE =================== */
-const WERSJA_APKI = window.WERSJA_APKI || "ORGHUB APP";
+const APP_BUILD = window.APP_BUILD;
 const CORE_URL = "https://still-shape-2aa3.orghubsystems.workers.dev";
 
 // ===== DEBUG: pokaż błąd JS na ekranie (żeby nie stało "w ciszy") =====
@@ -835,6 +835,10 @@ async function apiCorePost(payload = {}) {
   const res = await fetch(CORE_URL, { method: "POST", body });
   return res.json();
 }
+
+window.activateClub_ = async function(payload = {}) {
+  return apiCorePost({ action: "activateClub", ...payload });
+};
 
 // GET/POST do CLUB (wymaga clubId)
 async function apiClubGet(action, params = {}) {
@@ -1548,10 +1552,20 @@ function monthKey_(m) {
     }
 
     // minimalna walidacja: kwoty składek dla miesięcy
+    const feeValues = Array.isArray(fees)
+      ? fees
+      : (fees && typeof fees === "object" ? Object.values(fees) : []);
+    const hasAnyFee = feeValues.some((v) => v !== undefined && v !== null && String(v).trim() !== "");
+    if (!hasAnyFee) {
+      if (msg) msg.textContent = "❌ Brak zdefiniowanej składki.";
+      return;
+    }
+
     for (const m of months) {
-      const v = fees[m];
+      const mKey = monthKey_(m);
+      const v = fees[mKey];
       if (v === undefined || v === null || String(v).trim() === "") {
-        if (msg) msg.textContent = `❌ Brak składki dla: ${m}`;
+        if (msg) msg.textContent = mKey ? `❌ Brak składki dla: ${mKey}` : "❌ Brak zdefiniowanej składki.";
         return;
       }
     }
@@ -1565,8 +1579,7 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
-    const r = await apiCorePost({
-      action: "activateClub",
+    const r = await window.activateClub_({
       clubId,
       sezonStart,
       sezonEnd,
@@ -1596,6 +1609,7 @@ function monthKey_(m) {
     if (btn) { btn.classList.remove("loading"); }
   }
 }
+window.submitSetupAndActivateClub = submitSetupAndActivateClub;
  
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
@@ -2532,7 +2546,12 @@ window.addEventListener('load', () => {
   if (app) app.classList.remove('hidden');
 
   const wersja = document.getElementById("wersjaNum");
-  if (wersja) wersja.textContent = WERSJA_APKI;
+  if (wersja) wersja.textContent = APP_BUILD;
+
+  const setupSubmitBtn = document.getElementById("btnSetupSubmit");
+  if (setupSubmitBtn && !setupSubmitBtn.getAttribute("onclick")) {
+    setupSubmitBtn.addEventListener("click", submitSetupAndActivateClub);
+  }
 
   // START: najpierw ustaw clubId z URL (albo wyczyść na linku głównym)
   initClubFromUrl_();
