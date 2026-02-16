@@ -333,7 +333,8 @@ input[type="number"] {
     </button>
 
     <button class="full-btn" id="btnSetupSubmit" disabled
-            style="margin-top:12px; width:100%;">Wyślij i aktywuj klub</button>
+        style="margin-top:12px; width:100%;"
+        onclick="submitSetupAndActivateClub()">Wyślij i aktywuj klub</button>
 
     <button class="full-btn alt" onclick="goBackFromSetup()" 
             style="margin-top:12px; width:100%;">⬅ Powrót</button>
@@ -1505,6 +1506,85 @@ function updateSetupPaymentsState_() {
   }
 }
 
+ async function submitSetupAndActivateClub() {
+  const msg = document.getElementById("setupMsg");
+  const btn = document.getElementById("btnSetupSubmit");
+  if (msg) msg.textContent = "";
+
+  try {
+    if (!clubId) {
+      if (msg) msg.textContent = "❌ Brak clubId. Wróć do Panelu 1 i utwórz klub.";
+      return;
+    }
+
+    // zakładam, że trzymasz to w setupDraft (tak jak pisałeś)
+    const sezonStart = String(setupDraft?.sezonStart || "").trim();
+    const sezonEnd   = String(setupDraft?.sezonEnd || "").trim();
+
+    if (!sezonStart || !sezonEnd || sezonStart > sezonEnd) {
+      if (msg) msg.textContent = "❌ Ustaw poprawnie początek i koniec sezonu.";
+      return;
+    }
+
+    const months = Array.isArray(setupDraft?.months) ? setupDraft.months : [];
+    const fees = setupDraft?.fees || {};
+    const singleTrainingPrice = String(setupDraft?.singleTrainingPrice || "").trim();
+
+    if (!months.length) {
+      if (msg) msg.textContent = "❌ Brak miesięcy sezonu (sprawdź daty sezonu).";
+      return;
+    }
+
+    // minimalna walidacja: kwoty składek dla miesięcy
+    for (const m of months) {
+      const v = fees[m];
+      if (v === undefined || v === null || String(v).trim() === "") {
+        if (msg) msg.textContent = `❌ Brak składki dla: ${m}`;
+        return;
+      }
+    }
+
+    if (!singleTrainingPrice) {
+      if (msg) msg.textContent = "❌ Podaj cenę pojedynczego treningu.";
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.classList.add("loading"); }
+    if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
+
+    // CORE zapisuje to do Administracja->Kartoteka
+    const r = await apiCorePost({
+      action: "activateClub",
+      clubId,
+      sezonStart,
+      sezonEnd,
+      months: JSON.stringify(months),
+      fees: JSON.stringify(fees),
+      singleTrainingPrice
+    });
+
+    if (!r || (r.success !== true && r.ok !== true)) {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    // tutaj: link klubowy dopiero po aktywacji
+    const link = r.clubLink || r.link || "";
+    if (msg) msg.textContent = link ? `✅ Gotowe. Link klubu: ${link}` : "✅ Gotowe. Klub aktywowany.";
+    
+    // opcjonalnie: przejście na ekran login / landing
+    // goToView("loginView");
+
+  } catch (e) {
+    console.error(e);
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+    if (btn) btn.disabled = false;
+  } finally {
+    if (btn) { btn.classList.remove("loading"); }
+  }
+}
+ 
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
   numerZalogowanego = null;
