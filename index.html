@@ -863,9 +863,9 @@ async function apiCorePost(payload = {}) {
   return res.json();
 }
 
-async function activateClub_(payload = {}) {
+window.activateClub_ = async function(payload = {}) {
   return apiCorePost({ action: "activateClub", ...payload });
-}
+};
 
 // GET/POST do CLUB (wymaga clubId)
 async function apiClubGet(action, params = {}) {
@@ -1614,7 +1614,9 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
+
     const r = await activateClub_({
+
       clubId,
       sezonStart,
       sezonEnd,
@@ -1657,6 +1659,7 @@ function monthKey_(m) {
     if (btn) { btn.classList.remove("loading"); }
   }
 }
+window.submitSetupAndActivateClub = submitSetupAndActivateClub;
  
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
