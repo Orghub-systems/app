@@ -340,6 +340,7 @@ input[type="number"] {
             style="margin-top:12px; width:100%;">⬅ Powrót</button>
 
     <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
+    <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
   </div>
   <!-- POPUP PŁATNOŚCI -->
 <div id="paymentsPopup" class="hidden" style="
@@ -831,8 +832,34 @@ function requireClubId() {
 
 // POST do CORE bez clubId (np. createClub)
 async function apiCorePost(payload = {}) {
+  // DIAG_START: Panel 2 / CORE POST diagnostics
+  const safePayload = { ...payload };
+  ["haslo", "password", "token", "auth", "authorization"].forEach((k) => {
+    if (safePayload[k] != null) safePayload[k] = "[REDACTED]";
+  });
+  console.log("[DIAG][apiCorePost][request]", {
+    clubId: safePayload.clubId || clubId || "",
+    action: safePayload.action || "",
+    mode: safePayload.mode || "",
+    payload: safePayload
+  });
+  // DIAG_END
+
   const body = new URLSearchParams({ ...payload });
   const res = await fetch(CORE_URL, { method: "POST", body });
+
+  // DIAG_START: Panel 2 / CORE response diagnostics
+  const contentType = res.headers.get("content-type") || "";
+  console.log("[DIAG][apiCorePost][response-meta]", {
+    status: res.status,
+    contentType
+  });
+  if (!/json/i.test(contentType)) {
+    const raw = await res.clone().text();
+    console.log("[DIAG][apiCorePost][non-json-preview]", raw.slice(0, 200));
+  }
+  // DIAG_END
+
   return res.json();
 }
 
@@ -1523,9 +1550,17 @@ function monthKey_(m) {
 }
 
  async function submitSetupAndActivateClub() {
+  console.log('[DIAG] submitSetupAndActivateClub fired');
   const msg = document.getElementById("setupMsg");
   const btn = document.getElementById("btnSetupSubmit");
+  const errorBox = document.getElementById("setupErrorBox");
   if (msg) msg.textContent = "";
+  // DIAG_START: Panel 2 error box reset
+  if (errorBox) {
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+  }
+  // DIAG_END
 
   try {
     if (!clubId) {
@@ -1579,7 +1614,9 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
-    const r = await window.activateClub_({
+
+    const r = await activateClub_({
+
       clubId,
       sezonStart,
       sezonEnd,
@@ -1589,7 +1626,14 @@ function monthKey_(m) {
     });
 
     if (!r || (r.success !== true && r.ok !== true)) {
+      const shortErr = (r?.error || r?.message || "Błąd odpowiedzi backendu");
       if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
+      // DIAG_START: Panel 2 error box backend error
+      if (errorBox) {
+        errorBox.textContent = "Błąd aktywacji klubu: " + shortErr;
+        errorBox.classList.remove("hidden");
+      }
+      // DIAG_END
       if (btn) btn.disabled = false;
       return;
     }
@@ -1604,6 +1648,12 @@ function monthKey_(m) {
   } catch (e) {
     console.error(e);
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+    // DIAG_START: Panel 2 error box transport error
+    if (errorBox) {
+      errorBox.textContent = "Błąd połączenia z backendem: " + (e?.message || e);
+      errorBox.classList.remove("hidden");
+    }
+    // DIAG_END
     if (btn) btn.disabled = false;
   } finally {
     if (btn) { btn.classList.remove("loading"); }
