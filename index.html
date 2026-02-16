@@ -863,6 +863,10 @@ async function apiCorePost(payload = {}) {
   return res.json();
 }
 
+async function activateClub_(payload = {}) {
+  return apiCorePost({ action: "activateClub", ...payload });
+}
+
 // GET/POST do CLUB (wymaga clubId)
 async function apiClubGet(action, params = {}) {
   requireClubId();
@@ -1610,8 +1614,7 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
-    const r = await apiCorePost({
-      action: "activateClub",
+    const r = await activateClub_({
       clubId,
       sezonStart,
       sezonEnd,
