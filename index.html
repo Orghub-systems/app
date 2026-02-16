@@ -1506,6 +1506,18 @@ function updateSetupPaymentsState_() {
   }
 }
 
+  /* helper: ujednolicenie klucza miesiąca (string) */
+function monthKey_(m) {
+  if (!m) return "";
+  if (typeof m === "string") return m.trim();
+
+  // gdy miesiąc jest obiektem
+  return String(
+    m.key ?? m.id ?? m.value ?? m.label ?? m.name ?? m.text ??
+    (m.monthName && m.year ? `${m.monthName} ${m.year}` : "")
+  ).trim();
+}
+
  async function submitSetupAndActivateClub() {
   const msg = document.getElementById("setupMsg");
   const btn = document.getElementById("btnSetupSubmit");
