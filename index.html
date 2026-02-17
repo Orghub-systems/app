@@ -1684,16 +1684,38 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
+    
+const membershipLimit =
+  setupDraft?.membershipLimit === "NO_LIMIT"
+    ? "NO_LIMIT"
+    : (setupDraft?.membershipLimit === "" || setupDraft?.membershipLimit == null)
+      ? ""
+      : String(setupDraft.membershipLimit).trim();
 
-    const r = await activateClub_({
+console.log("[DIAG] activateClub payload preview", {
+  clubId,
+  sezonStart,
+  sezonEnd,
+  monthsType: typeof months,
+  monthsIsArray: Array.isArray(months),
+  feesType: typeof fees,
+  singleTrainingPrice,
+  membershipLimit_raw: setupDraft?.membershipLimit,
+  membershipLimit_type: typeof setupDraft?.membershipLimit,
+  membershipLimit
+});
 
-      clubId,
-      sezonStart,
-      sezonEnd,
-      months: JSON.stringify(months),
-      fees: JSON.stringify(fees),
-      singleTrainingPrice
-      membershipLimit
+const r = await activateClub_({
+  clubId,
+  sezonStart,
+  sezonEnd,
+  months: JSON.stringify(months),
+  fees: JSON.stringify(fees),
+  singleTrainingPrice,
+  membershipLimit
+});
+
+
     });
 
     if (!r || (r.success !== true && r.ok !== true)) {
