@@ -1638,9 +1638,58 @@ function monthKey_(m) {
       return;
     }
 
-    // tutaj: link klubowy dopiero po aktywacji
-    const link = r.clubLink || r.link || "";
-    if (msg) msg.textContent = link ? `✅ Gotowe. Link klubu: ${link}` : "✅ Gotowe. Klub aktywowany.";
+// Link klubu po aktywacji (budujemy po clubId — backend nie musi zwracać linku)
+const link = (r && (r.clubLink || r.link))
+  ? (r.clubLink || r.link)
+  : ("https://orghub-systems.github.io/app/?clubId=" + encodeURIComponent(String(clubId || "").trim()));
+
+if (msg) msg.textContent = "✅ Gotowe. Klub aktywowany. Link poniżej.";
+
+// dynamiczny box (nie wymaga zmian w HTML)
+let box = document.getElementById("clubLinkBox");
+if (!box) {
+  box = document.createElement("div");
+  box.id = "clubLinkBox";
+  box.style.marginTop = "12px";
+
+  box.innerHTML = `
+    <div style="font-weight:700; margin-bottom:6px;">Link Twojego klubu:</div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <input id="clubLinkInput" type="text" readonly style="flex:1; min-width:260px;" />
+      <button id="btnCopyClubLink" type="button">Skopiuj link Twojego klubu</button>
+    </div>
+    <div id="clubLinkCopyMsg" style="margin-top:6px; opacity:.9;"></div>
+  `;
+
+  // wpinamy pod setupMsg (albo na koniec panelu)
+  const anchor = document.getElementById("setupMsg");
+  if (anchor && anchor.parentNode) anchor.parentNode.appendChild(box);
+  else document.body.appendChild(box); // awaryjnie
+}
+
+const input = document.getElementById("clubLinkInput");
+const btnCopy = document.getElementById("btnCopyClubLink");
+const copyMsg = document.getElementById("clubLinkCopyMsg");
+
+if (input) input.value = link;
+if (copyMsg) copyMsg.textContent = "";
+
+if (btnCopy) {
+  btnCopy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      if (copyMsg) copyMsg.textContent = "✅ Skopiowano link.";
+    } catch (e) {
+      if (input) {
+        input.focus(); input.select();
+        document.execCommand("copy");
+        if (copyMsg) copyMsg.textContent = "✅ Skopiowano link (tryb zgodności).";
+      } else {
+        if (copyMsg) copyMsg.textContent = "❌ Skopiuj ręcznie z pola.";
+      }
+    }
+  };
+}
     
     // opcjonalnie: przejście na ekran login / landing
     // goToView("loginView");
