@@ -1314,6 +1314,7 @@ function goToConfig2() {
     months: [],
     fees: {},
     singleTrainingPrice: ""
+    membershipLimit: null,   // null = brak limitu, liczba = limit
   };
   renderSetupUI_();
   goToView("clubSetupView");
@@ -1468,7 +1469,27 @@ function applyPaymentsPopup() {
   const smsg = document.getElementById("setupMsg");
   if (smsg) smsg.textContent = "✅ Płatności zapisane. Możesz kliknąć „Wyślij i aktywuj klub”.";
 }
-  
+
+  function wireMembershipLimitUI_() {
+  const cb = document.getElementById("noLimitCheckbox");
+  const inp = document.getElementById("membershipLimitInput");
+  if (!cb || !inp) return;
+
+  function refresh() {
+    if (cb.checked) {
+      inp.value = "";
+      inp.disabled = true;
+      inp.style.opacity = "0.55";
+    } else {
+      inp.disabled = false;
+      inp.style.opacity = "1";
+    }
+  }
+
+  cb.onchange = refresh;
+  refresh();
+}
+
 /* =================== 62 PANEL 2: SEZON -> AKTYWACJA PŁATNOŚCI =================== */
 function setupSeasonStartPick() {
   const span = document.getElementById("setupSeasonStartText");
