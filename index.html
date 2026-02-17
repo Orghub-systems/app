@@ -1383,8 +1383,31 @@ function openPaymentsPopup() {
 
   const pop = document.getElementById("paymentsPopup");
   if (pop) pop.classList.remove("hidden");
+  
+  wireMembershipLimitUI_();
+
 }
 
+function wireMembershipLimitUI_() {
+  const cb = document.getElementById("noLimitCheckbox");
+  const inp = document.getElementById("membershipLimitInput");
+  if (!cb || !inp) return;
+
+  function refresh() {
+    if (cb.checked) {
+      inp.value = "";
+      inp.disabled = true;
+      inp.style.opacity = "0.55";
+    } else {
+      inp.disabled = false;
+      inp.style.opacity = "1";
+    }
+  }
+
+  cb.onchange = refresh;
+  refresh();
+}
+  
 function closePaymentsPopup() {
   const pop = document.getElementById("paymentsPopup");
   if (pop) pop.classList.add("hidden");
