@@ -1487,6 +1487,24 @@ function applyPaymentsPopup() {
   const btnSubmit = document.getElementById("btnSetupSubmit");
   if (btnSubmit) btnSubmit.disabled = false;
 
+    const noLimit = !!document.getElementById("noLimitCheckbox")?.checked;
+  const limitInp = document.getElementById("membershipLimitInput");
+  const limitRaw = String(limitInp?.value || "").trim();
+
+  if (noLimit) {
+    setupDraft.membershipLimit = "NO_LIMIT";
+  } else if (limitRaw === "") {
+    setupDraft.membershipLimit = ""; // brak ustawienia (albo wymusimy później)
+  } else {
+    const lim = Number(limitRaw.replace(",", "."));
+    if (!Number.isFinite(lim) || lim < 0) {
+      if (pmsg) pmsg.textContent = "❌ Nieprawidłowy limit treningów w ramach składki.";
+      if (limitInp) limitInp.focus();
+      return;
+    }
+    setupDraft.membershipLimit = lim;
+  }
+
   closePaymentsPopup();
   const smsg = document.getElementById("setupMsg");
   if (smsg) smsg.textContent = "✅ Płatności zapisane. Możesz kliknąć „Wyślij i aktywuj klub”.";
