@@ -1715,9 +1715,6 @@ const r = await activateClub_({
   membershipLimit
 });
 
-
-    });
-
     if (!r || (r.success !== true && r.ok !== true)) {
       const shortErr = (r?.error || r?.message || "Błąd odpowiedzi backendu");
       if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
