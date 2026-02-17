@@ -342,6 +342,18 @@ input[type="number"] {
     <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
     <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
   </div>
+
+  <div id="clubLinkBox" class="hidden" style="margin-top:12px;">
+  <div style="font-weight:700; margin-bottom:6px;">Link Twojego klubu:</div>
+
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <input id="clubLinkInput" type="text" readonly style="flex:1; min-width:260px;" />
+    <button id="btnCopyClubLink" type="button">Skopiuj link Twojego klubu</button>
+  </div>
+
+  <div id="clubLinkCopyMsg" style="margin-top:6px; opacity:.9;"></div>
+</div>
+  
   <!-- POPUP PŁATNOŚCI -->
 <div id="paymentsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
@@ -1549,6 +1561,11 @@ function monthKey_(m) {
   ).trim();
 }
 
+  function buildClubLink_(clubId) {
+  const base = "https://orghub-systems.github.io/app/";
+  return base + "?clubId=" + encodeURIComponent(String(clubId || "").trim());
+}
+
  async function submitSetupAndActivateClub() {
   console.log('[DIAG] submitSetupAndActivateClub fired');
   const msg = document.getElementById("setupMsg");
@@ -1615,7 +1632,7 @@ function monthKey_(m) {
 
     // CORE zapisuje to do Administracja->Kartoteka
 
-    const r = await activateClub_({
+    const r = await window.activateClub_({ ... });
 
       clubId,
       sezonStart,
@@ -1638,9 +1655,38 @@ function monthKey_(m) {
       return;
     }
 
-    // tutaj: link klubowy dopiero po aktywacji
-    const link = r.clubLink || r.link || "";
-    if (msg) msg.textContent = link ? `✅ Gotowe. Link klubu: ${link}` : "✅ Gotowe. Klub aktywowany.";
+// link klubowy po aktywacji (budujemy po clubId — backend nie musi zwracać linku)
+const link = (r && (r.clubLink || r.link)) ? (r.clubLink || r.link) : buildClubLink_(clubId);
+
+if (msg) msg.textContent = "✅ Gotowe. Klub aktywowany. Skopiuj link poniżej.";
+
+const box = document.getElementById("clubLinkBox");
+const input = document.getElementById("clubLinkInput");
+const btnCopy = document.getElementById("btnCopyClubLink");
+const copyMsg = document.getElementById("clubLinkCopyMsg");
+
+if (input) input.value = link;
+if (copyMsg) copyMsg.textContent = "";
+if (box) box.classList.remove("hidden");
+
+if (btnCopy) {
+  btnCopy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      if (copyMsg) copyMsg.textContent = "✅ Skopiowano link.";
+    } catch (e) {
+      // fallback kompatybilności
+      if (input) {
+        input.focus();
+        input.select();
+        document.execCommand("copy");
+        if (copyMsg) copyMsg.textContent = "✅ Skopiowano link (tryb zgodności).";
+      } else {
+        if (copyMsg) copyMsg.textContent = "❌ Nie mogę skopiować — skopiuj ręcznie z pola.";
+      }
+    }
+  };
+}
     
     // opcjonalnie: przejście na ekran login / landing
     // goToView("loginView");
