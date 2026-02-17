@@ -496,7 +496,6 @@ input[type="number"] {
     <div style="display:flex; gap:8px; margin-top:14px;">
       <button class="full-btn alt" style="flex:1;" onclick="closeGroupsPopup()">Anuluj</button>
       <button class="full-btn" style="flex:1;" onclick="applyGroupsPopup()">Zapisz</button>
-
     </div>
   </div>
 </div>
@@ -946,6 +945,8 @@ async function apiClubPost(payload = {}) {
   };
 }
 
+
+
 /* =================== 60 ORGHUB START / KONFIGURACJA =================== */
 
 /**
@@ -1313,7 +1314,6 @@ function goToConfig2() {
     months: [],
     fees: {},
     singleTrainingPrice: ""
-    membershipLimit: null,   // null = brak limitu, liczba = limit
   };
   renderSetupUI_();
   goToView("clubSetupView");
@@ -1385,25 +1385,6 @@ function openPaymentsPopup() {
   if (pop) pop.classList.remove("hidden");
 }
 
-  function wireMembershipLimitUI_() {
-  const cb = document.getElementById("noLimitCheckbox");
-  const inp = document.getElementById("membershipLimitInput");
-  if (!cb || !inp) return;
-
-  function refresh() {
-    if (cb.checked) {
-      inp.value = "";
-      inp.disabled = true;
-      inp.style.opacity = "0.55";
-    } else {
-      inp.disabled = false;
-      inp.style.opacity = "1";
-    }
-  }
-
-  cb.onchange = refresh;
-  refresh();
-}
 function closePaymentsPopup() {
   const pop = document.getElementById("paymentsPopup");
   if (pop) pop.classList.add("hidden");
@@ -1487,7 +1468,7 @@ function applyPaymentsPopup() {
   const smsg = document.getElementById("setupMsg");
   if (smsg) smsg.textContent = "✅ Płatności zapisane. Możesz kliknąć „Wyślij i aktywuj klub”.";
 }
-
+  
 /* =================== 62 PANEL 2: SEZON -> AKTYWACJA PŁATNOŚCI =================== */
 function setupSeasonStartPick() {
   const span = document.getElementById("setupSeasonStartText");
