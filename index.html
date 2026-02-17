@@ -1693,7 +1693,7 @@ function monthKey_(m) {
       months: JSON.stringify(months),
       fees: JSON.stringify(fees),
       singleTrainingPrice
-      membershipLimit: setupDraft?.membershipLimit
+      membershipLimit
     });
 
     if (!r || (r.success !== true && r.ok !== true)) {
