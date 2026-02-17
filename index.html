@@ -740,7 +740,10 @@ function hideBusy() {
 
 /* =================== 40 NAWIGACJA / ROUTER =================== */
 function ukryjWszystkie() {
-  document.querySelectorAll(".container").forEach(v => v.classList.add("hidden"));
+  document.querySelectorAll(".container").forEach(v => {
+    if (v.id === "app") return; // ✅ NIE chowamy wrappera
+    v.classList.add("hidden");
+  });
 }
 
 function goToView(viewId, options = {}) {
@@ -793,7 +796,7 @@ async function startApp_() {
 
   // 🔧 KLUCZOWE – ustaw globalne clubId zanim apka coś zrobi
 if (clubFromUrl) {
-  clubId = String(clubFromUrl).trim();
+  clubId = String(clubFromUrl);
 }
 
   // --- KOLOR ---
