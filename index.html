@@ -791,6 +791,11 @@ async function startApp_() {
   const params = new URLSearchParams(window.location.search);
   const clubFromUrl = params.get("clubId");
 
+  // 🔧 KLUCZOWE – ustaw globalne clubId zanim apka coś zrobi
+if (clubFromUrl) {
+  clubId = String(clubFromUrl).trim();
+}
+
   // --- KOLOR ---
   if (!clubFromUrl) {
 
