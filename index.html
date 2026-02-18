@@ -548,9 +548,10 @@ input[type="number"] {
 
 <!-- PŁATNOŚCI -->
 <div id="platnosciView" class="container hidden">
-  <div style="margin-top:10px;">
-    <div style="font-size:44px; font-weight:900; letter-spacing:1px; line-height:1.05;">Płatności</div>
-    <div style="margin-top:8px; font-size:18px; font-weight:700; opacity:.92;">Zaległe płatności:</div>
+  <h1>Płatności</h1>
+
+  <div style="opacity:.9; font-weight:700; margin-top:6px;">
+    Zaległe płatności:
   </div>
 
   <div id="listaPlatnosci" style="
@@ -558,11 +559,11 @@ input[type="number"] {
     max-width:420px;
     display:flex;
     flex-direction:column;
-    gap:14px;
+    gap:10px;
     padding:0 10px;
   ">Ładowanie...</div>
 
-  <button class="full-btn" id="btnPlatnosciDalej" style="margin-top:22px;" onclick="pokazTreningi()">
+  <button class="full-btn" style="margin-top:20px;" onclick="pokazTreningi()">
     Dalej ➡
   </button>
 </div>
@@ -2019,50 +2020,33 @@ async function wyslijRejestracjeTrener() {
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
-  const btn = document.getElementById("btnPlatnosciDalej");
   if (!div) return;
 
-  // przycisk dalej zawsze widoczny (jak w Warriors)
-  if (btn) btn.classList.remove("hidden");
-
-  // brak zaległości
   if (!Array.isArray(lista) || lista.length === 0) {
     div.innerHTML = `
-      <div class="card" style="
-        background:#111;
-        border:1px solid #333;
-        border-radius:18px;
-        padding:16px;
-        text-align:center;
-        opacity:.95;
-      ">
+      <div class="card" style="text-align:center;">
         Brak zaległości ✅
       </div>
     `;
     return;
   }
 
-  // zaległości -> czerwone kafle w stylu apki
   div.innerHTML = lista.map(p => `
-    <div style="
-      background: linear-gradient(180deg, #b00000 0%, #6a0000 100%);
-      border:1px solid rgba(255,255,255,0.12);
-      border-radius:18px;
-      padding:14px 16px;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.45);
+    <div class="card" style="
+      background:#1a0505;
+      border-color:#7a1a1a;
       text-align:left;
       display:flex;
       align-items:center;
-      gap:12px;
+      gap:10px;
     ">
       <div style="
-        width:14px;height:14px;border-radius:50%;
-        background:#ff2aa1;
-        box-shadow:0 0 0 3px rgba(255,42,161,0.18), 0 0 14px rgba(255,42,161,0.55);
+        width:10px;height:10px;border-radius:50%;
+        background:red;
         flex:0 0 auto;
       "></div>
 
-      <div style="font-weight:800; letter-spacing:.2px;">
+      <div style="font-weight:800;">
         ${escapeHtml_(p.nazwa)} – ${Number(p.kwota || 0)} zł
       </div>
     </div>
