@@ -2022,44 +2022,42 @@ function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
   if (!div) return;
 
+  div.innerHTML = "";
+
   if (!Array.isArray(lista) || lista.length === 0) {
-    div.innerHTML = `
-      <div class="card" style="text-align:center;">
-        Brak zaległości ✅
-      </div>
-    `;
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.textAlign = "center";
+    card.textContent = "Brak zaległości ✅";
+    div.appendChild(card);
     return;
   }
 
-  div.innerHTML = lista.map(p => `
-    <div class="card" style="
-      background:#1a0505;
-      border-color:#7a1a1a;
-      text-align:left;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    ">
-      <div style="
-        width:10px;height:10px;border-radius:50%;
-        background:red;
-        flex:0 0 auto;
-      "></div>
+  for (const p of lista) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.background = "#1a0505";
+    card.style.borderColor = "#7a1a1a";
+    card.style.textAlign = "left";
+    card.style.display = "flex";
+    card.style.alignItems = "center";
+    card.style.gap = "10px";
 
-      <div style="font-weight:800;">
-        ${escapeHtml_(p.nazwa)} – ${Number(p.kwota || 0)} zł
-      </div>
-    </div>
-  `).join("");
-}
+    const dot = document.createElement("div");
+    dot.style.width = "10px";
+    dot.style.height = "10px";
+    dot.style.borderRadius = "50%";
+    dot.style.background = "red";
+    dot.style.flex = "0 0 auto";
 
-function escapeHtml_(s) {
-  return String(s || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    const txt = document.createElement("div");
+    txt.style.fontWeight = "800";
+    txt.textContent = `${String(p?.nazwa || "").trim()} – ${Number(p?.kwota || 0)} zł`;
+
+    card.appendChild(dot);
+    card.appendChild(txt);
+    div.appendChild(card);
+  }
 }
 
 async function pokazTreningi() {
