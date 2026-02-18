@@ -1973,6 +1973,9 @@ function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
   if (!div) return;
 
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
   // brak zaległości
   if (!Array.isArray(lista) || lista.length === 0) {
     div.innerHTML = `
@@ -1986,10 +1989,8 @@ function renderPlatnosci(lista) {
     return;
   }
 
-  // suma zaległości
   const suma = lista.reduce((s, p) => s + (Number(p.kwota) || 0), 0);
 
-  // budowa kafelków w stylu .card (jak cała apka)
   let html = `
     <div class="card" style="background:#200;">
       <div style="font-size:14px;opacity:.85;">Do zapłaty</div>
@@ -2000,8 +2001,11 @@ function renderPlatnosci(lista) {
   `;
 
   lista.forEach(p => {
+    const meta = parsePlatnoscMeta_(p.nazwa);
+    const bgColor = getPlatnoscColor_(meta, today);
+
     html += `
-      <div class="card" style="border-left:6px solid #e53935;">
+      <div class="card" style="background:${bgColor};">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="font-weight:600;text-align:left;">
             ${formatPlatnoscNazwa_(p.nazwa)}
@@ -2023,6 +2027,73 @@ function renderPlatnosci(lista) {
   div.innerHTML = html;
 }
 
+  function parsePlatnoscMeta_(nazwa){
+  if (!nazwa) return null;
+
+  const lower = nazwa.toLowerCase();
+
+  const isSkladka = lower.startsWith("składka");
+  const isZajecia = lower.startsWith("zajęcia");
+
+  const yearMatch = nazwa.match(/20\d{2}/);
+  if (!yearMatch) return null;
+  const year = Number(yearMatch[0]);
+
+  const miesiace = [
+    "styczeń","luty","marzec","kwiecień","maj","czerwiec",
+    "lipiec","sierpień","wrzesień","październik","listopad","grudzień"
+  ];
+
+  const monthIdx = miesiace.findIndex(m => lower.includes(m));
+  if (monthIdx === -1) return null;
+
+  return {
+    type: isSkladka ? "S" : (isZajecia ? "Z" : null),
+    year,
+    monthIdx
+  };
+}
+
+ function getPlatnoscColor_(meta, today){
+  if (!meta) return "#200"; // fallback czerwony
+
+  const paymentMonth = new Date(meta.year, meta.monthIdx, 1);
+  const nextMonth = new Date(meta.year, meta.monthIdx + 1, 1);
+
+  // ======================
+  // SKŁADKA
+  // ======================
+  if (meta.type === "S") {
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // jeśli to bieżący miesiąc → zielony
+    if (meta.year === currentYear && meta.monthIdx === currentMonth) {
+      return "#0a2a0a";
+    }
+
+    // jeśli miesiąc minął i nadal zaległość → czerwony
+    return "#200";
+  }
+
+  // ======================
+  // ZAJĘCIA DODATKOWE
+  // ======================
+  if (meta.type === "Z") {
+    // termin płatności: 15 dzień następnego miesiąca
+    const deadline = new Date(meta.year, meta.monthIdx + 1, 15);
+    deadline.setHours(0,0,0,0);
+
+    if (today <= deadline) {
+      return "#0a2a0a"; // jeszcze czas na rozliczenie → zielony
+    } else {
+      return "#200"; // po 15 → czerwony
+    }
+  }
+
+  return "#200";
+}
+ 
   function formatPlatnoscNazwa_(txt){
   if (!txt) return "";
   return String(txt)
