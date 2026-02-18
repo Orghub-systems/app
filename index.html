@@ -1884,16 +1884,16 @@ async function zaloguj() {
 
     komunikat.innerText = "✅ Zalogowano";
 
-    if (data.role === "zawodnik") {
-      numerZalogowanego = data.login;
-      grupaZalogowanego = data.grupa || "";
+if (data.role === "zawodnik") {
+  numerZalogowanego = data.login;
+  grupaZalogowanego = data.grupa || "";
 
-      const platnosci = await apiClubGet("platnosci", { numer: numerZalogowanego });
-      if (Array.isArray(platnosci) && platnosci.length > 0) {
-        goToView("platnosciView");
-        renderPlatnosci(platnosci);
-        return;
-      }
+  // ✅ zawsze pokazujemy Płatności jako pierwszy ekran po loginie (jak w Warriors)
+  const platnosci = await apiClubGet("platnosci", { numer: numerZalogowanego });
+  goToView("platnosciView");
+  renderPlatnosci(platnosci);
+  return;
+}
 
       await pokazTreningi();
       return;
