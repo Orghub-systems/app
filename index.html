@@ -186,42 +186,6 @@ input[type="number"] {
   appearance: textfield;
 }
 
-    /* ===== PŁATNOŚCI: BELKI JAK W WARRIORS ===== */
-.pay-pill{
-  display:flex;
-  align-items:center;
-  gap:14px;
-
-  padding:16px 18px;
-  border-radius:16px;
-
-  background: linear-gradient(180deg, #a10000 0%, #7c0000 100%);
-  border: 2px solid rgba(255,255,255,0.18);
-
-  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
-  text-align:left;
-}
-
-.pay-dot{
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  background: radial-gradient(circle at 35% 35%, #ff7aa5 0%, #ff2f6a 40%, #b4002d 100%);
-  box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
-  flex: 0 0 18px;
-}
-
-.pay-text{
-  font-weight:800;
-  font-size:18px;
-  letter-spacing:0.2px;
-  line-height:1.2;
-}
-
-.pay-amount{
-  font-weight:900;
-}
-
   </style>
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
@@ -546,27 +510,12 @@ input[type="number"] {
   <p id="eventMsg" style="margin-top:10px;"></p>
 </div>
 
-<!-- PŁATNOŚCI -->
-<div id="platnosciView" class="container hidden">
-  <h1>Płatności</h1>
 
-  <div style="opacity:.9; font-weight:700; margin-top:6px;">
-    Zaległe płatności:
-  </div>
-
-  <div id="listaPlatnosci" style="
-    margin:18px auto 0 auto;
-    max-width:420px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    padding:0 10px;
-  ">Ładowanie...</div>
-
-  <button class="full-btn" style="margin-top:20px;" onclick="pokazTreningi()">
-    Dalej ➡
-  </button>
-</div>
+    <!-- PŁATNOŚCI -->
+    <div id="platnosciView" class="container hidden">
+      <h1>Płatności</h1>
+      <div id="listaPlatnosci">Ładowanie...</div>
+    </div>
 
     <!-- WYDARZENIA (ZAWODNIK) -->
     <div id="homeView" class="container hidden">
@@ -1884,16 +1833,16 @@ async function zaloguj() {
 
     komunikat.innerText = "✅ Zalogowano";
 
-if (data.role === "zawodnik") {
-  numerZalogowanego = data.login;
-  grupaZalogowanego = data.grupa || "";
+    if (data.role === "zawodnik") {
+      numerZalogowanego = data.login;
+      grupaZalogowanego = data.grupa || "";
 
-  // ✅ zawsze pokazujemy Płatności jako pierwszy ekran po loginie (jak w Warriors)
-  const platnosci = await apiClubGet("platnosci", { numer: numerZalogowanego });
-  goToView("platnosciView");
-  renderPlatnosci(platnosci);
-  return;
-}
+      const platnosci = await apiClubGet("platnosci", { numer: numerZalogowanego });
+      if (Array.isArray(platnosci) && platnosci.length > 0) {
+        goToView("platnosciView");
+        renderPlatnosci(platnosci);
+        return;
+      }
 
       await pokazTreningi();
       return;
@@ -2017,47 +1966,21 @@ async function wyslijRejestracjeTrener() {
   }
 }
 
+
+
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
-  if (!div) return;
-
-  div.innerHTML = "";
-
-  if (!Array.isArray(lista) || lista.length === 0) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.textAlign = "center";
-    card.textContent = "Brak zaległości ✅";
-    div.appendChild(card);
+  if (!lista?.length) {
+    div.innerHTML = "<p>Brak zaległości ✅</p>" +
+      "<button class='full-btn' onclick='pokazTreningi()'>Dalej ➡</button>";
     return;
   }
 
-  for (const p of lista) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.background = "#1a0505";
-    card.style.borderColor = "#7a1a1a";
-    card.style.textAlign = "left";
-    card.style.display = "flex";
-    card.style.alignItems = "center";
-    card.style.gap = "10px";
-
-    const dot = document.createElement("div");
-    dot.style.width = "10px";
-    dot.style.height = "10px";
-    dot.style.borderRadius = "50%";
-    dot.style.background = "red";
-    dot.style.flex = "0 0 auto";
-
-    const txt = document.createElement("div");
-    txt.style.fontWeight = "800";
-    txt.textContent = `${String(p?.nazwa || "").trim()} – ${Number(p?.kwota || 0)} zł`;
-
-    card.appendChild(dot);
-    card.appendChild(txt);
-    div.appendChild(card);
-  }
+  div.innerHTML =
+    "<h3>Zaległe płatności:</h3>" +
+    lista.map(p => `<div class='card' style='background:#a00;'>🔴 ${p.nazwa} – ${p.kwota} zł</div>`).join('') +
+    `<button class='full-btn' onclick='pokazTreningi()' style='margin-top:20px;'>Dalej ➡</button>`;
 }
 
 async function pokazTreningi() {
