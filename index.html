@@ -2017,21 +2017,66 @@ async function wyslijRejestracjeTrener() {
   }
 }
 
-
-
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
-  if (!lista?.length) {
-    div.innerHTML = "<p>Brak zaległości ✅</p>" +
-      "<button class='full-btn' onclick='pokazTreningi()'>Dalej ➡</button>";
+  if (!div) return;
+
+  // UI jak w Warriors (screen)
+  const header = `
+    <div style="font-size:44px;font-weight:900;letter-spacing:1px;margin:10px 0 14px 0;">Płatności</div>
+    <div style="font-size:22px;font-weight:800;margin:0 0 18px 0;">Zaległe płatności:</div>
+  `;
+
+  // brak zaległości
+  if (!Array.isArray(lista) || lista.length === 0) {
+    div.innerHTML = `
+      ${header}
+      <div class="card" style="background:#111; border-color:#333; max-width:520px; margin:0 auto;">
+        Brak zaległości ✅
+      </div>
+      <button class="full-btn" onclick="pokazTreningi()" style="margin-top:22px; width:240px;">Dalej ➡</button>
+    `;
     return;
   }
 
-  div.innerHTML =
-    "<h3>Zaległe płatności:</h3>" +
-    lista.map(p => `<div class='card' style='background:#a00;'>🔴 ${p.nazwa} – ${p.kwota} zł</div>`).join('') +
-    `<button class='full-btn' onclick='pokazTreningi()' style='margin-top:20px;'>Dalej ➡</button>`;
+  // belki
+  const items = lista.map(p => {
+    const nazwa = String(p?.nazwa || "").trim();
+    const kwota = Number(p?.kwota || 0) || 0;
+
+    return `
+      <div class="pay-pill" style="max-width:560px;margin:12px auto;">
+        <div class="pay-dot"></div>
+        <div class="pay-text">
+          ${escapeHtml_(nazwa)} – <span class="pay-amount">${formatPLN_(kwota)} zł</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  div.innerHTML = `
+    ${header}
+    <div style="margin-top:10px;">${items}</div>
+    <button class="full-btn" onclick="pokazTreningi()" style="margin-top:24px; width:240px;">Dalej ➡</button>
+  `;
+}
+
+/* helpers tylko dla płatności */
+function formatPLN_(n) {
+  const v = Number(n || 0);
+  // bez groszy jeśli równe .00, ale toleruje 1.5 etc.
+  if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+  return v.toFixed(2).replace(".", ",");
+}
+
+function escapeHtml_(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 async function pokazTreningi() {
