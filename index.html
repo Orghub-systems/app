@@ -186,6 +186,42 @@ input[type="number"] {
   appearance: textfield;
 }
 
+    /* ===== PŁATNOŚCI: BELKI JAK W WARRIORS ===== */
+.pay-pill{
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:16px 18px;
+  border-radius:16px;
+
+  background: linear-gradient(180deg, #a10000 0%, #7c0000 100%);
+  border: 2px solid rgba(255,255,255,0.18);
+
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  text-align:left;
+}
+
+.pay-dot{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background: radial-gradient(circle at 35% 35%, #ff7aa5 0%, #ff2f6a 40%, #b4002d 100%);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+  flex: 0 0 18px;
+}
+
+.pay-text{
+  font-weight:800;
+  font-size:18px;
+  letter-spacing:0.2px;
+  line-height:1.2;
+}
+
+.pay-amount{
+  font-weight:900;
+}
+
   </style>
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
@@ -511,11 +547,26 @@ input[type="number"] {
 </div>
 
 
-    <!-- PŁATNOŚCI -->
-    <div id="platnosciView" class="container hidden">
-      <h1>Płatności</h1>
-      <div id="listaPlatnosci">Ładowanie...</div>
+<!-- PŁATNOŚCI -->
+<div id="platnosciView" class="container hidden">
+  <div style="position:relative; max-width:520px; margin:0 auto;">
+    <div style="position:absolute; right:0; top:-22px; font-size:14px; opacity:.65;">WS APP</div>
+
+    <h1 style="margin:0 0 10px 0; font-size:46px; font-weight:900;">Płatności</h1>
+
+    <div style="font-size:22px; font-weight:800; margin:22px 0 18px 0;">
+      Zaległe płatności:
     </div>
+
+    <!-- tu wstrzykujemy belki -->
+    <div id="listaPlatnosci" style="display:flex; flex-direction:column; gap:16px;"></div>
+
+    <button class="full-btn" style="margin-top:26px; width:260px; height:54px; border-radius:14px; font-size:18px;"
+            onclick="pokazTreningi()">
+      Dalej ➡️
+    </button>
+  </div>
+</div>
 
     <!-- WYDARZENIA (ZAWODNIK) -->
     <div id="homeView" class="container hidden">
