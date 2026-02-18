@@ -528,7 +528,9 @@ input[type="number"] {
       <h1 id="tytulTreningow">TWOJE WYDARZENIA</h1>
       <div id="listaTreningow">Ładowanie...</div>
       <button onclick="pokazStatystyki()" style="margin-top:20px;">📈 Pokaż statystyki</button>
-      <button onclick="powrotDoPlatnosci()" style="margin-top:10px;background:#333;">⬅ Powrót do płatności</button>
+    <button class="full-btn alt" onclick="powrotDoPlatnosci()" style="margin-top:10px;">   ⬅ Powrót do płatności
+</button>
+
     </div>
 
     <!-- STATYSTYKI -->
@@ -2094,6 +2096,10 @@ async function pokazTreningi() {
   renderTreningi(lista);
 }
 
+function powrotDoPlatnosci() {
+  goToView("platnosciView", { replace: true });
+}
+  
 function renderTreningi(lista) {
   const div = document.getElementById('listaTreningow');
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
