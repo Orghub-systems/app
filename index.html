@@ -2055,7 +2055,10 @@ function renderPlatnosci(lista) {
 }
 
  function getPlatnoscColor_(meta, today){
-  if (!meta) return "#200"; // fallback czerwony
+  if (!meta) return "#b30000"; // mocna czerwień fallback
+
+  const GREEN = "#00c853";  // zielony jak sygnalizacja (mocny)
+  const RED   = "#ff0000";  // agresywna czerwień
 
   const paymentMonth = new Date(meta.year, meta.monthIdx, 1);
   const nextMonth = new Date(meta.year, meta.monthIdx + 1, 1);
@@ -2067,33 +2070,33 @@ function renderPlatnosci(lista) {
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
 
-    // jeśli to bieżący miesiąc → zielony
+    // bieżący miesiąc → zielony
     if (meta.year === currentYear && meta.monthIdx === currentMonth) {
-      return "#0a2a0a";
+      return GREEN;
     }
 
-    // jeśli miesiąc minął i nadal zaległość → czerwony
-    return "#200";
+    // zaległe → czerwony
+    return RED;
   }
 
   // ======================
   // ZAJĘCIA DODATKOWE
   // ======================
   if (meta.type === "Z") {
-    // termin płatności: 15 dzień następnego miesiąca
+    // deadline: 15 dzień następnego miesiąca
     const deadline = new Date(meta.year, meta.monthIdx + 1, 15);
     deadline.setHours(0,0,0,0);
 
     if (today <= deadline) {
-      return "#0a2a0a"; // jeszcze czas na rozliczenie → zielony
+      return GREEN; // jeszcze czas na rozliczenie
     } else {
-      return "#200"; // po 15 → czerwony
+      return RED;   // po 15 – wali po oczach
     }
   }
 
-  return "#200";
+  return RED;
 }
- 
+
   function formatPlatnoscNazwa_(txt){
   if (!txt) return "";
   return String(txt)
