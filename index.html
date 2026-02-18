@@ -546,26 +546,25 @@ input[type="number"] {
   <p id="eventMsg" style="margin-top:10px;"></p>
 </div>
 
-
 <!-- PŁATNOŚCI -->
 <div id="platnosciView" class="container hidden">
-  <div style="position:relative; max-width:520px; margin:0 auto;">
-    <div style="position:absolute; right:0; top:-22px; font-size:14px; opacity:.65;">WS APP</div>
-
-    <h1 style="margin:0 0 10px 0; font-size:46px; font-weight:900;">Płatności</h1>
-
-    <div style="font-size:22px; font-weight:800; margin:22px 0 18px 0;">
-      Zaległe płatności:
-    </div>
-
-    <!-- tu wstrzykujemy belki -->
-    <div id="listaPlatnosci" style="display:flex; flex-direction:column; gap:16px;"></div>
-
-    <button class="full-btn" style="margin-top:26px; width:260px; height:54px; border-radius:14px; font-size:18px;"
-            onclick="pokazTreningi()">
-      Dalej ➡️
-    </button>
+  <div style="margin-top:10px;">
+    <div style="font-size:44px; font-weight:900; letter-spacing:1px; line-height:1.05;">Płatności</div>
+    <div style="margin-top:8px; font-size:18px; font-weight:700; opacity:.92;">Zaległe płatności:</div>
   </div>
+
+  <div id="listaPlatnosci" style="
+    margin:18px auto 0 auto;
+    max-width:420px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding:0 10px;
+  ">Ładowanie...</div>
+
+  <button class="full-btn" id="btnPlatnosciDalej" style="margin-top:22px;" onclick="pokazTreningi()">
+    Dalej ➡
+  </button>
 </div>
 
     <!-- WYDARZENIA (ZAWODNIK) -->
@@ -2020,63 +2019,63 @@ async function wyslijRejestracjeTrener() {
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
+  const btn = document.getElementById("btnPlatnosciDalej");
   if (!div) return;
 
-  // UI jak w Warriors (screen)
-  const header = `
-    <div style="font-size:44px;font-weight:900;letter-spacing:1px;margin:10px 0 14px 0;">Płatności</div>
-    <div style="font-size:22px;font-weight:800;margin:0 0 18px 0;">Zaległe płatności:</div>
-  `;
+  // przycisk dalej zawsze widoczny (jak w Warriors)
+  if (btn) btn.classList.remove("hidden");
 
   // brak zaległości
   if (!Array.isArray(lista) || lista.length === 0) {
     div.innerHTML = `
-      ${header}
-      <div class="card" style="background:#111; border-color:#333; max-width:520px; margin:0 auto;">
+      <div class="card" style="
+        background:#111;
+        border:1px solid #333;
+        border-radius:18px;
+        padding:16px;
+        text-align:center;
+        opacity:.95;
+      ">
         Brak zaległości ✅
       </div>
-      <button class="full-btn" onclick="pokazTreningi()" style="margin-top:22px; width:240px;">Dalej ➡</button>
     `;
     return;
   }
 
-  // belki
-  const items = lista.map(p => {
-    const nazwa = String(p?.nazwa || "").trim();
-    const kwota = Number(p?.kwota || 0) || 0;
+  // zaległości -> czerwone kafle w stylu apki
+  div.innerHTML = lista.map(p => `
+    <div style="
+      background: linear-gradient(180deg, #b00000 0%, #6a0000 100%);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px;
+      padding:14px 16px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.45);
+      text-align:left;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    ">
+      <div style="
+        width:14px;height:14px;border-radius:50%;
+        background:#ff2aa1;
+        box-shadow:0 0 0 3px rgba(255,42,161,0.18), 0 0 14px rgba(255,42,161,0.55);
+        flex:0 0 auto;
+      "></div>
 
-    return `
-      <div class="pay-pill" style="max-width:560px;margin:12px auto;">
-        <div class="pay-dot"></div>
-        <div class="pay-text">
-          ${escapeHtml_(nazwa)} – <span class="pay-amount">${formatPLN_(kwota)} zł</span>
-        </div>
+      <div style="font-weight:800; letter-spacing:.2px;">
+        ${escapeHtml_(p.nazwa)} – ${Number(p.kwota || 0)} zł
       </div>
-    `;
-  }).join("");
-
-  div.innerHTML = `
-    ${header}
-    <div style="margin-top:10px;">${items}</div>
-    <button class="full-btn" onclick="pokazTreningi()" style="margin-top:24px; width:240px;">Dalej ➡</button>
-  `;
-}
-
-/* helpers tylko dla płatności */
-function formatPLN_(n) {
-  const v = Number(n || 0);
-  // bez groszy jeśli równe .00, ale toleruje 1.5 etc.
-  if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
-  return v.toFixed(2).replace(".", ",");
+    </div>
+  `).join("");
 }
 
 function escapeHtml_(s) {
   return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 async function pokazTreningi() {
