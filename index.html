@@ -2236,6 +2236,44 @@ async function odswiezListeZapisanych(id) {
   }
 }
 
+ async function pokazStatystyki() {
+  goToView("statsView");
+
+  const div = document.getElementById("listaStatystyk");
+  if (div) div.innerHTML = "Ładowanie...";
+
+  try {
+    const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
+    renderStatystyki(lista);
+  } catch (e) {
+    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+
+function renderStatystyki(lista) {
+  const div = document.getElementById("listaStatystyk");
+  if (!div) return;
+
+  if (!lista?.length) {
+    div.innerHTML = "<p>Brak danych</p>";
+    return;
+  }
+
+  const suma = lista.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
+
+  div.innerHTML =
+    lista.map(s =>
+      `<div class="card">📅 ${s.miesiac} — 🏒 ${s.treningi} treningów</div>`
+    ).join('') +
+    `<div class="card" style="background:#222;margin-top:20px;font-weight:bold;">
+      🔥 Łącznie: ${suma} treningów w sezonie
+    </div>`;
+}
+
+function powrotDoTreningow() {
+  goToView("homeView"); // zamiast appBack() — stabilne
+}
+ 
 /* =================== 90 TRENER: LISTA / WYDARZENIA / DODAWANIE / USUWANIE =================== */
 function trainerPowrot() { appBack(); }
 
