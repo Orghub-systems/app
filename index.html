@@ -2236,56 +2236,33 @@ async function odswiezListeZapisanych(id) {
   }
 }
 
-async function pokazStatystyki() {
+ async function pokazStatystyki() {
   goToView("statsView");
 
-  // 1) bierzemy listę miesięcy sezonu z ustawień klubu (masz to już w apce po branding/config)
-  // Zakładam, że masz globalny obiekt configu klubu np. window.CLUB_CFG albo podobnie.
-  // Jeśli u Ciebie nazywa się inaczej: podmień w jednej linijce niżej.
-  const months = getSeasonMonthsForUI_();
+  const div = document.getElementById("listaStatystyk");
+  if (div) div.innerHTML = "Ładowanie...";
 
-  // 2) pobierz statystyki z CORE (zwraca tylko miesiące z treningami>0)
-  const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
-
-  // 3) render pełnej listy miesięcy + suma
-  renderStatystykiFull(months, lista);
+  try {
+    const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
+    renderStatystyki(lista);
+  } catch (e) {
+    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+  }
 }
 
 function renderStatystyki(lista) {
   const div = document.getElementById("listaStatystyk");
   if (!div) return;
 
-  // pełna lista miesięcy sezonu (minione + bieżący)
-  const MONTHS_PL_CAP = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
-
-  const now = new Date();
-  const currentMonthIdx = now.getMonth();
-
-  // budujemy listę miesięcy od początku roku do bieżącego miesiąca
-  const monthsAll = [];
-  for (let i = 0; i <= currentMonthIdx; i++) {
-    monthsAll.push(MONTHS_PL_CAP[i]);
+  if (!lista?.length) {
+    div.innerHTML = "<p>Brak danych</p>";
+    return;
   }
 
-  // mapa z API: "Luty" -> 5 treningów
-  const map = {};
-  if (Array.isArray(lista)) {
-    lista.forEach(s => {
-      if (!s?.miesiac) return;
-      map[String(s.miesiac).toLowerCase()] = Number(s.treningi) || 0;
-    });
-  }
-
-  // pełna lista miesięcy z zerami gdzie brak danych
-  const full = monthsAll.map(m => ({
-    miesiac: m,
-    treningi: map[m.toLowerCase()] ?? 0
-  }));
-
-  const suma = full.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
+  const suma = lista.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
 
   div.innerHTML =
-    full.map(s =>
+    lista.map(s =>
       `<div class="card">📅 ${s.miesiac} — 🏒 ${s.treningi} treningów</div>`
     ).join('') +
     `<div class="card" style="background:#222;margin-top:20px;font-weight:bold;">
