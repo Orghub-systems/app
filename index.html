@@ -2236,17 +2236,17 @@ async function odswiezListeZapisanych(id) {
   }
 }
 
- async function pokazStatystyki() {
-  goToView("statsView");
-
-  const div = document.getElementById("listaStatystyk");
-  if (div) div.innerHTML = "Ładowanie...";
-
+async function pokazStatystyki() {
   try {
+    goToView("statsView");
+
+    // WAŻNE: apiClubGet już powinno dokleić clubId i ogarnąć SCRIPT_URL wewnętrznie
     const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
+
     renderStatystyki(lista);
   } catch (e) {
-    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+    const div = document.getElementById("listaStatystyk");
+    if (div) div.innerHTML = `<p>Błąd ładowania statystyk: ${String(e)}</p>`;
   }
 }
 
@@ -2254,17 +2254,33 @@ function renderStatystyki(lista) {
   const div = document.getElementById("listaStatystyk");
   if (!div) return;
 
-  if (!lista?.length) {
-    div.innerHTML = "<p>Brak danych</p>";
+  // jeśli backend zwróci błąd jako obiekt
+  if (lista && typeof lista === "object" && !Array.isArray(lista) && (lista.success === false || lista.error)) {
+    div.innerHTML = `<p>Błąd: ${String(lista.error || "Nieznany błąd")}</p>`;
     return;
   }
 
-  const suma = lista.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
+  const MONTHS_PL_CAP_STATS = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+
+  // od stycznia do bieżącego
+  const monthsAll = [];
+  for (let i = 0; i <= currentMonthIdx; i++) monthsAll.push(MONTHS_PL_CAP_STATS[i]);
+
+  const map = {};
+  if (Array.isArray(lista)) {
+    lista.forEach(s => {
+      if (!s || !s.miesiac) return;
+      map[String(s.miesiac).toLowerCase()] = Number(s.treningi) || 0;
+    });
+  }
+
+  const full = monthsAll.map(m => ({ miesiac: m, treningi: map[m.toLowerCase()] ?? 0 }));
+  const suma = full.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
 
   div.innerHTML =
-    lista.map(s =>
-      `<div class="card">📅 ${s.miesiac} — 🏒 ${s.treningi} treningów</div>`
-    ).join('') +
+    full.map(s => `<div class="card">📅 ${s.miesiac} — 🏒 ${s.treningi} treningów</div>`).join("") +
     `<div class="card" style="background:#222;margin-top:20px;font-weight:bold;">
       🔥 Łącznie: ${suma} treningów w sezonie
     </div>`;
