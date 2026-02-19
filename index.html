@@ -2236,31 +2236,27 @@ async function odswiezListeZapisanych(id) {
   }
 }
 
- async function pokazStatystyki() {
+async function pokazStatystyki() {
   goToView("statsView");
-
-  const div = document.getElementById("listaStatystyk");
-  if (div) div.innerHTML = "Ładowanie...";
-
-  try {
-    const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
-    renderStatystyki(lista);
-  } catch (e) {
-    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
-  }
+  const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
+  renderStatystyki(lista);
 }
 
 function renderStatystyki(lista) {
   const div = document.getElementById("listaStatystyk");
-  if (!div) return;
 
-  if (!lista?.length) {
+  // jeśli CORE zwrócił błąd w formie obiektu
+  if (lista && !Array.isArray(lista) && lista.success === false) {
+    div.innerHTML = `<div class="card status-red">Błąd: ${lista.error}</div>`;
+    return;
+  }
+
+  if (!Array.isArray(lista) || !lista.length) {
     div.innerHTML = "<p>Brak danych</p>";
     return;
   }
 
   const suma = lista.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
-
   div.innerHTML =
     lista.map(s =>
       `<div class="card">📅 ${s.miesiac} — 🏒 ${s.treningi} treningów</div>`
