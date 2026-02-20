@@ -356,6 +356,42 @@ input[type="number"] {
   Płatności (ustaw daty sezonu)
     </button>
 
+<!-- HASŁO ADMINA -->
+<button class="full-btn alt" id="btnSetupAdminPass" disabled
+        style="margin-top:12px; width:100%;"
+        onclick="openAdminPassPopup()">
+  Utwórz hasło administratora
+</button>
+
+<!-- POPUP: HASŁO ADMINA -->
+<div id="adminPassPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4000; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:800; font-size:16px; margin-bottom:10px;">
+      Hasło administratora
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font-weight:700;">Ustaw hasło (min. 6 znaków)</div>
+      <input id="adminPassInput" type="password" placeholder="Wpisz hasło"
+             style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+      <div style="font-size:12px; opacity:0.75;">
+        Login admina jest stały: <b>admin</b>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="closeAdminPassPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="saveAdminPass()">Zapisz</button>
+    </div>
+
+    <p id="adminPassMsg" style="margin-top:12px; min-height:1.2em;"></p>
+  </div>
+</div>
+    
     <button class="full-btn" id="btnSetupSubmit" disabled
         style="margin-top:12px; width:100%;"
         onclick="submitSetupAndActivateClub()">Wyślij i aktywuj klub</button>
@@ -366,6 +402,7 @@ input[type="number"] {
     <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
     <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
   </div>
+  
   <!-- POPUP PŁATNOŚCI -->
 <div id="paymentsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
