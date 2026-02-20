@@ -2098,15 +2098,15 @@ let __adminSelectedNazwisko = "";
 
 // ---- Otwarcie okna zawodnika (wywołasz z listy zawodników) ----
 function adminOpenZawodnik(nr, nazwisko) {
-  __adminSelectedNr = String(nr || "").trim();
-  __adminSelectedNazwisko = String(nazwisko || "").trim();
+  // zapamiętaj kontekst
+  window.__adminSelectedNr = String(nr || "").trim();
+  window.__adminSelectedNazw = String(nazwisko || "").trim();
 
+  // ustaw nagłówek
   const h = document.getElementById("adminZawodnikHeader");
-  if (h) h.textContent = `#${__adminSelectedNr} — ${__adminSelectedNazwisko || "—"}`;
+  if (h) h.textContent = `#${window.__adminSelectedNr} — ${window.__adminSelectedNazw || "—"}`;
 
-  const msg = document.getElementById("adminZawodnikMsg");
-  if (msg) msg.textContent = "";
-
+  // pokaż popup (NIE przełączamy widoku!)
   const pop = document.getElementById("adminZawodnikPopup");
   if (pop) pop.classList.remove("hidden");
 }
