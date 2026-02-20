@@ -740,6 +740,94 @@ input[type="number"] {
   </div>
 </div>
 
+    <!-- =================== ADMIN: POPUP ZAWODNIK =================== -->
+<div id="adminZawodnikPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.75);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4600; padding:18px;
+">
+  <div class="card" style="max-width:340px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Zawodnik <span id="adminZawodnikHeader" style="opacity:.9;"></span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button class="full-btn alt" type="button" onclick="adminOpenGroups()">Grupy</button>
+      <button class="full-btn alt" type="button" onclick="adminOpenStats()">Statystyki</button>
+      <button class="full-btn alt" type="button" onclick="adminOpenPayments()">Płatności</button>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminCloseZawodnik()">Zamknij</button>
+    </div>
+
+    <div id="adminZawodnikMsg" style="margin-top:10px; opacity:.9;"></div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: POPUP GRUP (2 rzędy po 5) =================== -->
+<div id="adminGroupsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4700; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Grupy <span id="adminGroupsNrLabel" style="opacity:.85;"></span>
+    </div>
+
+    <div id="adminGroupsGrid" style="
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:10px;
+    "></div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="adminCloseGroupsPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminApplyGroupsPopup()">Zapisz</button>
+    </div>
+
+    <div id="adminGroupsMsg" style="margin-top:10px; opacity:.9;"></div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: POPUP STATYSTYKI =================== -->
+<div id="adminStatsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4700; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Statystyki <span id="adminStatsNrLabel" style="opacity:.85;"></span>
+    </div>
+
+    <div id="adminStatsBody">⏳ Ładowanie…</div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminCloseStatsPopup()">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: POPUP PŁATNOŚCI =================== -->
+<div id="adminPaymentsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4700; padding:18px;
+">
+  <div class="card" style="max-width:380px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Płatności <span id="adminPayNrLabel" style="opacity:.85;"></span>
+    </div>
+
+    <div id="adminPaymentsBody">⏳ Ładowanie…</div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminClosePaymentsPopup()">Zamknij</button>
+    </div>
+  </div>
+</div>
   </div><!-- /app -->
 
 <script>
@@ -2002,7 +2090,225 @@ async function adminSaveGrupy(nr, selectedSetOrArray) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
   }
 }
- 
+
+  /* =================== 66 ADMIN: POPUP ZAWODNIK + GRUPY/STATY/PŁATNOŚCI =================== */
+
+let __adminSelectedNr = "";
+let __adminSelectedNazwisko = "";
+
+// ---- Otwarcie okna zawodnika (wywołasz z listy zawodników) ----
+function adminOpenZawodnik(nr, nazwisko) {
+  __adminSelectedNr = String(nr || "").trim();
+  __adminSelectedNazwisko = String(nazwisko || "").trim();
+
+  const h = document.getElementById("adminZawodnikHeader");
+  if (h) h.textContent = `#${__adminSelectedNr} — ${__adminSelectedNazwisko || "—"}`;
+
+  const msg = document.getElementById("adminZawodnikMsg");
+  if (msg) msg.textContent = "";
+
+  const pop = document.getElementById("adminZawodnikPopup");
+  if (pop) pop.classList.remove("hidden");
+}
+
+function adminCloseZawodnik() {
+  const pop = document.getElementById("adminZawodnikPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+// =================== GRUPY ===================
+let __adminGroupsSet = new Set();
+
+function adminRenderGroupsGrid_() {
+  const grid = document.getElementById("adminGroupsGrid");
+  if (!grid) return;
+
+  const groups = Array.from({ length: 10 }, (_, i) => `G${i + 1}`);
+  grid.innerHTML = groups.map(g => {
+    const checked = __adminGroupsSet.has(g) ? "checked" : "";
+    return `
+      <label style="
+        display:flex; gap:8px; align-items:center; justify-content:center;
+        padding:10px; border:1px solid #333; border-radius:12px; background:#111;
+        cursor:pointer; user-select:none;
+      ">
+        <input type="checkbox" class="adminGrpPick" value="${g}" ${checked} style="transform:scale(1.25);">
+        <span style="font-weight:800;">${g}</span>
+      </label>
+    `;
+  }).join("");
+}
+
+async function adminOpenGroups() {
+  const nr = __adminSelectedNr;
+  if (!nr) return;
+
+  // (na razie) otwieramy bez pobierania z backendu
+  // docelowo: dociągniemy aktualne grupy z arkusza przez GET (adminGetZawodnikDetails)
+  __adminGroupsSet = new Set();
+
+  const lbl = document.getElementById("adminGroupsNrLabel");
+  if (lbl) lbl.textContent = `(#${nr})`;
+
+  const msg = document.getElementById("adminGroupsMsg");
+  if (msg) msg.textContent = "";
+
+  adminRenderGroupsGrid_();
+
+  const pop = document.getElementById("adminGroupsPopup");
+  if (pop) pop.classList.remove("hidden");
+}
+
+function adminCloseGroupsPopup() {
+  const pop = document.getElementById("adminGroupsPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+async function adminApplyGroupsPopup() {
+  const msg = document.getElementById("adminGroupsMsg");
+  if (msg) msg.textContent = "⏳ Zapisuję…";
+
+  const picks = document.querySelectorAll("#adminGroupsGrid .adminGrpPick");
+  __adminGroupsSet = new Set();
+  picks.forEach(ch => { if (ch.checked) __adminGroupsSet.add(ch.value); });
+
+  // ⬇⬇⬇ TU leci zapis do backendu (akcję dopniemy w CORE)
+  const grupyCsv = Array.from(__adminGroupsSet).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
+
+  try {
+    const r = await apiClubPost({ action:"adminSetGrupy", numer: __adminSelectedNr, grupy: grupyCsv });
+    if (!r || !(r.success || r.ok)) {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
+      return;
+    }
+    if (msg) msg.textContent = "✅ Zapisane: " + (grupyCsv || "—");
+    setTimeout(adminCloseGroupsPopup, 350);
+  } catch (e) {
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
+}
+
+// =================== STATYSTYKI ===================
+async function adminOpenStats() {
+  const nr = __adminSelectedNr;
+  if (!nr) return;
+
+  const lbl = document.getElementById("adminStatsNrLabel");
+  if (lbl) lbl.textContent = `(#${nr})`;
+
+  const body = document.getElementById("adminStatsBody");
+  if (body) body.innerHTML = "⏳ Ładowanie…";
+
+  const pop = document.getElementById("adminStatsPopup");
+  if (pop) pop.classList.remove("hidden");
+
+  try {
+    const lista = await apiClubGet("statystyki", { numer: nr });
+
+    // Re-use: Twoje renderStatystyki, ale do innego kontenera:
+    // robimy mini-wrapper:
+    if (body) {
+      const old = document.getElementById("listaStatystyk");
+      // jeśli masz render tylko na #listaStatystyk, to na chwilę podstawimy:
+      // (brzydkie, ale skuteczne i szybkie; później zrobimy elegancki overload)
+      const tmpId = "listaStatystyk";
+      const prev = body.innerHTML;
+      body.innerHTML = `<div id="${tmpId}"></div>`;
+      renderStatystyki(lista);
+    }
+  } catch (e) {
+    if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+
+function adminCloseStatsPopup() {
+  const pop = document.getElementById("adminStatsPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+// =================== PŁATNOŚCI ===================
+async function adminOpenPayments() {
+  const nr = __adminSelectedNr;
+  if (!nr) return;
+
+  const lbl = document.getElementById("adminPayNrLabel");
+  if (lbl) lbl.textContent = `(#${nr})`;
+
+  const body = document.getElementById("adminPaymentsBody");
+  if (body) body.innerHTML = "⏳ Ładowanie…";
+
+  const pop = document.getElementById("adminPaymentsPopup");
+  if (pop) pop.classList.remove("hidden");
+
+  try {
+    // UWAGA: zawodnikowy "platnosci" zwraca raczej zaległości.
+    // Dla admina potrzebujemy: od startu sezonu do miesiąca bieżącego, z flagą paid/unpaid.
+    // Backend dopniemy jako akcję: "platnosciAdmin"
+    const lista = await apiClubGet("platnosciAdmin", { numer: nr });
+
+    renderAdminPayments_(lista);
+  } catch (e) {
+    if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+
+function adminClosePaymentsPopup() {
+  const pop = document.getElementById("adminPaymentsPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+function renderAdminPayments_(lista) {
+  const body = document.getElementById("adminPaymentsBody");
+  if (!body) return;
+
+  if (!Array.isArray(lista) || !lista.length) {
+    body.innerHTML = `<div class="card status-green">Brak płatności do wyświetlenia</div>`;
+    return;
+  }
+
+  body.innerHTML = lista.map(p => {
+    const paid = (p.status === "green" || p.paid === true);
+    const cls = paid ? "status-green" : "status-red";
+
+    const btn = paid ? "" : `
+      <div style="margin-top:10px;">
+        <button class="full-btn" type="button" onclick="adminConfirmPayment('${String(p.id || p.nazwa || "").replace(/'/g,"\\'")}')">
+          Potwierdź wpłatę
+        </button>
+      </div>
+    `;
+
+    return `
+      <div class="card ${cls}" style="text-align:left;">
+        <div style="font-weight:800;">${p.nazwa || "Płatność"}</div>
+        <div>${p.kwota != null ? `${p.kwota} zł` : ""}</div>
+        ${btn}
+      </div>
+    `;
+  }).join("");
+}
+
+async function adminConfirmPayment(paymentIdOrName) {
+  // Optymistycznie: zmieniamy UI od razu na zielono
+  // Backend dopniemy jako: adminConfirmPlatnosc
+  try {
+    const r = await apiClubPost({
+      action: "adminConfirmPlatnosc",
+      numer: __adminSelectedNr,
+      payment: String(paymentIdOrName || "")
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+      return;
+    }
+
+    // odśwież płatności po zapisaniu
+    await adminOpenPayments();
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  }
+}
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
   numerZalogowanego = null;
@@ -2535,13 +2841,18 @@ async function trainerPokazZawodnicy() {
     }
 
     // prosta lista kart – klik w następnym kroku otworzy szczegóły zawodnika
-    if (box) box.innerHTML = lista.map(z => `
-      <div class="card" style="text-align:left; cursor:pointer;"
-           onclick="adminOpenZawodnik('${String(z.nr).replace(/'/g, "\\'")}')">
-        <b>#${z.nr}</b> — ${z.nazwisko}<br>
-        <span style="opacity:0.8;">${z.suma ?? ""}</span>
-      </div>
-    `).join("");
+box.innerHTML = lista.map(z => {
+  const nr = String(z.nr || "").trim();
+  const nazw = String(z.nazwisko || "").replace(/'/g, "\\'");
+
+  return `
+    <div class="card" style="text-align:left; cursor:pointer;"
+         onclick="adminOpenZawodnik('${nr}','${nazw}')">
+      <b>#${nr}</b> — ${z.nazwisko}<br>
+      <span style="opacity:0.8;">${z.suma} treningów łącznie</span>
+    </div>
+  `;
+}).join('');
 
   } catch (e) {
     if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ Błąd: ${e?.message || e}</div>`;
