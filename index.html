@@ -2254,38 +2254,47 @@ function renderStatystyki(lista) {
   const div = document.getElementById("listaStatystyk");
   if (!div) return;
 
-  // jeśli backend zwróci błąd jako obiekt
-  if (lista && typeof lista === "object" && !Array.isArray(lista) && (lista.success === false || lista.error)) {
-    div.innerHTML = `<p>Błąd: ${String(lista.error || "Nieznany błąd")}</p>`;
+  if (!Array.isArray(lista) || lista.length === 0) {
+    div.innerHTML = "<p>Brak danych</p>";
     return;
   }
 
-  const MONTHS_PL_CAP_STATS = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
+  // Kolejność sezonowa (hokejowa, nie kalendarzowa): Wrzesień -> Sierpień
+  const seasonOrder = ["Wrzesień","Październik","Listopad","Grudzień","Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień"];
+  const orderIdx = Object.fromEntries(seasonOrder.map((m, i) => [m.toLowerCase(), i]));
+
+  // Sortujemy po sezonie, a jak trafi się dziwny nagłówek — na koniec
+  const sorted = [...lista].sort((a, b) => {
+    const ai = orderIdx[String(a.miesiac || "").toLowerCase()];
+    const bi = orderIdx[String(b.miesiac || "").toLowerCase()];
+    const aIdx = (ai == null ? 999 : ai);
+    const bIdx = (bi == null ? 999 : bi);
+    return aIdx - bIdx;
+  });
+
+  const suma = sorted.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
+
+  // Bieżący miesiąc (PL, wielka litera jak w nagłówkach)
   const now = new Date();
-  const currentMonthIdx = now.getMonth();
-
-  // od stycznia do bieżącego
-  const monthsAll = [];
-  for (let i = 0; i <= currentMonthIdx; i++) monthsAll.push(MONTHS_PL_CAP_STATS[i]);
-
-  const map = {};
-  if (Array.isArray(lista)) {
-    lista.forEach(s => {
-      if (!s || !s.miesiac) return;
-      map[String(s.miesiac).toLowerCase()] = Number(s.treningi) || 0;
-    });
-  }
-
-  const full = monthsAll.map(m => ({ miesiac: m, treningi: map[m.toLowerCase()] ?? 0 }));
-  const suma = full.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
+  const currentMonthName = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"][now.getMonth()];
 
   div.innerHTML =
-    full.map(s => `<div class="card">📅 ${s.miesiac} — 🏒 ${s.treningi} treningów</div>`).join("") +
-    `<div class="card" style="background:#222;margin-top:20px;font-weight:bold;">
+    sorted.map(s => {
+      const miesiac = String(s.miesiac || "").trim();
+      const treningi = Number(s.treningi) || 0;
+
+      // delikatne wyróżnienie bieżącego miesiąca
+      const isCurrent = miesiac.toLowerCase() === currentMonthName.toLowerCase();
+      const badge = isCurrent ? ` <span style="opacity:.9;font-weight:700;">(teraz)</span>` : "";
+
+      return `<div class="card">
+        📅 ${miesiac}${badge} — 🏒 <b>${treningi}</b>
+      </div>`;
+    }).join("") +
+    `<div class="card" style="background:#222;margin-top:20px;font-weight:800;">
       🔥 Łącznie: ${suma} treningów w sezonie
     </div>`;
 }
-
 function powrotDoTreningow() {
   goToView("homeView"); // zamiast appBack() — stabilne
 }
