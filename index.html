@@ -1709,7 +1709,7 @@ function closeAdminPassPopup() {
   if (pop) pop.classList.add("hidden");
 }
 
-function saveAdminPass() {
+async function saveAdminPass() {
   const inp = document.getElementById("adminPassInput");
   const msg = document.getElementById("adminPassMsg");
   const btn = document.getElementById("btnSetupAdminPass");
@@ -1721,14 +1721,30 @@ function saveAdminPass() {
     return;
   }
 
-  setupDraft.adminPass = pass;
+  if (msg) msg.textContent = "⏳ Zapisuję hasło administratora...";
 
-  // UI feedback
-  if (btn) btn.textContent = "Hasło administratora ✅";
-  if (msg) msg.textContent = "✅ Zapisano (lokalnie). Backend w kolejnym kroku.";
+  try {
+    const r = await apiClubPost({
+      action: "adminSetPassword",
+      adminPass: pass
+    });
 
-  // zamknij po chwili, żeby było „klik i spokój”
-  setTimeout(() => closeAdminPassPopup(), 500);
+    if (!r || (r.success !== true && r.ok !== true)) {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu hasła.");
+      return;
+    }
+
+    // zapis lokalny (żeby UI wiedziało, że już jest ustawione)
+    setupDraft.adminPass = pass;
+
+    if (btn) btn.textContent = "Hasło administratora ✅";
+    if (msg) msg.textContent = "✅ Hasło zapisane w panelu administracyjnym.";
+
+    setTimeout(() => closeAdminPassPopup(), 500);
+
+  } catch (e) {
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
 }
   
  async function submitSetupAndActivateClub() {
