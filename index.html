@@ -603,6 +603,21 @@ input[type="number"] {
       <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
     </div>
 
+    <!-- PANEL ADMINISTRATORA -->
+<div id="adminPanelView" class="container hidden">
+  <h1>Panel administratora</h1>
+
+  <button class="full-btn" onclick="adminPokazZawodnikow()">👥 Zawodnicy</button>
+  <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
+</div>
+
+<!-- LISTA ZAWODNIKÓW (ADMIN) -->
+<div id="adminZawodnicyView" class="container hidden">
+  <h1>Lista zawodników</h1>
+  <div id="adminListaZawodnikow">Ładowanie...</div>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+</div>
+
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
     <div id="trainerZawodnicyView" class="container hidden">
       <h1>Lista zawodników</h1>
@@ -1982,6 +1997,11 @@ async function zaloguj() {
       return;
     }
 
+    if (data.role === "admin") {
+  goToView("adminPanelView");
+  return;
+}
+
   } catch (e) {
     komunikat.innerText = "Błąd połączenia: " + (e?.message || e);
   }
@@ -2439,6 +2459,38 @@ async function trainerPokazZawodnicy() {
   }
 }
 
+  async function adminPokazZawodnikow() {
+  goToView("adminZawodnicyView");
+  const box = document.getElementById("adminListaZawodnikow");
+  if (box) box.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
+
+  try {
+    // admin widzi wszystkich – nie filtrujemy po grupach
+    const lista = await apiClubGet("listaZawodnikow", { grupy: "" });
+
+    if (!Array.isArray(lista) || lista.length === 0) {
+      if (box) box.innerHTML = "<div class='card' style='background:#111;'>Brak danych</div>";
+      return;
+    }
+
+    // prosta lista kart – klik w następnym kroku otworzy szczegóły zawodnika
+    if (box) box.innerHTML = lista.map(z => `
+      <div class="card" style="text-align:left; cursor:pointer;"
+           onclick="adminOpenZawodnik('${String(z.nr).replace(/'/g, "\\'")}')">
+        <b>#${z.nr}</b> — ${z.nazwisko}<br>
+        <span style="opacity:0.8;">${z.suma ?? ""}</span>
+      </div>
+    `).join("");
+
+  } catch (e) {
+    if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+
+  function adminOpenZawodnik(nr) {
+  alert("Admin: szczegóły zawodnika #" + nr + " (następny krok)");
+}
+  
 function renderTreningiTrainer(lista) {
   const div = document.getElementById("trainerListaWydarzen");
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
