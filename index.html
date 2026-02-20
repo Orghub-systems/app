@@ -620,19 +620,15 @@ input[type="number"] {
 
    <!-- KARTA ZAWODNIKA (ADMIN) -->
 <div id="adminZawodnikView" class="container hidden">
-  <h1 id="adminZawodnikTitle" style="margin-bottom:14px;">Zawodnik</h1>
+  <h1 id="adminZawodnikTitle">Zawodnik</h1>
 
-  <div style="width:100%; max-width:520px; margin:0 auto;">
-    <div class="card" style="text-align:center;">
-      <button class="full-btn alt" style="width:100%;" type="button" onclick="adminOpenGroups()">Grupy</button>
-      <button class="full-btn alt" style="width:100%; margin-top:10px;" type="button" onclick="adminOpenStats()">Statystyki</button>
-      <button class="full-btn alt" style="width:100%; margin-top:10px;" type="button" onclick="adminOpenPayments()">Płatności</button>
-    </div>
+  <button class="full-btn" onclick="adminOpenGroups()">Grupy</button>
+  <button class="full-btn" onclick="adminOpenStats()">Statystyki</button>
+  <button class="full-btn" onclick="adminOpenPayments()">Płatności</button>
 
-    <button class="full-btn alt" style="width:100%; margin-top:12px;" type="button" onclick="appBack()">⬅ Powrót</button>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
 
-    <p id="adminZawodnikMsg" style="margin-top:10px; min-height:1.2em;"></p>
-  </div>
+  <p id="adminZawodnikMsg" style="margin-top:10px;"></p>
 </div>
 
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
