@@ -1965,6 +1965,43 @@ if (btnCopy) {
   }
 }
 window.submitSetupAndActivateClub = submitSetupAndActivateClub;
+
+  /* =================== 65 ADMIN PANEL (frontend) =================== */
+
+async function adminSaveGrupy(nr, selectedSetOrArray) {
+  const numer = String(nr || "").trim();
+  if (!numer) { alert("❌ Brak numeru zawodnika"); return; }
+
+  // accepted: Set, Array, string
+  let grupyCsv = "";
+  if (typeof selectedSetOrArray === "string") {
+    grupyCsv = selectedSetOrArray.trim();
+  } else if (selectedSetOrArray && typeof selectedSetOrArray.forEach === "function") {
+    const arr = [];
+    selectedSetOrArray.forEach(v => arr.push(String(v || "").trim()));
+    grupyCsv = arr.filter(Boolean).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
+  } else if (Array.isArray(selectedSetOrArray)) {
+    grupyCsv = selectedSetOrArray.map(v=>String(v||"").trim()).filter(Boolean)
+      .sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
+  }
+
+  try {
+    const r = await apiClubPost({
+      action: "adminSetGrupy",
+      numer,
+      grupy: grupyCsv
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      alert("❌ Zapis grup nie wyszedł: " + (r?.error || r?.message || JSON.stringify(r)));
+      return;
+    }
+
+    alert("✅ Zapisano grupy: " + (r.written || grupyCsv || "—"));
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  }
+}
  
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
