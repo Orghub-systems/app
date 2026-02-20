@@ -618,6 +618,22 @@ input[type="number"] {
   <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
 </div>
 
+   <!-- KARTA ZAWODNIKA (ADMIN) -->
+<div id="adminZawodnikView" class="container hidden">
+  <h1 id="adminZawodnikTitle">Zawodnik</h1>
+
+  <div class="card" id="adminZawodnikInfo" style="text-align:left;">
+    Ładowanie...
+  </div>
+
+  <div class="card" style="text-align:left;">
+    <b>Statystyki</b>
+    <div id="adminStatystykiBox">Ładowanie...</div>
+  </div>
+
+  <button class="full-btn alt" onclick="goToView('adminZawodnicyView')">⬅ Powrót do listy</button>
+</div> 
+
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
     <div id="trainerZawodnicyView" class="container hidden">
       <h1>Lista zawodników</h1>
@@ -2488,8 +2504,52 @@ async function trainerPokazZawodnicy() {
   }
 }
 
-  function adminOpenZawodnik(nr) {
-  alert("Admin: szczegóły zawodnika #" + nr + " (następny krok)");
+async function adminOpenZawodnik(nr) {
+  goToView("adminZawodnikView");
+
+  const title = document.getElementById("adminZawodnikTitle");
+  const info  = document.getElementById("adminZawodnikInfo");
+  const stat  = document.getElementById("adminStatystykiBox");
+
+  if (title) title.textContent = "Zawodnik #" + nr;
+  if (info)  info.innerHTML = "⏳ Ładowanie danych zawodnika...";
+  if (stat)  stat.innerHTML = "⏳ Ładowanie statystyk...";
+
+  try {
+    // 1. Statystyki (już masz w CORE)
+    const s = await apiClubGet("statystyki", { numer: nr });
+
+    if (stat) {
+      if (!s || s.success === false) {
+        stat.innerHTML = "<span style='color:#f66;'>Brak statystyk</span>";
+      } else {
+        stat.innerHTML = `
+          Treningi: <b>${s.treningi || 0}</b><br>
+          Obecności: <b>${s.obecnosci || 0}</b><br>
+          % obecności: <b>${s.procent || 0}%</b>
+        `;
+      }
+    }
+
+    // 2. Płatności (preview – tylko odczyt)
+    const p = await apiClubGet("platnosci", { numer: nr });
+
+    if (info) {
+      if (!p || p.success === false) {
+        info.innerHTML = "Brak danych płatności";
+      } else {
+        info.innerHTML = `
+          <b>Login:</b> #${nr}<br>
+          <b>Do zapłaty:</b> <span style="color:${p.doZaplaty > 0 ? '#f66' : '#6f6'};">
+            ${p.doZaplaty || 0} zł
+          </span>
+        `;
+      }
+    }
+
+  } catch (e) {
+    if (info) info.innerHTML = "❌ Błąd: " + (e?.message || e);
+  }
 }
   
 function renderTreningiTrainer(lista) {
