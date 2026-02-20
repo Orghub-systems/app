@@ -1660,7 +1660,9 @@ function updateSetupPaymentsState_() {
     btnPay.textContent = enablePayments ? "Płatności" : "Płatności (ustaw daty sezonu)";
   }
 
-  // dalej zostawiamy disabled, odblokujemy po zapisaniu płatności
+   const btnAdmin = document.getElementById("btnSetupAdminPass");
+  if (btnAdmin) btnAdmin.disabled = !enablePayments; 
+
   if (btnSubmit) btnSubmit.disabled = true;
 
   if (msg) {
@@ -1682,6 +1684,53 @@ function monthKey_(m) {
   ).trim();
 }
 
+ /* =================== 62A PANEL 2: HASŁO ADMINA (UI) =================== */
+
+// stan roboczy hasła admina (na tym etapie tylko frontend)
+setupDraft.adminPass = setupDraft.adminPass || "";
+
+function openAdminPassPopup() {
+  const pop = document.getElementById("adminPassPopup");
+  const inp = document.getElementById("adminPassInput");
+  const msg = document.getElementById("adminPassMsg");
+
+  if (msg) msg.textContent = "";
+  if (inp) {
+    inp.value = setupDraft.adminPass || "";
+    inp.focus();
+  }
+  if (pop) pop.classList.remove("hidden");
+}
+
+function closeAdminPassPopup() {
+  const pop = document.getElementById("adminPassPopup");
+  const msg = document.getElementById("adminPassMsg");
+  if (msg) msg.textContent = "";
+  if (pop) pop.classList.add("hidden");
+}
+
+function saveAdminPass() {
+  const inp = document.getElementById("adminPassInput");
+  const msg = document.getElementById("adminPassMsg");
+  const btn = document.getElementById("btnSetupAdminPass");
+
+  const pass = String(inp?.value || "").trim();
+
+  if (pass.length < 6) {
+    if (msg) msg.textContent = "❌ Hasło musi mieć minimum 6 znaków.";
+    return;
+  }
+
+  setupDraft.adminPass = pass;
+
+  // UI feedback
+  if (btn) btn.textContent = "Hasło administratora ✅";
+  if (msg) msg.textContent = "✅ Zapisano (lokalnie). Backend w kolejnym kroku.";
+
+  // zamknij po chwili, żeby było „klik i spokój”
+  setTimeout(() => closeAdminPassPopup(), 500);
+}
+  
  async function submitSetupAndActivateClub() {
   console.log('[DIAG] submitSetupAndActivateClub fired');
   const msg = document.getElementById("setupMsg");
