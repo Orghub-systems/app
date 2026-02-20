@@ -622,24 +622,16 @@ input[type="number"] {
 <div id="adminZawodnikView" class="container hidden">
   <h1 id="adminZawodnikTitle">Zawodnik</h1>
 
-  <div class="card" id="adminZawodnikInfo" style="text-align:left;">
-    Ładowanie...
+  <div class="card" style="max-width:320px;margin:12px auto;">
+    <button class="full-btn alt" type="button" onclick="adminOpenGroups()">Grupy</button>
+    <button class="full-btn alt" type="button" onclick="adminOpenStats()">Statystyki</button>
+    <button class="full-btn alt" type="button" onclick="adminOpenPayments()">Płatności</button>
+
+    <button class="full-btn" style="margin-top:12px;" type="button" onclick="appBack()">⬅ Powrót</button>
+
+    <p id="adminZawodnikMsg" style="margin-top:10px; min-height:1.2em;"></p>
   </div>
-  <div class="card" style="text-align:left;">
-  <b>Grupy treningowe</b>
-  <div id="adminGrupyBox" style="margin-top:10px; display:grid; grid-template-columns:repeat(2,1fr); gap:6px;">
-    Ładowanie...
-  </div>
-  <button class="full-btn" style="margin-top:12px;" onclick="adminZapiszGrupy()">Zapisz grupy</button>
 </div>
-
-  <div class="card" style="text-align:left;">
-    <b>Statystyki</b>
-    <div id="adminStatystykiBox">Ładowanie...</div>
-  </div>
-
-  <button class="full-btn alt" onclick="goToView('adminZawodnicyView')">⬅ Powrót do listy</button>
-</div> 
 
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
     <div id="trainerZawodnicyView" class="container hidden">
