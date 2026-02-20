@@ -1968,11 +1968,12 @@ async function zaloguj() {
 
   try {
     const data = await apiClubPost({ mode: "login", numer: login, haslo });
-
-    if (!data.success) {
-      komunikat.innerText = "❌ " + (data.message || "Błąd logowania");
-      return;
-    }
+    
+if (!data.success) {
+  const err = data?.error || data?.message || "Błąd logowania";
+  komunikat.innerText = "❌ " + err;
+  return;
+}
 
     komunikat.innerText = "✅ Zalogowano";
 
