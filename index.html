@@ -673,6 +673,19 @@ input[type="number"] {
   <p id="adminGrupyMsg" style="margin-top:10px;"></p>
 </div>
 
+    <!-- ADMIN: STATYSTYKI (EKRAN) -->
+    
+    <div id="adminStatsView" class="container hidden">
+  <h1 id="adminStatsTitle">Statystyki</h1>
+
+  <div id="adminStatsBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
+  </div>
+
+  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
+
+  <p id="adminStatsMsg" style="margin-top:10px;"></p>
+</div>
     <!-- ADMIN: PŁATNOŚCI ZAWODNIKA -->
 <div id="adminPaymentsView" class="container hidden">
   <h1 id="adminPaymentsTitle">Płatności</h1>
@@ -2225,21 +2238,40 @@ function adminOpenGroups() {
 // ADMIN: Statystyki zawodnika (reuse ekranu zawodnika)
 async function adminOpenStats() {
   const nr = String(window.__adminSelectedNr || "").trim();
+  const nazw = String(window.__adminSelectedNazw || "").trim();
   if (!nr) {
     alert("❌ Brak wybranego zawodnika (nr).");
     return;
   }
 
-  goToView("statsView"); // ten sam ekran co zawodnik
+  goToView("adminStatsView");
 
-  const div = document.getElementById("listaStatystyk");
-  if (div) div.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
+  const title = document.getElementById("adminStatsTitle");
+  if (title) title.textContent = `Statystyki — #${nr}${nazw ? " — " + nazw : ""}`;
+
+  const body = document.getElementById("adminStatsBody");
+  if (body) body.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie...</div>`;
+
+  const msg = document.getElementById("adminStatsMsg");
+  if (msg) msg.textContent = "";
 
   try {
     const lista = await apiClubGet("statystyki", { numer: nr });
-    renderStatystyki(lista); // używamy istniejącego renderera zawodnika
+
+    // jeśli masz gotowy renderer zawodnika, użyjemy go w kontenerze admina:
+    // 1) robimy tymczasowy kontener o ID "listaStatystyk" w adminStatsBody
+    if (body) body.innerHTML = `<div id="listaStatystyk"></div>`;
+
+    // 2) odpalamy istniejący renderer (zawodnikowy)
+    renderStatystyki(lista);
+
+    // 3) popraw nagłówek jeśli renderStatystyki wstawia "Moje statystyki"
+    // (opcjonalnie, jeśli u Ciebie to się dzieje)
+    const h = document.querySelector("#adminStatsView h1");
+    if (h) h.textContent = `Statystyki — #${nr}${nazw ? " — " + nazw : ""}`;
+
   } catch (e) {
-    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+    if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 }
   
