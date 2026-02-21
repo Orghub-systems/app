@@ -2261,43 +2261,6 @@ async function adminApplyGroupsPopup() {
   }
 }
 
-// =================== STATYSTYKI ===================
-async function adminOpenStats() {
-  const nr = __adminSelectedNr;
-  if (!nr) return;
-
-  const lbl = document.getElementById("adminStatsNrLabel");
-  if (lbl) lbl.textContent = `(#${nr})`;
-
-  const body = document.getElementById("adminStatsBody");
-  if (body) body.innerHTML = "⏳ Ładowanie…";
-
-  const pop = document.getElementById("adminStatsPopup");
-  if (pop) pop.classList.remove("hidden");
-
-  try {
-    const lista = await apiClubGet("statystyki", { numer: nr });
-
-    // Re-use: Twoje renderStatystyki, ale do innego kontenera:
-    // robimy mini-wrapper:
-    if (body) {
-      const old = document.getElementById("listaStatystyk");
-      // jeśli masz render tylko na #listaStatystyk, to na chwilę podstawimy:
-      // (brzydkie, ale skuteczne i szybkie; później zrobimy elegancki overload)
-      const tmpId = "listaStatystyk";
-      const prev = body.innerHTML;
-      body.innerHTML = `<div id="${tmpId}"></div>`;
-      renderStatystyki(lista);
-    }
-  } catch (e) {
-    if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
-  }
-}
-
-function adminCloseStatsPopup() {
-  const pop = document.getElementById("adminStatsPopup");
-  if (pop) pop.classList.add("hidden");
-}
 
 // =================== PŁATNOŚCI ===================
 async function adminOpenPayments() {
