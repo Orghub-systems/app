@@ -2428,30 +2428,34 @@ function renderPaymentTile_(p) {
   `;
 }
   
-async function adminConfirmPayment(nr, col) {
-  if (!nr || !col) return;
+async function adminConfirmPayment(colNum) {
+  // colNum = numer kolumny w Kartotece (np. 7 dla G)
+  const nr = String(window.__adminSelectedNr || "").trim();
+  const col = Number(colNum);
 
-  const ok = confirm(`Potwierdzić wpłatę dla #${nr}?`);
-  if (!ok) return;
+  if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
+  if (!col || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
 
-  const msg = document.getElementById("adminPaymentsMsg");
-  if (msg) msg.textContent = "⏳ Zapisuję...";
+  const ok = confirm("Potwierdzam zapłatę\n\nTAK — zapisuję\nNIE — anuluję");
+  if (!ok) return; // NIE zamyka nic więcej — po prostu nic nie robimy
 
   try {
-    const res = await apiClubPost("potwierdzPlatnoscAdmin", {
-      numer: String(nr),
-      col: String(col)
+    const r = await apiClubPost({
+      action: "adminConfirmPlatnosc",
+      numer: nr,
+      col: col
     });
 
-    if (!res || res.success === false) {
-      if (msg) msg.textContent = "❌ " + (res?.error || res?.message || "Błąd zapisu");
+    if (!r || !(r.success || r.ok)) {
+      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
       return;
     }
 
-    if (msg) msg.textContent = "✅ Zapisano";
-    await adminOpenPayments(); // refresh listy
+    // odśwież widok płatności po zapisie
+    await adminOpenPayments();
+
   } catch (e) {
-    if (msg) msg.textContent = "❌ " + (e?.message || e);
+    alert("❌ Błąd połączenia: " + (e?.message || e));
   }
 }
   
