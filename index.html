@@ -2462,9 +2462,14 @@ function renderPaymentTile_(p) {
   const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
 
   // ✅ przekazujemy kolumnę, a nie nr zawodnika
-  const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, ${JSON.stringify(String(p.label || ""))})">Zarejestruj płatność</button>`
-    : "";
+const btn = (!paid)
+  ? `<button class="full-btn" style="margin-top:10px;"
+        data-col="${Number(p.col)}"
+        data-label="${escAttr_(p.label || "")}"
+        onclick="adminConfirmPaymentFromBtn(this)">
+       Zarejestruj płatność
+     </button>`
+  : "";
 
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
@@ -2614,6 +2619,21 @@ function adminConfirmPayment(colNum, label) {
 
   const pop = document.getElementById("adminConfirmPayPopup");
   if (pop) pop.classList.remove("hidden");
+}
+
+  function escAttr_(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function adminConfirmPaymentFromBtn(btn) {
+  const col = Number(btn?.dataset?.col);
+  const label = String(btn?.dataset?.label || "");
+  adminConfirmPayment(col, label);
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
