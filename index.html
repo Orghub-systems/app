@@ -2813,20 +2813,14 @@ async function pokazStatystyki() {
     if (div) div.innerHTML = `<p>Błąd ładowania statystyk: ${String(e)}</p>`;
   }
 }
-
 function renderStatystyki(lista) {
-  // priorytet: jeśli adminowy kontener jest widoczny (aktywny), użyj go
-  let div = document.getElementById("adminStatsView");
-  const isAdminActive = div && !div.classList.contains("hidden");
-
-  if (isAdminActive) {
-    div = document.getElementById("adminStatsBody");
-  } else {
-    div = document.getElementById("listaStatystyk");
-  }
+  // ✅ Kontener zależny od widoku (admin ma swój)
+  const isAdminStats = (currentView === "adminStatsView");
+  const div = isAdminStats
+    ? document.getElementById("adminStatsBody")
+    : document.getElementById("listaStatystyk");
 
   if (!div) return;
-}
 
   if (!Array.isArray(lista) || lista.length === 0) {
     div.innerHTML = "<p>Brak danych</p>";
