@@ -925,6 +925,22 @@ input[type="number"] {
 </div>
 
 <!-- =================== ADMIN: POPUP PŁATNOŚCI =================== -->
+<div id="adminConfirmPayPopup" class="container hidden">
+  <h1>Potwierdzenie</h1>
+
+  <div class="card">
+    <p id="adminConfirmPayMsg">Potwierdzam zapłatę</p>
+  </div>
+
+  <button id="adminConfirmPayYes" class="full-btn" style="background:#1a7f37;" onclick="adminDoConfirmPayment()">
+    TAK
+  </button>
+
+  <button class="full-btn alt" onclick="adminCancelConfirmPayment()">
+    NIE
+  </button>
+</div>
+    
 <div id="adminPaymentsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
   display:flex; justify-content:center; align-items:center;
@@ -995,6 +1011,9 @@ let numerZalogowanego = null;
 let grupaZalogowanego = null;
 window.grupyTrenera = "";
 let currentView = "loginView";
+
+window.__adminPendingPayCol = null;
+window.__adminPendingPayLabel = "";
 
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
@@ -2394,9 +2413,9 @@ function renderAdminPayments_(lista) {
 
     const btn = paid ? "" : `
       <div style="margin-top:10px;">
-              <button class="full-btn" onclick="adminConfirmPayment(${it.col}, '${String(it.label||"").replace(/'/g,"\\'")}')">
+            <button class="full-btn" onclick="adminAskConfirmPayment(${it.col}, '${it.label}')">
               Zarejestruj płatność
-          </button>
+        </button>
       </div>
     `;
 
@@ -2563,6 +2582,46 @@ function adminOpenPayConfirmModal_(text, onYes) {
   });
 
   modal.classList.remove("hidden");
+}
+  window.__adminPendingPayCol = null;
+window.__adminPendingPayLabel = "";
+
+function adminAskConfirmPayment(col, label) {
+  window.__adminPendingPayCol = Number(col);
+  window.__adminPendingPayLabel = label || "";
+
+  document.getElementById("adminConfirmPayMsg").textContent =
+    "Potwierdzam zapłatę: " + window.__adminPendingPayLabel;
+
+  document.getElementById("adminConfirmPayPopup").classList.remove("hidden");
+}
+
+async function adminDoConfirmPayment() {
+  const col = window.__adminPendingPayCol;
+  const nr  = window.__adminSelectedNr;
+
+  try {
+    const r = await apiClubPost({
+      action: "potwierdzPlatnoscAdmin",
+      numer: nr,
+      col: col
+    });
+
+    if (!r || !r.success) {
+      alert("Błąd zapisu: " + (r?.error || "nieznany"));
+      return;
+    }
+
+    document.getElementById("adminConfirmPayPopup").classList.add("hidden");
+    await adminOpenPayments();
+
+  } catch (e) {
+    alert("Błąd połączenia: " + e);
+  }
+}
+
+function adminCancelConfirmPayment() {
+  document.getElementById("adminConfirmPayPopup").classList.add("hidden");
 }
 
 function adminClosePayConfirmModal_() {
