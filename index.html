@@ -635,12 +635,36 @@ input[type="number"] {
 <div id="adminGrupyView" class="container hidden">
   <h1 id="adminGrupyTitle">Grupy</h1>
 
-  <div class="card" style="text-align:left;">
-    <div id="adminGrupyGrid" style="
+  <!-- KAFEL 1: G1–G5 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="
       display:grid;
       grid-template-columns: repeat(5, 1fr);
-      gap:10px;
-    "></div>
+      gap:6mm;
+      text-align:center;
+    ">
+      <label><input type="checkbox" class="adminGrupaChk" value="G1"> G1</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G2"> G2</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G3"> G3</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G4"> G4</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G5"> G5</label>
+    </div>
+  </div>
+
+  <!-- KAFEL 2: G6–G10 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6mm;
+      text-align:center;
+    ">
+      <label><input type="checkbox" class="adminGrupaChk" value="G6"> G6</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G7"> G7</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G8"> G8</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G9"> G9</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G10"> G10</label>
+    </div>
   </div>
 
   <button class="full-btn" onclick="adminSaveGrupyLocal()">Zapisz</button>
