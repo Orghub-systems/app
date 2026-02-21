@@ -3582,6 +3582,10 @@ async function trainerShowEditPopup(miesiac, col5) {
   // 3) pokaż popup od razu, ale z komunikatem "ładuję"
   if (pop) pop.style.display = "flex";
 
+  // ✅ zawsze podepnij klik do przycisku w tym popupie (unikamy duplikatów ID w innych miejscach)
+const saveBtn = pop ? pop.querySelector("#btnEditSave") : null;
+if (saveBtn) saveBtn.onclick = trainerSaveEditEvent;
+
   // 4) załaduj opcje trenerów do selectów
   await zaladujListeTrenerowDoEdycji();
 
