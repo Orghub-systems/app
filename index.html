@@ -2462,7 +2462,7 @@ function renderPaymentTile_(p) {
     : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
   const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment('${nr}', ${p.col})">Potwierdź wpłatę</button>`
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment('${nr}', ${p.col})">Zarejestruj płatność</button>`
     : "";
 
   return `
@@ -2470,7 +2470,8 @@ function renderPaymentTile_(p) {
       <div style="display:flex; justify-content:space-between; gap:10px;">
         <div>
           <div style="opacity:.9; font-size:14px;">${p.typ === "skladka" ? "Składka" : "Zajęcia dodatkowe"}</div>
-          <div style="font-size:18px; font-weight:800;">${p.label || ""}</div>
+          <div style="font-size:
+          18px; font-weight:800;">${p.label || ""}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:18px; font-weight:800;">${kw} zł</div>
