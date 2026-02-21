@@ -3787,6 +3787,14 @@ window.addEventListener('load', () => {
 
   // router + theme
   startApp_();
+  const btn = document.getElementById("btnEditSave");
+if (btn) {
+  btn.onclick = () => {
+    const m = document.getElementById("editEventMsg");
+    if (m) m.textContent = "✅ Klik działa (handler podpięty)";
+    trainerSaveEditEvent();
+  };
+}
 
   // splash ma być zawsze widoczny minimalnie chwilę (żeby nie "mrugał")
   if (splash) {
