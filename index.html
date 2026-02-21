@@ -2411,38 +2411,7 @@ async function adminOpenPayments() {
   }
 }
   
-function renderAdminPayments_(lista) {
-  const body = document.getElementById("adminPaymentsBody");
-  if (!body) return;
-
-  if (!Array.isArray(lista) || !lista.length) {
-    body.innerHTML = `<div class="card status-green">Brak płatności do wyświetlenia</div>`;
-    return;
-  }
-
-  body.innerHTML = lista.map(p => {
-    const paid = (p.status === "green" || p.paid === true);
-    const cls = paid ? "status-green" : "status-red";
-
-    const btn = paid ? "" : `
-      <div style="margin-top:10px;">
-            <button class="full-btn" onclick="adminAskConfirmPayment(${it.col}, '${it.label}')">
-              Zarejestruj płatność
-        </button>
-      </div>
-    `;
-
-    return `
-      <div class="card ${cls}" style="text-align:left;">
-        <div style="font-weight:800;">${p.nazwa || "Płatność"}</div>
-        <div>${p.kwota != null ? `${p.kwota} zł` : ""}</div>
-        ${btn}
-      </div>
-    `;
-  }).join("");
-}
-
-  function renderAdminPayments_(res) {
+function renderAdminPayments_(res) {
   const body = document.getElementById("adminPaymentsBody");
   const msg  = document.getElementById("adminPaymentsMsg");
   if (!body) return;
@@ -2458,7 +2427,6 @@ function renderAdminPayments_(lista) {
     return;
   }
 
-  // grupujemy ładnie: osobno "Składki" i "Zajęcia dodatkowe"
   const skladki = items.filter(x => x.typ === "skladka");
   const zajecia = items.filter(x => x.typ === "zajecia");
 
@@ -2484,17 +2452,19 @@ function renderPaymentsSection_(title, arr) {
 }
 
 function renderPaymentTile_(p) {
-  const nr = String(window.__adminSelectedNr || "").trim();
   const paid = !!p.zaplacono;
   const kw = Number(p.kwota || 0);
 
-  const bg = paid ? "#123a1a" : "#3a1414"; // zielono / czerwono (w stylu apki)
+  const bg = paid ? "#123a1a" : "#3a1414";
   const badge = paid
     ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
     : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
+  const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
+
+  // ✅ przekazujemy kolumnę, a nie nr zawodnika
   const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment('${nr}', ${p.col})">Zarejestruj płatność</button>`
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
     : "";
 
   return `
@@ -2502,8 +2472,7 @@ function renderPaymentTile_(p) {
       <div style="display:flex; justify-content:space-between; gap:10px;">
         <div>
           <div style="opacity:.9; font-size:14px;">${p.typ === "skladka" ? "Składka" : "Zajęcia dodatkowe"}</div>
-          <div style="font-size:
-          18px; font-weight:800;">${p.label || ""}</div>
+          <div style="font-size:18px; font-weight:800;">${p.label || ""}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:18px; font-weight:800;">${kw} zł</div>
@@ -2515,40 +2484,6 @@ function renderPaymentTile_(p) {
   `;
 }
   
-async function adminConfirmPayment(colNum) {
-  // colNum = numer kolumny w Kartotece (np. 7 dla G)
-  const nr = String(window.__adminSelectedNr || "").trim();
-  const col = Number(colNum);
-
-  if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
-  if (!col || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
-
-  const ok = confirm("Potwierdzam zapłatę\n\nTAK — zapisuję\nNIE — anuluję");
-  if (!ok) return; // NIE zamyka nic więcej — po prostu nic nie robimy
-
-  try {
-    const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",
-      numer: nr,
-      col: col
-    });
-
-    if (!r || !(r.success || r.ok)) {
-      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
-      return;
-    }
-
-    // odśwież widok płatności po zapisie
-    await adminOpenPayments();
-
-  } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
-  }
-}
-
-  // trzymamy "kontekst" klikniętej płatności
-window.__adminPayConfirmCtx = null;
-
 function adminOpenPayConfirmModal_(text, onYes) {
   const modal = document.getElementById("adminPayConfirmModal");
   const txt   = document.getElementById("adminPayConfirmText");
@@ -2661,30 +2596,34 @@ function adminClosePayConfirmModal_() {
 }
 
 // =================== ADMIN: KLIK "Zarejestruj płatność" ===================
-async function adminConfirmPayment(colNum, label) {
+ async function adminConfirmPayment(colNum, label) {
   const nr  = String(window.__adminSelectedNr || "").trim();
   const col = Number(colNum);
 
   if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
-  if (!col || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
+  if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
 
   const text = label ? `Potwierdzam zapłatę\n${label}` : "Potwierdzam zapłatę";
+  const ok = confirm(text + "\n\nTAK — zapisuję\nNIE — anuluję");
+  if (!ok) return;
 
-  adminOpenPayConfirmModal_(text, async () => {
+  try {
     const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",
+      action: "adminConfirmPlatnosc",  // upewnij się, że backend ma tę akcję
       numer: nr,
       col: col
     });
 
     if (!r || !(r.success || r.ok)) {
-      throw new Error(r?.error || r?.message || "Nie zapisano");
+      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+      return;
     }
 
-    // odśwież płatności w tle
-    await adminOpenPayments();
-  });
-}     
+    await adminOpenPayments(); // odśwież
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  }
+}
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
