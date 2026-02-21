@@ -2815,19 +2815,28 @@ async function pokazStatystyki() {
 }
 
 function renderStatystyki(lista) {
-  const div = document.getElementById("listaStatystyk");
+  // priorytet: jeśli adminowy kontener jest widoczny (aktywny), użyj go
+  let div = document.getElementById("adminStatsView");
+  const isAdminActive = div && !div.classList.contains("hidden");
+
+  if (isAdminActive) {
+    div = document.getElementById("adminStatsBody");
+  } else {
+    div = document.getElementById("listaStatystyk");
+  }
+
   if (!div) return;
+}
 
   if (!Array.isArray(lista) || lista.length === 0) {
     div.innerHTML = "<p>Brak danych</p>";
     return;
   }
 
-  // Kolejność sezonowa (hokejowa, nie kalendarzowa): Wrzesień -> Sierpień
+  // Kolejność sezonowa: Wrzesień -> Sierpień
   const seasonOrder = ["Wrzesień","Październik","Listopad","Grudzień","Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień"];
   const orderIdx = Object.fromEntries(seasonOrder.map((m, i) => [m.toLowerCase(), i]));
 
-  // Sortujemy po sezonie, a jak trafi się dziwny nagłówek — na koniec
   const sorted = [...lista].sort((a, b) => {
     const ai = orderIdx[String(a.miesiac || "").toLowerCase()];
     const bi = orderIdx[String(b.miesiac || "").toLowerCase()];
@@ -2838,7 +2847,6 @@ function renderStatystyki(lista) {
 
   const suma = sorted.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
 
-  // Bieżący miesiąc (PL, wielka litera jak w nagłówkach)
   const now = new Date();
   const currentMonthName = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"][now.getMonth()];
 
@@ -2846,8 +2854,6 @@ function renderStatystyki(lista) {
     sorted.map(s => {
       const miesiac = String(s.miesiac || "").trim();
       const treningi = Number(s.treningi) || 0;
-
-      // delikatne wyróżnienie bieżącego miesiąca
       const isCurrent = miesiac.toLowerCase() === currentMonthName.toLowerCase();
       const badge = isCurrent ? ` <span style="opacity:.9;font-weight:700;">(teraz)</span>` : "";
 
@@ -2859,6 +2865,7 @@ function renderStatystyki(lista) {
       🔥 Łącznie: ${suma} treningów w sezonie
     </div>`;
 }
+  
 function powrotDoTreningow() {
   goToView("homeView"); // zamiast appBack() — stabilne
 }
