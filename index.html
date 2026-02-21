@@ -688,12 +688,15 @@ input[type="number"] {
 </div>
     
     <!-- ADMIN: PŁATNOŚCI ZAWODNIKA -->
-<div id="adminPaymentsView" class="container hidden">
+
+    <div id="adminPaymentsView" class="container hidden">
   <h1 id="adminPaymentsTitle">Płatności</h1>
 
-  <div id="adminPaymentsList">Ładowanie...</div>
+  <div id="adminPaymentsBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
+  </div>
 
-  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
 
   <p id="adminPaymentsMsg" style="margin-top:10px;"></p>
 </div>
@@ -2302,36 +2305,26 @@ async function adminApplyGroupsPopup() {
 // =================== PŁATNOŚCI ===================
 async function adminOpenPayments() {
   const nr = String(window.__adminSelectedNr || "").trim();
-  const nazw = String(window.__adminSelectedNazw || "").trim();
-  if (!nr) {
-    alert("❌ Brak wybranego zawodnika (nr).");
-    return;
-  }
+  if (!nr) return alert("❌ Brak wybranego zawodnika.");
 
   goToView("adminPaymentsView");
 
   const title = document.getElementById("adminPaymentsTitle");
-  if (title) title.textContent = `Płatności — #${nr}${nazw ? " — " + nazw : ""}`;
+  if (title) title.textContent = `Płatności — #${nr}`;
 
-  const list = document.getElementById("adminPaymentsList");
-  if (list) list.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie...</div>`;
-
-  const msg = document.getElementById("adminPaymentsMsg");
+  const body = document.getElementById("adminPaymentsBody");
+  const msg  = document.getElementById("adminPaymentsMsg");
   if (msg) msg.textContent = "";
+  if (body) body.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
 
   try {
-    // jeszcze nie istnieje w CORE — na razie pokażmy komunikat kontrolny
-    if (list) list.innerHTML = `
-      <div class="card" style="background:#222;">
-        ✅ Widok adminPaymentsView działa.<br>
-        Następny krok: CORE action <b>platnosciAdmin</b> + render kafelków.
-      </div>
-    `;
+    const res = await apiClubGet("platnosciAdmin", { numer: nr });
+    renderAdminPayments_(res);
   } catch (e) {
-    if (list) list.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+    if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 }
-
+  
 function renderAdminPayments_(lista) {
   const body = document.getElementById("adminPaymentsBody");
   if (!body) return;
@@ -2363,28 +2356,106 @@ function renderAdminPayments_(lista) {
   }).join("");
 }
 
-async function adminConfirmPayment(paymentIdOrName) {
-  // Optymistycznie: zmieniamy UI od razu na zielono
-  // Backend dopniemy jako: adminConfirmPlatnosc
+  function renderAdminPayments_(res) {
+  const body = document.getElementById("adminPaymentsBody");
+  const msg  = document.getElementById("adminPaymentsMsg");
+  if (!body) return;
+
+  if (!res || res.success === false) {
+    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
+    return;
+  }
+
+  const items = Array.isArray(res.items) ? res.items : [];
+  if (items.length === 0) {
+    body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
+    return;
+  }
+
+  // grupujemy ładnie: osobno "Składki" i "Zajęcia dodatkowe"
+  const skladki = items.filter(x => x.typ === "skladka");
+  const zajecia = items.filter(x => x.typ === "zajecia");
+
+  body.innerHTML = `
+    ${renderPaymentsSection_("Składki", skladki)}
+    ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
+  `;
+
+  if (msg) msg.textContent = "";
+}
+
+function renderPaymentsSection_(title, arr) {
+  if (!arr || arr.length === 0) {
+    return `<div class="card" style="background:#111; margin-top:10px;"><b>${title}</b><br><span style="opacity:.8;">Brak danych</span></div>`;
+  }
+
+  return `
+    <div class="card" style="background:#111; margin-top:10px; text-align:left;">
+      <b>${title}</b>
+    </div>
+    ${arr.map(renderPaymentTile_).join("")}
+  `;
+}
+
+function renderPaymentTile_(p) {
+  const nr = String(window.__adminSelectedNr || "").trim();
+  const paid = !!p.zaplacono;
+  const kw = Number(p.kwota || 0);
+
+  const bg = paid ? "#123a1a" : "#3a1414"; // zielono / czerwono (w stylu apki)
+  const badge = paid
+    ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
+    : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
+
+  const btn = (!paid)
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment('${nr}', ${p.col})">Potwierdź wpłatę</button>`
+    : "";
+
+  return `
+    <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <div>
+          <div style="opacity:.9; font-size:14px;">${p.typ === "skladka" ? "Składka" : "Zajęcia dodatkowe"}</div>
+          <div style="font-size:18px; font-weight:800;">${p.label || ""}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px; font-weight:800;">${kw} zł</div>
+          <div style="margin-top:2px;">${badge}</div>
+        </div>
+      </div>
+      ${btn}
+    </div>
+  `;
+}
+  
+async function adminConfirmPayment(nr, col) {
+  if (!nr || !col) return;
+
+  const ok = confirm(`Potwierdzić wpłatę dla #${nr}?`);
+  if (!ok) return;
+
+  const msg = document.getElementById("adminPaymentsMsg");
+  if (msg) msg.textContent = "⏳ Zapisuję...";
+
   try {
-    const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",
-      numer: __adminSelectedNr,
-      payment: String(paymentIdOrName || "")
+    const res = await apiClubPost("potwierdzPlatnoscAdmin", {
+      numer: String(nr),
+      col: String(col)
     });
 
-    if (!r || !(r.success || r.ok)) {
-      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+    if (!res || res.success === false) {
+      if (msg) msg.textContent = "❌ " + (res?.error || res?.message || "Błąd zapisu");
       return;
     }
 
-    // odśwież płatności po zapisaniu
-    await adminOpenPayments();
+    if (msg) msg.textContent = "✅ Zapisano";
+    await adminOpenPayments(); // refresh listy
   } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
+    if (msg) msg.textContent = "❌ " + (e?.message || e);
   }
 }
-/* =================== 70 LOGOWANIE / REJESTRACJA =================== */
+  
+  /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
   numerZalogowanego = null;
   grupaZalogowanego = null;
