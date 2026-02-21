@@ -631,6 +631,24 @@ input[type="number"] {
   <p id="adminZawodnikMsg" style="margin-top:10px;"></p>
 </div>
 
+<!-- ADMIN: GRUPY (EKRAN) -->
+<div id="adminGrupyView" class="container hidden">
+  <h1 id="adminGrupyTitle">Grupy</h1>
+
+  <div class="card" style="text-align:left;">
+    <div id="adminGrupyGrid" style="
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:10px;
+    "></div>
+  </div>
+
+  <button class="full-btn" onclick="adminSaveGrupyLocal()">Zapisz</button>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="adminGrupyMsg" style="margin-top:10px;"></p>
+</div>
+
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
     <div id="trainerZawodnicyView" class="container hidden">
       <h1>Lista zawodników</h1>
