@@ -210,6 +210,40 @@ input[type="number"] {
   border: 1px solid var(--color-accent-green-border) !important;
   color: #fff !important;
 }
+
+    .modal.hidden { display:none; }
+
+.modal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.65);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:9999;
+}
+
+.modal-card{
+  width:min(520px, 100%);
+  background:#111;
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 18px 60px rgba(0,0,0,0.55);
+}
+
+.modal-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* Zielony przycisk TAK */
+.full-btn.green{
+  background:#0a7a2f;
+  border:1px solid rgba(255,255,255,0.10);
+}
+.full-btn.green:active{ transform:scale(0.99); }
   
   </style>
 <script>
@@ -702,6 +736,25 @@ input[type="number"] {
   <p id="adminPaymentsMsg" style="margin-top:10px;"></p>
 </div>
 
+    <!-- =================== ADMIN: MODAL POTWIERDZENIA PŁATNOŚCI =================== -->
+<div id="adminPayConfirmModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
+    <div id="adminPayConfirmText" style="opacity:0.9; line-height:1.35;">
+      Potwierdzam zapłatę
+    </div>
+
+    <div style="height:10px;"></div>
+
+    <div class="modal-actions">
+      <button class="full-btn green" id="adminPayConfirmYesBtn">TAK</button>
+      <button class="full-btn alt" id="adminPayConfirmNoBtn">NIE</button>
+    </div>
+
+    <p id="adminPayConfirmMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
+    
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
     <div id="trainerZawodnicyView" class="container hidden">
       <h1>Lista zawodników</h1>
@@ -2341,9 +2394,9 @@ function renderAdminPayments_(lista) {
 
     const btn = paid ? "" : `
       <div style="margin-top:10px;">
-        <button class="full-btn" type="button" onclick="adminConfirmPayment('${String(p.id || p.nazwa || "").replace(/'/g,"\\'")}')">
-          Potwierdź wpłatę
-        </button>
+              <button class="full-btn" onclick="adminConfirmPayment(${it.col}, '${String(it.label||"").replace(/'/g,"\\'")}')">
+              Zarejestruj płatność
+          </button>
       </div>
     `;
 
@@ -2459,6 +2512,88 @@ async function adminConfirmPayment(colNum) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
   }
 }
+
+  // trzymamy "kontekst" klikniętej płatności
+window.__adminPayConfirmCtx = null;
+
+function adminOpenPayConfirmModal_(text, onYes) {
+  const modal = document.getElementById("adminPayConfirmModal");
+  const txt   = document.getElementById("adminPayConfirmText");
+  const msg   = document.getElementById("adminPayConfirmMsg");
+  const yes   = document.getElementById("adminPayConfirmYesBtn");
+  const no    = document.getElementById("adminPayConfirmNoBtn");
+
+  if (!modal || !txt || !yes || !no) {
+    alert("❌ Brak elementów modala potwierdzenia w HTML.");
+    return;
+  }
+
+  if (txt) txt.textContent = text || "Potwierdzam zapłatę";
+  if (msg) msg.textContent = "";
+
+  // wyczyść stare bindy (najprościej przez klon)
+  const yesClone = yes.cloneNode(true);
+  yes.parentNode.replaceChild(yesClone, yes);
+
+  const noClone = no.cloneNode(true);
+  no.parentNode.replaceChild(noClone, no);
+
+  // bind: TAK
+  yesClone.addEventListener("click", async () => {
+    try {
+      yesClone.disabled = true;
+      noClone.disabled  = true;
+      if (msg) msg.textContent = "⏳ Zapisuję…";
+
+      await onYes();
+
+      // jeśli zapis OK -> zamykamy
+      adminClosePayConfirmModal_();
+    } catch (e) {
+      if (msg) msg.textContent = "❌ " + (e?.message || e);
+      yesClone.disabled = false;
+      noClone.disabled  = false;
+    }
+  });
+
+  // bind: NIE
+  noClone.addEventListener("click", () => {
+    adminClosePayConfirmModal_(); // zamyka modal
+  });
+
+  modal.classList.remove("hidden");
+}
+
+function adminClosePayConfirmModal_() {
+  const modal = document.getElementById("adminPayConfirmModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+// =================== ADMIN: KLIK "Zarejestruj płatność" ===================
+async function adminConfirmPayment(colNum, label) {
+  const nr  = String(window.__adminSelectedNr || "").trim();
+  const col = Number(colNum);
+
+  if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
+  if (!col || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
+
+  const text = label ? `Potwierdzam zapłatę\n${label}` : "Potwierdzam zapłatę";
+
+  adminOpenPayConfirmModal_(text, async () => {
+    const r = await apiClubPost({
+      action: "adminConfirmPlatnosc",
+      numer: nr,
+      col: col
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      throw new Error(r?.error || r?.message || "Nie zapisano");
+    }
+
+    // odśwież płatności w tle
+    await adminOpenPayments();
+  });
+}     
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
