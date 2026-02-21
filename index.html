@@ -2209,6 +2209,29 @@ function adminOpenGroups() {
 
   if (msg) msg.textContent = "✅ Zapisano (lokalnie): " + (arr.length ? arr.join(", ") : "—");
 }
+
+  /* =================== ADMIN: STATYSTYKI (reuse statsView) =================== */
+async function adminPokazStatystykiZawodnika() {
+  const nr = String(window.__adminSelectedNr || "").trim();
+  if (!nr) {
+    alert("❌ Najpierw wybierz zawodnika.");
+    return;
+  }
+
+  // używamy istniejącego ekranu zawodnika
+  goToView("statsView");
+
+  const div = document.getElementById("listaStatystyk");
+  if (div) div.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
+
+  try {
+    const lista = await apiClubGet("statystyki", { numer: nr });
+    renderStatystyki(lista); // <- Twój istniejący renderer zawodnika
+  } catch (e) {
+    if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+  
 function adminCloseGroupsPopup() {
   const pop = document.getElementById("adminGroupsPopup");
   if (pop) pop.classList.add("hidden");
