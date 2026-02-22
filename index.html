@@ -2457,13 +2457,21 @@ function renderPaymentTile_(p) {
     ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
     : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
-  // ✅ kuloodporne przekazanie labela do onclick (bez zabijania JS przez apostrofy/nowe linie/cudzysłowy)
-  const labelArg = JSON.stringify(String(p.label || p.nazwa || ""));
+  // HTML-escape pod atrybuty (żeby nic nie urywało HTML)
+  const escAttr = (s) => String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
-  // ✅ przekazujemy kolumnę, a nie nr zawodnika
+  const label = escAttr(p.label || p.nazwa || "");
+  const col   = Number(p.col) || 0;
+
   const btn = (!paid)
     ? `<button class="full-btn" style="margin-top:10px;"
-         onclick="adminConfirmPayment(${Number(p.col)}, ${labelArg})">
+         data-col="${col}"
+         data-label="${label}"
+         onclick="adminConfirmPaymentFromBtn(this)">
          Zarejestruj płatność
        </button>`
     : "";
@@ -2483,8 +2491,13 @@ function renderPaymentTile_(p) {
       ${btn}
     </div>
   `;
+
+  function adminConfirmPaymentFromBtn(btn) {
+  const col = Number(btn?.dataset?.col || 0);
+  const label = String(btn?.dataset?.label || "");
+  adminConfirmPayment(col, label);
 }
-  
+}  
 // =================== ADMIN: PŁATNOŚCI (POTWIERDZENIE + ZAPIS) ===================
 // Kontekst klikniętej płatności (globalnie)
 window.__adminPendingPayCol = null;
