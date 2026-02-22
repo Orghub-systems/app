@@ -2492,12 +2492,6 @@ function renderPaymentTile_(p) {
     </div>
   `;
 
-  function adminConfirmPaymentFromBtn(btn) {
-  const col = Number(btn?.dataset?.col || 0);
-  const label = String(btn?.dataset?.label || "");
-  adminConfirmPayment(col, label);
-}
-
 // =================== ADMIN: PŁATNOŚCI (POTWIERDZENIE + ZAPIS) ===================
 // Kontekst klikniętej płatności (globalnie)
 window.__adminPendingPayCol = null;
