@@ -791,6 +791,15 @@ input[type="number"] {
       </div>
     </div>
 
+    <!-- Popup potwierdzenia płatności -->
+    <div id="trainerPaymentPopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:2200;">
+      <div class="popup-card" style="max-width:320px;">
+        <p id="trainerPaymentPopupText" style="margin:0 0 12px 0;">Czy oznaczyć płatność jako opłaconą?</p>
+        <button class="full-btn" onclick="trainerConfirmPaymentYes()">TAK</button>
+        <button class="full-btn alt" style="margin-top:8px;" onclick="trainerHidePaymentPopup()">NIE</button>
+      </div>
+    </div>
+
     <!-- Popup edycji wydarzenia -->
 <div id="trainerEditPopup" style="
   position: fixed;
@@ -2198,361 +2207,8 @@ if (btnCopy) {
   }
 }
 window.submitSetupAndActivateClub = submitSetupAndActivateClub;
-
-  /* =================== 65 ADMIN PANEL (frontend) =================== */
-
-async function adminSaveGrupy(nr, selectedSetOrArray) {
-  const numer = String(nr || "").trim();
-  if (!numer) { alert("❌ Brak numeru zawodnika"); return; }
-
-  // accepted: Set, Array, string
-  let grupyCsv = "";
-  if (typeof selectedSetOrArray === "string") {
-    grupyCsv = selectedSetOrArray.trim();
-  } else if (selectedSetOrArray && typeof selectedSetOrArray.forEach === "function") {
-    const arr = [];
-    selectedSetOrArray.forEach(v => arr.push(String(v || "").trim()));
-    grupyCsv = arr.filter(Boolean).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
-  } else if (Array.isArray(selectedSetOrArray)) {
-    grupyCsv = selectedSetOrArray.map(v=>String(v||"").trim()).filter(Boolean)
-      .sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
-  }
-
-  try {
-    const r = await apiClubPost({
-      action: "adminSetGrupy",
-      numer,
-      grupy: grupyCsv
-    });
-
-    if (!r || !(r.success || r.ok)) {
-      alert("❌ Zapis grup nie wyszedł: " + (r?.error || r?.message || JSON.stringify(r)));
-      return;
-    }
-
-    alert("✅ Zapisano grupy: " + (r.written || grupyCsv || "—"));
-  } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
-  }
-}
-
-  /* =================== 66 ADMIN: POPUP ZAWODNIK + GRUPY/STATY/PŁATNOŚCI =================== */
-
-let __adminSelectedNr = "";
-let __adminSelectedNazwisko = "";
-
-// ---- Otwarcie okna zawodnika (wywołasz z listy zawodników) ----
-function adminOpenZawodnik(nr, nazwisko) {
-  // kontekst zawodnika dla admina
-  window.__adminSelectedNr = String(nr || "").trim();
-  window.__adminSelectedNazw = String(nazwisko || "").trim();
-
-  // przełącz na widok (NOWE OKNO)
-  goToView("adminZawodnikView");
-
-  // ustaw tytuł w tym widoku (jeśli masz te elementy)
-  const title = document.getElementById("adminZawodnikTitle");
-  if (title) title.textContent = `Zawodnik #${window.__adminSelectedNr} — ${window.__adminSelectedNazw || "—"}`;
-
-  // (opcjonalnie) wyczyść komunikaty / boxy, jeśli istnieją
-  const msg = document.getElementById("adminZawodnikMsg");
-  if (msg) msg.textContent = "";
-}
-
-function adminCloseZawodnik() {
-  const pop = document.getElementById("adminZawodnikPopup");
-  if (pop) pop.classList.add("hidden");
-}
-
-// =================== GRUPY ===================
-let __adminGroupsSet = new Set();
-
-function adminRenderGroupsGrid_() {
-  const grid = document.getElementById("adminGroupsGrid");
-  if (!grid) return;
-
-  const groups = Array.from({ length: 10 }, (_, i) => `G${i + 1}`);
-  grid.innerHTML = groups.map(g => {
-    const checked = __adminGroupsSet.has(g) ? "checked" : "";
-    return `
-      <label style="
-        display:flex; gap:8px; align-items:center; justify-content:center;
-        padding:10px; border:1px solid #333; border-radius:12px; background:#111;
-        cursor:pointer; user-select:none;
-      ">
-        <input type="checkbox" class="adminGrpPick" value="${g}" ${checked} style="transform:scale(1.25);">
-        <span style="font-weight:800;">${g}</span>
-      </label>
-    `;
-  }).join("");
-}
-
-function adminOpenGroups() {
-  const nr = String(window.__adminSelectedNr || "").trim();
-  const nazw = String(window.__adminSelectedNazw || "").trim();
-
-  goToView("adminGrupyView");
-
-  const t = document.getElementById("adminGrupyTitle");
-  if (t) t.textContent = `Grupy — #${nr} ${nazw ? "— " + nazw : ""}`;
-
-  const grid = document.getElementById("adminGrupyGrid");
-  if (grid) {
-    grid.innerHTML = Array.from({ length: 10 }, (_, i) => {
-      const g = `G${i + 1}`;
-      return `
-        <label style="display:flex;align-items:center;justify-content:center;gap:8px;
-          padding:10px;border:1px solid #333;border-radius:12px;background:#111;">
-          <input type="checkbox" class="adminGrupaChk" value="${g}" style="transform:scale(1.25);">
-          <span style="font-weight:800;">${g}</span>
-        </label>
-      `;
-    }).join("");
-  }
-
-  const msg = document.getElementById("adminGrupyMsg");
-  if (msg) msg.textContent = "";
-}
-
-  function adminSaveGrupyLocal() {
-  const msg = document.getElementById("adminGrupyMsg");
-  const picks = document.querySelectorAll("#adminGrupyGrid .adminGrupaChk");
-  const arr = [];
-  picks.forEach(ch => { if (ch.checked) arr.push(ch.value); });
-
-  if (msg) msg.textContent = "✅ Zapisano (lokalnie): " + (arr.length ? arr.join(", ") : "—");
-}
-
-  /* =================== ADMIN: STATYSTYKI (reuse statsView) =================== */
-// ADMIN: Statystyki zawodnika (reuse ekranu zawodnika)
-  
-async function adminOpenStats() {
-  const nr = String(window.__adminSelectedNr || "").trim();
-  const nazw = String(window.__adminSelectedNazw || "").trim();
-  if (!nr) {
-    alert("❌ Brak wybranego zawodnika (nr).");
-    return;
-  }
-
-  goToView("adminStatsView");
-
-  const title = document.getElementById("adminStatsTitle");
-  if (title) title.textContent = `Statystyki — #${nr}${nazw ? " — " + nazw : ""}`;
-
-  const body = document.getElementById("adminStatsBody");
-  if (body) body.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie...</div>`;
-
-  try {
-    const lista = await apiClubGet("statystyki", { numer: nr });
-
-    // wstawiamy tymczasowy kontener o ID, którego używa renderStatystyki
-    if (body) {
-      body.innerHTML = `<div id="listaStatystyk"></div>`;
-      renderStatystyki(lista);
-    }
-
-  } catch (e) {
-    if (body) body.innerHTML =
-      `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
-  }
-}
-  
-function adminCloseGroupsPopup() {
-  const pop = document.getElementById("adminGroupsPopup");
-  if (pop) pop.classList.add("hidden");
-}
-
-async function adminApplyGroupsPopup() {
-  const msg = document.getElementById("adminGroupsMsg");
-  if (msg) msg.textContent = "⏳ Zapisuję…";
-
-  const picks = document.querySelectorAll("#adminGroupsGrid .adminGrpPick");
-  __adminGroupsSet = new Set();
-  picks.forEach(ch => { if (ch.checked) __adminGroupsSet.add(ch.value); });
-
-  // ⬇⬇⬇ TU leci zapis do backendu (akcję dopniemy w CORE)
-  const grupyCsv = Array.from(__adminGroupsSet).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
-
-  try {
-    const r = await apiClubPost({ action:"adminSetGrupy", numer: __adminSelectedNr, grupy: grupyCsv });
-    if (!r || !(r.success || r.ok)) {
-      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
-      return;
-    }
-    if (msg) msg.textContent = "✅ Zapisane: " + (grupyCsv || "—");
-    setTimeout(adminCloseGroupsPopup, 350);
-  } catch (e) {
-    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
-  }
-}
-
-// =================== ADMIN: PŁATNOŚCI (LISTA + RENDER) ===================
-async function adminOpenPayments() {
-  const nr = String(window.__adminSelectedNr || "").trim();
-  if (!nr) return alert("❌ Brak wybranego zawodnika.");
-
-  goToView("adminPaymentsView");
-
-  const title = document.getElementById("adminPaymentsTitle");
-  if (title) title.textContent = `Płatności — #${nr}`;
-
-  const body = document.getElementById("adminPaymentsBody");
-  const msg  = document.getElementById("adminPaymentsMsg");
-  if (msg) msg.textContent = "";
-  if (body) body.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
-
-  try {
-    const res = await apiClubGet("platnosciAdmin", { numer: nr });
-    renderAdminPayments_(res);
-  } catch (e) {
-    if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
-  }
-}
-  
-function renderAdminPayments_(res) {
-  const body = document.getElementById("adminPaymentsBody");
-  const msg  = document.getElementById("adminPaymentsMsg");
-  if (!body) return;
-
-  if (!res || res.success === false) {
-    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
-    return;
-  }
-
-  const items = Array.isArray(res.items) ? res.items : [];
-  if (items.length === 0) {
-    body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
-    return;
-  }
-
-  const skladki = items.filter(x => x.typ === "skladka");
-  const zajecia = items.filter(x => x.typ === "zajecia");
-
-  body.innerHTML = `
-    ${renderPaymentsSection_("Składki", skladki)}
-    ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
-  `;
-
-  if (msg) msg.textContent = "";
-}
-
-function renderPaymentsSection_(title, arr) {
-  if (!arr || arr.length === 0) {
-    return `<div class="card" style="background:#111; margin-top:10px;"><b>${title}</b><br><span style="opacity:.8;">Brak danych</span></div>`;
-  }
-
-  return `
-    <div class="card" style="background:#111; margin-top:10px; text-align:left;">
-      <b>${title}</b>
-    </div>
-    ${arr.map(renderPaymentTile_).join("")}
-  `;
-}
-function renderPaymentTile_(p) {
-  const paid = !!p.zaplacono;
-  const kw = Number(p.kwota || 0);
-
-  const bg = paid ? "#123a1a" : "#3a1414";
-  const badge = paid
-    ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
-    : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
-
-  // HTML-escape pod atrybuty (żeby nic nie urywało HTML)
-  const escAttr = (s) => String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  const label = escAttr(p.label || p.nazwa || "");
-  const col   = Number(p.col) || 0;
-
-  const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;"
-         data-col="${col}"
-         data-label="${label}"
-         onclick="adminConfirmPaymentFromBtn(this)">
-         Zarejestruj płatność
-       </button>`
-    : "";
-
-  return `
-    <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
-      <div style="display:flex; justify-content:space-between; gap:10px;">
-        <div>
-          <div style="opacity:.9; font-size:14px;">${p.typ === "skladka" ? "Składka" : "Zajęcia dodatkowe"}</div>
-          <div style="font-size:18px; font-weight:800;">${p.label || ""}</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:18px; font-weight:800;">${kw} zł</div>
-          <div style="margin-top:2px;">${badge}</div>
-        </div>
-      </div>
-      ${btn}
-    </div>
-  `;
-}
-  
-// =================== ADMIN: PŁATNOŚCI (POTWIERDZENIE + ZAPIS) ===================
-// Kontekst klikniętej płatności (globalnie)
-window.__adminPendingPayCol = null;
-window.__adminPendingPayLabel = "";
-
-function adminConfirmPayment(colNum, label) {
-  // ✅ KROK 1: zamiast confirm() pokazujemy popup TAK/NIE
-  window.__adminPendingPayCol = Number(colNum);
-  window.__adminPendingPayLabel = String(label || "");
-
-  const msg = document.getElementById("adminConfirmPayMsg");
-  if (msg) {
-    msg.textContent = window.__adminPendingPayLabel
-      ? ("Potwierdzam zapłatę: " + window.__adminPendingPayLabel)
-      : "Potwierdzam zapłatę";
-  }
-
-  const pop = document.getElementById("adminConfirmPayPopup");
-  if (pop) pop.classList.remove("hidden");
-}
-
-async function adminDoConfirmPayment() {
-  const nr  = String(window.__adminSelectedNr || "").trim();
-  const col = Number(window.__adminPendingPayCol);
-
-  if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
-  if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
-
-  try {
-    const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",
-      numer: nr,
-      col: col
-    });
-
-    if (!r || !(r.success || r.ok)) {
-      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
-      return;
-    }
-
-    // zamknij popup i odśwież widok płatności
-    adminCancelConfirmPayment();
-    await adminOpenPayments();
-  } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
-  }
-}
-
-function adminCancelConfirmPayment() {
-  const pop = document.getElementById("adminConfirmPayPopup");
-  if (pop) pop.classList.add("hidden");
-}
-
- window.adminConfirmPaymentFromBtn = function(btn) {
-  const col = Number(btn?.dataset?.col || 0);
-  const label = String(btn?.dataset?.label || "");
-  adminConfirmPayment(col, label);
-}; 
-  
-  /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
+ 
+/* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
   numerZalogowanego = null;
   grupaZalogowanego = null;
@@ -3033,6 +2689,7 @@ function powrotDoTreningow() {
 }
  
 /* =================== 90 TRENER: LISTA / WYDARZENIA / DODAWANIE / USUWANIE =================== */
+window.trainerPaymentNumer = null;
 function trainerPowrot() { appBack(); }
 
   // ✅ MUSI być globalne dla onclick w HTML
@@ -3046,6 +2703,43 @@ window.trainerPokazWydarzenia = async function trainerPokazWydarzenia() {
     if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 };
+
+window.trainerShowPaymentPopup = function(numer, nazwisko) {
+  window.trainerPaymentNumer = String(numer || "").trim();
+  const pop = document.getElementById("trainerPaymentPopup");
+  const txt = document.getElementById("trainerPaymentPopupText");
+  if (txt) txt.textContent = window.trainerPaymentNumer
+    ? `Czy oznaczyć płatność zawodnika #${window.trainerPaymentNumer} (${nazwisko || ""}) jako opłaconą?`
+    : "Czy oznaczyć płatność jako opłaconą?";
+  if (pop) pop.style.display = "flex";
+}
+
+window.trainerHidePaymentPopup = function() {
+  const pop = document.getElementById("trainerPaymentPopup");
+  if (pop) pop.style.display = "none";
+  window.trainerPaymentNumer = null;
+}
+
+window.trainerConfirmPaymentYes = async function() {
+  const numer = String(window.trainerPaymentNumer || "").trim();
+  if (!numer) { window.trainerHidePaymentPopup(); return; }
+
+  const box = document.getElementById("trainerListaZawodnikow");
+  if (box) box.innerHTML = "<div class='card' style='background:#222;'>⏳ Rejestruję płatność...</div>";
+
+  try {
+    const r = await apiClubPost({ action: "zarejestrujPlatnosc", numer });
+    window.trainerHidePaymentPopup();
+    if (!r || (r.ok !== true && r.success !== true)) {
+      if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ ${(r?.error || r?.message || "Nie udało się zarejestrować płatności.")}</div>`;
+      return;
+    }
+    await trainerPokazZawodnicy();
+  } catch (e) {
+    window.trainerHidePaymentPopup();
+    if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ ${e?.message || e}</div>`;
+  }
+}
 
 async function trainerPokazZawodnicy() {
   goToView("trainerZawodnicyView");
@@ -3063,6 +2757,9 @@ async function trainerPokazZawodnicy() {
       <div class="card" style="text-align:left;">
         <b>#${z.nr}</b> — ${z.nazwisko}<br>
         <span style="opacity:0.8;">${z.suma} treningów łącznie</span>
+        <div style="margin-top:10px; text-align:center;">
+          <button class="full-btn" style="margin:0;" onclick="trainerShowPaymentPopup('${z.nr}', ${JSON.stringify(String(z.nazwisko || ''))})">Zarejestruj płatność</button>
+        </div>
       </div>
     `).join('');
   } catch {
