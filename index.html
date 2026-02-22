@@ -2462,14 +2462,9 @@ function renderPaymentTile_(p) {
   const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
 
   // ✅ przekazujemy kolumnę, a nie nr zawodnika
-const btn = (!paid)
-  ? `<button class="full-btn" style="margin-top:10px;"
-        data-col="${Number(p.col)}"
-        data-label="${escAttr_(p.label || "")}"
-        onclick="adminConfirmPaymentFromBtn(this)">
-       Zarejestruj płatność
-     </button>`
-  : "";
+  const btn = (!paid)
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
+    : "";
 
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
@@ -2561,7 +2556,59 @@ async function adminDoConfirmPayment() {
 
   try {
     const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",
+      action: "potwierdzPlatnoscAdmin",
+      numer: nr,
+      col: col
+    });
+
+    // pokaż debug (TYLKO NA TERAZ, potem usuniemy)
+    console.log("potwierdzPlatnoscAdmin response:", r);
+    alert("DEBUG:\n" + JSON.stringify(r?.debug || r, null, 2));
+
+    if (!r || !r.success) {
+      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+      return; // IMPORTANT: finally odblokuje przycisk
+    }
+
+    document.getElementById("adminConfirmPayPopup").classList.add("hidden");
+    await adminOpenPayments();
+
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  } finally {
+    // ✅ zawsze odblokuj TAK
+    if (yesBtn) {
+      yesBtn.disabled = false;
+      yesBtn.style.opacity = "1";
+      yesBtn.textContent = "TAK";
+    }
+  }
+}
+  
+function adminCancelConfirmPayment() {
+  document.getElementById("adminConfirmPayPopup").classList.add("hidden");
+}
+
+function adminClosePayConfirmModal_() {
+  const modal = document.getElementById("adminPayConfirmModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+// =================== ADMIN: KLIK "Zarejestruj płatność" ===================
+ async function adminConfirmPayment(colNum, label) {
+  const nr  = String(window.__adminSelectedNr || "").trim();
+  const col = Number(colNum);
+
+  if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
+  if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
+
+  const text = label ? `Potwierdzam zapłatę\n${label}` : "Potwierdzam zapłatę";
+  const ok = confirm(text + "\n\nTAK — zapisuję\nNIE — anuluję");
+  if (!ok) return;
+
+  try {
+    const r = await apiClubPost({
+      action: "adminConfirmPlatnosc",  // upewnij się, że backend ma tę akcję
       numer: nr,
       col: col
     });
@@ -2571,69 +2618,10 @@ async function adminDoConfirmPayment() {
       return;
     }
 
-    // zamknij popup
-    const pop = document.getElementById("adminConfirmPayPopup");
-    if (pop) pop.classList.add("hidden");
-
-    // odśwież płatności
-    await adminOpenPayments();
-
+    await adminOpenPayments(); // odśwież
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
-  } finally {
-    if (yesBtn) {
-      yesBtn.disabled = false;
-      yesBtn.style.opacity = "1";
-      yesBtn.textContent = "TAK";
-    }
   }
-}
-
-function adminCancelConfirmPayment() {
-  const pop = document.getElementById("adminConfirmPayPopup");
-  if (pop) pop.classList.add("hidden");
-}
-
-function adminClosePayConfirmModal_() {
-  const modal = document.getElementById("adminPayConfirmModal");
-  if (modal) modal.classList.add("hidden");
-}
-
-// =================== ADMIN: KLIK "Zarejestruj płatność" ===================
-// kontekst potwierdzania
-window.__adminPendingPayCol = null;
-window.__adminPendingPayLabel = "";
-
-function adminConfirmPayment(colNum, label) {
-  const nr  = String(window.__adminSelectedNr || "").trim();
-  const col = Number(colNum);
-
-  if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
-  if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
-
-  window.__adminPendingPayCol = col;
-  window.__adminPendingPayLabel = String(label || "");
-
-  const msg = document.getElementById("adminConfirmPayMsg");
-  if (msg) msg.textContent = "Potwierdzam zapłatę: " + (window.__adminPendingPayLabel || ("kolumna " + col));
-
-  const pop = document.getElementById("adminConfirmPayPopup");
-  if (pop) pop.classList.remove("hidden");
-}
-
-  function escAttr_(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function adminConfirmPaymentFromBtn(btn) {
-  const col = Number(btn?.dataset?.col);
-  const label = String(btn?.dataset?.label || "");
-  adminConfirmPayment(col, label);
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
