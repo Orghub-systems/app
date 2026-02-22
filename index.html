@@ -2239,7 +2239,7 @@ async function adminSaveGrupy(nr, selectedSetOrArray) {
 function adminOpenZawodnik(nr, nazwisko) {
   // kontekst zawodnika dla admina
   window.__adminSelectedNr = String(nr || "").trim();
-  window.__adminSelectedNazw = String(nazwisko || "").trim();
+  window.__adminSelectedNazwisko = String(nazwisko || "").trim();
 
   // przełącz na widok (NOWE OKNO)
   goToView("adminZawodnikView");
