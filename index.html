@@ -2595,20 +2595,166 @@ function adminClosePayConfirmModal_() {
 }
 
 // =================== ADMIN: KLIK "Zarejestruj płatność" ===================
- async function adminConfirmPayment(colNum, label) {
+function renderAdminPayments_(res) {
+  const body = document.getElementById("adminPaymentsBody");
+  const msg  = document.getElementById("adminPaymentsMsg");
+  if (!body) return;
+
+  if (!res || res.success === false) {
+    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
+    return;
+  }
+
+  const items = Array.isArray(res.items) ? res.items : [];
+  if (items.length === 0) {
+    body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
+    return;
+  }
+
+  const skladki = items.filter(x => x.typ === "skladka");
+  const zajecia = items.filter(x => x.typ === "zajecia");
+
+  body.innerHTML = `
+    ${renderPaymentsSection_("Składki", skladki)}
+    ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
+  `;
+
+  // ✅ stabilny handler (bez inline onclick i bez ryzyka apostrofów)
+  body.querySelectorAll("button.adminPayBtn").forEach(btn => {
+    btn.addEventListener("click", (ev) => {
+      const b = ev.currentTarget;
+      const col = Number(b?.dataset?.col);
+      const label = decodeURIComponent(String(b?.dataset?.label || ""));
+      adminConfirmPayment(col, label);
+    });
+  });
+
+  if (msg) msg.textContent = "";
+}
+
+function renderPaymentsSection_(title, arr) {
+  if (!arr || arr.length === 0) {
+    return `<div class="card" style="background:#111; margin-top:10px;"><b>${title}</b><br><span style="opacity:.8;">Brak danych</span></div>`;
+  }
+
+  return `
+    <div class="card" style="background:#111; margin-top:10px; text-align:left;">
+      <b>${title}</b>
+    </div>
+    ${arr.map(renderPaymentTile_).join("")}
+  `;
+}
+
+function renderPaymentTile_(p) {
+  const paid = !!p.zaplacono;
+  const kw = Number(p.kwota || 0);
+
+  const bg = paid ? "#123a1a" : "#3a1414";
+  const badge = paid
+    ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
+    : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
+
+  const colNum = Number(p.col);
+
+  // Bezpieczny tekst do HTML (wyświetlanie)
+  const labelTxt = String(p.label || p.nazwa || "");
+  const labelHtml = labelTxt
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Bezpieczny tekst do dataset (klik) — percent-encoding (zero apostrofów / cudzysłowów / newlines problemów)
+  const labelData = encodeURIComponent(labelTxt);
+
+  const btn = (!paid)
+    ? `<button class="full-btn adminPayBtn"
+          style="margin-top:10px;"
+          data-col="${Number.isFinite(colNum) ? colNum : ""}"
+          data-label="${labelData}">
+         Zarejestruj płatność
+       </button>`
+    : "";
+
+  return `
+    <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <div>
+          <div style="opacity:.9; font-size:14px;">${p.typ === "skladka" ? "Składka" : "Zajęcia dodatkowe"}</div>
+          <div style="font-size:18px; font-weight:800;">${labelHtml}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px; font-weight:800;">${kw} zł</div>
+          <div style="margin-top:2px;">${badge}</div>
+        </div>
+      </div>
+      ${btn}
+    </div>
+  `;
+}
+
+// =================== ADMIN: CONFIRM PŁATNOŚCI (POPUP #adminConfirmPayPopup) ===================
+window.__adminPendingPayCol = null;
+window.__adminPendingPayLabel = "";
+
+function adminConfirmPayment(colNum, label) {
   const nr  = String(window.__adminSelectedNr || "").trim();
   const col = Number(colNum);
 
   if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
   if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
 
-  const text = label ? `Potwierdzam zapłatę\n${label}` : "Potwierdzam zapłatę";
-  const ok = confirm(text + "\n\nTAK — zapisuję\nNIE — anuluję");
-  if (!ok) return;
+  window.__adminPendingPayCol = col;
+  window.__adminPendingPayLabel = String(label || "");
+
+  // ✅ Overlay style (jeśli HTML nie ma) — ustawiamy raz
+  const pop = document.getElementById("adminConfirmPayPopup");
+  if (!pop) { alert("❌ Brak #adminConfirmPayPopup w HTML."); return; }
+  if (!pop.dataset.styled) {
+    pop.dataset.styled = "1";
+    pop.style.position = "fixed";
+    pop.style.inset = "0";
+    pop.style.zIndex = "99999";
+    pop.style.display = "flex";
+    pop.style.alignItems = "center";
+    pop.style.justifyContent = "center";
+    pop.style.padding = "16px";
+    pop.style.background = "rgba(0,0,0,0.65)";
+  }
+
+  const msg = document.getElementById("adminConfirmPayMsg");
+  if (msg) msg.textContent = window.__adminPendingPayLabel
+    ? ("Potwierdzam zapłatę: " + window.__adminPendingPayLabel)
+    : "Potwierdzam zapłatę";
+
+  // ✅ Podpinamy guziki na pewno (nie zakładamy onclick w HTML)
+  const yesBtn = document.getElementById("adminConfirmPayYes");
+  if (yesBtn) yesBtn.onclick = adminDoConfirmPayment;
+
+  // przycisk NIE: szukamy po ID jeśli masz, a jak nie masz — zostaje Twój istniejący onclick w HTML
+  const noBtn =
+    document.getElementById("adminConfirmPayNo") ||
+    document.getElementById("adminConfirmPayCancel") ||
+    pop.querySelector("button[data-no='1']");
+
+  if (noBtn) noBtn.onclick = adminCancelConfirmPayment;
+
+  pop.classList.remove("hidden");
+}
+
+async function adminDoConfirmPayment() {
+  const yesBtn = document.getElementById("adminConfirmPayYes");
+  if (yesBtn) {
+    yesBtn.disabled = true;
+    yesBtn.style.opacity = "0.6";
+    yesBtn.textContent = "⏳ Zapisuję…";
+  }
+
+  const col = Number(window.__adminPendingPayCol);
+  const nr  = String(window.__adminSelectedNr || "").trim();
 
   try {
     const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",  // upewnij się, że backend ma tę akcję
+      action: "adminConfirmPlatnosc",   // ✅ dokładnie jak było w confirm()
       numer: nr,
       col: col
     });
@@ -2618,10 +2764,24 @@ function adminClosePayConfirmModal_() {
       return;
     }
 
-    await adminOpenPayments(); // odśwież
+    adminCancelConfirmPayment();
+    await adminOpenPayments(); // odśwież jak było
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
+  } finally {
+    if (yesBtn) {
+      yesBtn.disabled = false;
+      yesBtn.style.opacity = "1";
+      yesBtn.textContent = "TAK";
+    }
+    window.__adminPendingPayCol = null;
+    window.__adminPendingPayLabel = "";
   }
+}
+
+function adminCancelConfirmPayment() {
+  const pop = document.getElementById("adminConfirmPayPopup");
+  if (pop) pop.classList.add("hidden");
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
