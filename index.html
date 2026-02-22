@@ -2602,22 +2602,27 @@ function adminClosePayConfirmModal_() {
   if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
   if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
 
-  const text = label ? `Potwierdzam zapłatę\n${label}` : "Potwierdzam zapłatę";
-  const ok = confirm(text + "\n\nTAK — zapisuję\nNIE — anuluję");
-  if (!ok) return;
+  // zapamiętujemy kontekst klikniętej płatności
+  window.__adminPendingPayCol = col;
+  window.__adminPendingPayLabel = label || "";
 
-  try {
-    const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",  // upewnij się, że backend ma tę akcję
-      numer: nr,
-      col: col
-    });
+  // ustawiamy tekst w popupie
+  const msg = document.getElementById("adminConfirmPayMsg");
+  if (msg) {
+    msg.textContent = label
+      ? `Potwierdzam zapłatę: ${label}`
+      : "Potwierdzam zapłatę";
+  }
 
-    if (!r || !(r.success || r.ok)) {
-      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
-      return;
-    }
-
+  // pokazujemy popup zamiast confirm()
+  const popup = document.getElementById("adminConfirmPayPopup");
+  if (popup) popup.classList.remove("hidden");
+}
+    await adminOpenPayments();
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  }
+}
     await adminOpenPayments(); // odśwież
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
