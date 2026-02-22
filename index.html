@@ -2459,15 +2459,14 @@ function renderPaymentTile_(p) {
     ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
     : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
-  const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
+const safeLabel = String(p.label || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
-  // ✅ przekazujemy kolumnę, a nie nr zawodnika
-  const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;"
-  onclick="console.log('CLICK OK');">
-  Zarejestruj płatność
-</button>`
-    : "";
+const btn = (!paid)
+  ? `<button class="full-btn" style="margin-top:10px;"
+        onclick="adminAskConfirmPayment(${Number(p.col)}, '${safeLabel}')">
+        Zarejestruj płatność
+     </button>`
+  : "";
 
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
