@@ -2459,14 +2459,12 @@ function renderPaymentTile_(p) {
     ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
     : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
-const labelArg = JSON.stringify(String(p.label || ""));
+  const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
 
-const btn = (!paid)
-  ? `<button class="full-btn" style="margin-top:10px;"
-        onclick="adminAskConfirmPayment(${Number(p.col)}, ${labelArg})">
-        Zarejestruj płatność
-     </button>`
-  : "";
+  // ✅ przekazujemy kolumnę, a nie nr zawodnika
+  const btn = (!paid)
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
+    : "";
 
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
@@ -2597,28 +2595,33 @@ function adminClosePayConfirmModal_() {
 }
 
 // =================== ADMIN: KLIK "Zarejestruj płatność" ===================
-async function adminConfirmPayment(colNum, label) {
+ async function adminConfirmPayment(colNum, label) {
   const nr  = String(window.__adminSelectedNr || "").trim();
   const col = Number(colNum);
 
   if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
   if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
 
-  // zapamiętujemy kontekst klikniętej płatności
-  window.__adminPendingPayCol = col;
-  window.__adminPendingPayLabel = label || "";
+  const text = label ? `Potwierdzam zapłatę\n${label}` : "Potwierdzam zapłatę";
+  const ok = confirm(text + "\n\nTAK — zapisuję\nNIE — anuluję");
+  if (!ok) return;
 
-  // ustawiamy tekst w popupie
-  const msg = document.getElementById("adminConfirmPayMsg");
-  if (msg) {
-    msg.textContent = label
-      ? `Potwierdzam zapłatę: ${label}`
-      : "Potwierdzam zapłatę";
+  try {
+    const r = await apiClubPost({
+      action: "adminConfirmPlatnosc",  // upewnij się, że backend ma tę akcję
+      numer: nr,
+      col: col
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+      return;
+    }
+
+    await adminOpenPayments(); // odśwież
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
   }
-
-  // pokazujemy popup zamiast confirm()
-  const popup = document.getElementById("adminConfirmPayPopup");
-  if (popup) popup.classList.remove("hidden");
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
