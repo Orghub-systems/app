@@ -2279,6 +2279,8 @@ function adminOpenZawodnik(nr, nazwisko) {
   // (opcjonalnie) wyczyść komunikaty / boxy, jeśli istnieją
   const msg = document.getElementById("adminZawodnikMsg");
   if (msg) msg.textContent = "";
+    const popupMsg = document.getElementById("adminZawodnikPopupMsg");
+  if (popupMsg) popupMsg.textContent = "";
 }
 
 function adminCloseZawodnik() {
