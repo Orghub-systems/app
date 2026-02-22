@@ -875,31 +875,6 @@ input[type="number"] {
   </div>
 </div>
 
-    <!-- =================== ADMIN: POPUP ZAWODNIK =================== -->
-<div id="adminZawodnikPopup" class="hidden" style="
-  position:fixed; inset:0; background:rgba(0,0,0,0.75);
-  display:flex; justify-content:center; align-items:center;
-  z-index:4600; padding:18px;
-">
-  <div class="card" style="max-width:340px;width:100%; text-align:left;">
-    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
-      Zawodnik <span id="adminZawodnikHeader" style="opacity:.9;"></span>
-    </div>
-
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      <button class="full-btn alt" type="button" onclick="adminOpenGroups()">Grupy</button>
-      <button class="full-btn alt" type="button" onclick="adminOpenStats()">Statystyki</button>
-      <button class="full-btn alt" type="button" onclick="adminOpenPayments()">Płatności</button>
-    </div>
-
-    <div style="display:flex; gap:8px; margin-top:14px;">
-      <button class="full-btn" style="flex:1;" type="button" onclick="adminCloseZawodnik()">Zamknij</button>
-    </div>
-
-    <div id="adminZawodnikPopupMsg" style="margin-top:10px; opacity:.9;"></div>
-  </div>
-</div>
-
 <!-- =================== ADMIN: POPUP GRUP (2 rzędy po 5) =================== -->
 <div id="adminGroupsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
