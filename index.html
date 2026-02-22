@@ -2459,11 +2459,11 @@ function renderPaymentTile_(p) {
     ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
     : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
-const safeLabel = String(p.label || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+const labelArg = JSON.stringify(String(p.label || ""));
 
 const btn = (!paid)
   ? `<button class="full-btn" style="margin-top:10px;"
-        onclick="adminAskConfirmPayment(${Number(p.col)}, '${safeLabel}')">
+        onclick="adminAskConfirmPayment(${Number(p.col)}, ${labelArg})">
         Zarejestruj płatność
      </button>`
   : "";
