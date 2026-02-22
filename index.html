@@ -2544,6 +2544,12 @@ function adminCancelConfirmPayment() {
   const pop = document.getElementById("adminConfirmPayPopup");
   if (pop) pop.classList.add("hidden");
 }
+
+ window.adminConfirmPaymentFromBtn = function(btn) {
+  const col = Number(btn?.dataset?.col || 0);
+  const label = String(btn?.dataset?.label || "");
+  adminConfirmPayment(col, label);
+}; 
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
