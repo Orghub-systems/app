@@ -3431,6 +3431,18 @@ if (btn) {
   }
 });
 
+  // ===== HOTFIX: onclick w HTML woła adminOpenZawodnik(...) =====
+window.adminOpenZawodnik = window.adminOpenZawodnik || function(numer, nazwisko) {
+  // jeśli codex zrobił trainerShowPaymentPopup – przekieruj tam
+  if (typeof window.trainerShowPaymentPopup === "function") {
+    return window.trainerShowPaymentPopup(numer, nazwisko);
+  }
+
+  // jeśli masz własny flow admina – tu możesz go wpiąć później
+  console.error("adminOpenZawodnik: brak docelowego handlera (trainerShowPaymentPopup nie istnieje).", {
+    numer, nazwisko
+  });
+};
 </script>
 </body>
 </html>
