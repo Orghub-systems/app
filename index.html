@@ -2535,12 +2535,34 @@ window.__adminPendingPayLabel = "";
 
 function adminAskConfirmPayment(col, label) {
   window.__adminPendingPayCol = Number(col);
-  window.__adminPendingPayLabel = label || "";
+  window.__adminPendingPayLabel = String(label || "");
 
-  document.getElementById("adminConfirmPayMsg").textContent =
-    "Potwierdzam zapłatę: " + window.__adminPendingPayLabel;
+  // Nowy modal (spójny z Panelem 2)
+  const modal = document.getElementById("adminPayConfirmModal");
+  const text  = document.getElementById("adminPayConfirmText");
+  const msg   = document.getElementById("adminPayConfirmMsg");
+  const yes   = document.getElementById("adminPayConfirmYesBtn");
+  const no    = document.getElementById("adminPayConfirmNoBtn");
 
-  document.getElementById("adminConfirmPayPopup").classList.remove("hidden");
+  if (!modal || !text || !yes || !no) {
+    console.error("Brak elementów adminPayConfirmModal.*");
+    alert("❌ Brak elementów modala potwierdzenia płatności (adminPayConfirmModal).");
+    return;
+  }
+
+  // Ustaw treść
+  text.textContent = window.__adminPendingPayLabel
+    ? ("Potwierdzam zapłatę: " + window.__adminPendingPayLabel)
+    : "Potwierdzam zapłatę";
+
+  if (msg) msg.textContent = "";
+
+  // Podłącz akcje (bez dublowania eventów)
+  yes.onclick = () => adminDoConfirmPayment();
+  no.onclick  = () => adminCancelConfirmPayment();
+
+  // Pokaż modal
+  modal.classList.remove("hidden");
 }
 
 async function adminDoConfirmPayment() {
