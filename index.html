@@ -946,20 +946,33 @@ input[type="number"] {
 </div>
 
 <!-- =================== ADMIN: POPUP PŁATNOŚCI =================== -->
-<div id="adminConfirmPayPopup" class="container hidden">
-  <h1>Potwierdzenie</h1>
+<div id="adminConfirmPayPopup" class="modal hidden">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
 
-  <div class="card">
-    <p id="adminConfirmPayMsg">Potwierdzam zapłatę</p>
+    <div id="adminConfirmPayMsg" style="opacity:0.9; line-height:1.35;">
+      Potwierdzam zapłatę
+    </div>
+
+    <div style="height:12px;"></div>
+
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button
+        id="adminConfirmPayYes"
+        class="full-btn green"
+        type="button"
+        style="flex:1; width:100%; margin:0;"
+        onclick="adminDoConfirmPayment()"
+      >TAK</button>
+
+      <button
+        class="full-btn alt"
+        type="button"
+        style="flex:1; width:100%; margin:0;"
+        onclick="adminCancelConfirmPayment()"
+      >NIE</button>
+    </div>
   </div>
-
-  <button id="adminConfirmPayYes" class="full-btn" style="background:#1a7f37;" onclick="adminDoConfirmPayment()">
-    TAK
-  </button>
-
-  <button class="full-btn alt" onclick="adminCancelConfirmPayment()">
-    NIE
-  </button>
 </div>
     
 <div id="adminPaymentsPopup" class="hidden" style="
