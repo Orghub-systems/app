@@ -2246,7 +2246,7 @@ function adminOpenZawodnik(nr, nazwisko) {
 
   // ustaw tytuł w tym widoku (jeśli masz te elementy)
   const title = document.getElementById("adminZawodnikTitle");
-  if (title) title.textContent = `Zawodnik #${window.__adminSelectedNr} — ${window.__adminSelectedNazw || "—"}`;
+  if (title) title.textContent = `Zawodnik #${window.__adminSelectedNr} — ${window.__adminSelectedNazwisko || "—"}`;
 
   // (opcjonalnie) wyczyść komunikaty / boxy, jeśli istnieją
   const msg = document.getElementById("adminZawodnikMsg");
