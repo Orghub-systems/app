@@ -3307,11 +3307,11 @@ function setEditGroups_(arr) {
 }
 
 // zapis do backendu
-async function trainerSaveEditEvent() {
+async function trainerSaveEditEvent(ev) {
   const msg = document.getElementById("editEventMsg");
   if (msg) msg.textContent = "";
 
-  const btn = document.getElementById("btnEditSave");
+  const btn = ev?.currentTarget || document.getElementById("btnEditSave");
   if (btn) { btn.classList.add("loading"); btn.disabled = true; }
 
   try {
