@@ -189,11 +189,11 @@ input[type="number"] {
   </style>
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.WERSJA_APKI = '1.05.10.04';
+  window.APP_BUILD = '1.05.10.04';
 
   const poprzednia = localStorage.getItem('wersjaApki');
-  if (poprzednia !== window.WERSJA_APKI) {
-    localStorage.setItem('wersjaApki', window.WERSJA_APKI);
+  if (poprzednia !== window.APP_BUILD) {
+    localStorage.setItem('wersjaApki', window.APP_BUILD);
     location.reload(); // bez (true) — to już jest przestarzałe
   }
 
@@ -542,6 +542,15 @@ input[type="number"] {
       </div>
     </div>
 
+    <!-- Popup potwierdzenia płatności -->
+    <div id="trainerPaymentPopup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:2200;">
+      <div class="popup-card" style="max-width:320px;">
+        <p id="trainerPaymentPopupText" style="margin:0 0 12px 0;">Czy oznaczyć płatność jako opłaconą?</p>
+        <button class="full-btn" style="background:#1e7d32;" onclick="adminDoConfirmPayment()">TAK</button>
+        <button class="full-btn alt" style="margin-top:8px; background:#8b1e1e;" onclick="adminCancelConfirmPayment()">NIE</button>
+      </div>
+    </div>
+
     <!-- Popup edycji wydarzenia -->
 <div id="trainerEditPopup" style="
   position: fixed;
@@ -630,7 +639,7 @@ function odtworzIntroSound() {
 }
 
 /* =================== 10 KONFIG / GLOBALNE =================== */
-const WERSJA_APKI = window.WERSJA_APKI || "ORGHUB APP";
+const APP_BUILD = window.APP_BUILD;
 const CORE_URL = "https://still-shape-2aa3.orghubsystems.workers.dev";
 
 // ===== DEBUG: pokaż błąd JS na ekranie (żeby nie stało "w ciszy") =====
@@ -835,6 +844,10 @@ async function apiCorePost(payload = {}) {
   const res = await fetch(CORE_URL, { method: "POST", body });
   return res.json();
 }
+
+window.activateClub_ = async function(payload = {}) {
+  return apiCorePost({ action: "activateClub", ...payload });
+};
 
 // GET/POST do CLUB (wymaga clubId)
 async function apiClubGet(action, params = {}) {
@@ -1548,10 +1561,20 @@ function monthKey_(m) {
     }
 
     // minimalna walidacja: kwoty składek dla miesięcy
+    const feeValues = Array.isArray(fees)
+      ? fees
+      : (fees && typeof fees === "object" ? Object.values(fees) : []);
+    const hasAnyFee = feeValues.some((v) => v !== undefined && v !== null && String(v).trim() !== "");
+    if (!hasAnyFee) {
+      if (msg) msg.textContent = "❌ Brak zdefiniowanej składki.";
+      return;
+    }
+
     for (const m of months) {
-      const v = fees[m];
+      const mKey = monthKey_(m);
+      const v = fees[mKey];
       if (v === undefined || v === null || String(v).trim() === "") {
-        if (msg) msg.textContent = `❌ Brak składki dla: ${m}`;
+        if (msg) msg.textContent = mKey ? `❌ Brak składki dla: ${mKey}` : "❌ Brak zdefiniowanej składki.";
         return;
       }
     }
@@ -1565,8 +1588,8 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
-    const r = await apiCorePost({
-      action: "activateClub",
+    const activateClubCall = window.activateClub_ || (async (payload = {}) => apiCorePost({ action: "activateClub", ...payload }));
+    const r = await activateClubCall({
       clubId,
       sezonStart,
       sezonEnd,
@@ -1596,6 +1619,7 @@ function monthKey_(m) {
     if (btn) { btn.classList.remove("loading"); }
   }
 }
+window.submitSetupAndActivateClub = submitSetupAndActivateClub;
  
 /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
 function pokazLogowanie() {
@@ -1904,6 +1928,9 @@ async function odswiezListeZapisanych(id) {
 }
 
 /* =================== 90 TRENER: LISTA / WYDARZENIA / DODAWANIE / USUWANIE =================== */
+window.__adminSelectedNr = "";
+window.__adminSelectedName = "";
+window.__adminConfirmPayment = null;
 function trainerPowrot() { appBack(); }
 
   // ✅ MUSI być globalne dla onclick w HTML
@@ -1918,6 +1945,131 @@ window.trainerPokazWydarzenia = async function trainerPokazWydarzenia() {
   }
 };
 
+window.adminOpenZawodnik = function(numer, nazwisko) {
+  window.__adminSelectedNr = String(numer || "").trim();
+  window.__adminSelectedName = String(nazwisko || "").trim();
+  adminOpenPayments();
+}
+
+window.adminOpenPayments = async function() {
+  const box = document.getElementById("trainerListaZawodnikow");
+  if (!box) return;
+
+  const numer = String(window.__adminSelectedNr || "").trim();
+  if (!numer) {
+    box.innerHTML = "<div class='card' style='background:#700;'>❌ Brak numeru zawodnika.</div>";
+    return;
+  }
+
+  box.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie płatności...</div>";
+  try {
+    const data = await apiClubGet("adminPlatnosciZawodnika", { numer });
+    renderAdminPayments_(data);
+  } catch (e) {
+    box.innerHTML = `<div class='card' style='background:#700;'>❌ ${e?.message || e}</div>`;
+  }
+}
+
+function renderAdminPayments_(data) {
+  const box = document.getElementById("trainerListaZawodnikow");
+  if (!box) return;
+
+  const payload = data && typeof data === "object" ? data : {};
+  const skladki = Array.isArray(payload.skladki) ? payload.skladki : [];
+  const zajecia = Array.isArray(payload.zajecia) ? payload.zajecia : [];
+
+  box.innerHTML = `
+    <div class="card" style="text-align:left;">
+      <div style="font-weight:700; margin-bottom:6px;">Zawodnik #${window.__adminSelectedNr} ${window.__adminSelectedName ? "— " + window.__adminSelectedName : ""}</div>
+      <button class="full-btn alt" style="margin:8px 0 0 0;" onclick="trainerPokazZawodnicy()">⬅ Powrót do listy zawodników</button>
+    </div>
+    ${renderPaymentsSection_("Składki", skladki)}
+    ${renderPaymentsSection_("Zajęcia", zajecia)}
+  `;
+}
+
+function renderPaymentsSection_(title, list) {
+  if (!Array.isArray(list) || list.length === 0) {
+    return `<div class="card" style="text-align:left;"><b>${title}</b><div style="opacity:.8; margin-top:6px;">Brak pozycji.</div></div>`;
+  }
+  return `
+    <div class="card" style="text-align:left;">
+      <b>${title}</b>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+        ${list.map((it) => renderPaymentTile_(it)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderPaymentTile_(item) {
+  const row = item && typeof item === "object" ? item : {};
+  const colNum = row.col ?? row.colNum ?? row.columna ?? row.id ?? "";
+  const label = row.label ?? row.nazwa ?? row.tytul ?? row.opis ?? `Pozycja ${colNum}`;
+  const kwota = row.kwota != null && row.kwota !== "" ? ` — ${row.kwota} zł` : "";
+  const paid = row.zaplacono === true || row.oplacone === true || row.paid === true || String(row.status || "").toLowerCase() === "paid";
+
+  return `
+    <div class="card" style="background:${paid ? "#153015" : "#2b1111"}; margin:0;">
+      <div><b>${label}</b>${kwota}</div>
+      ${paid
+        ? `<div style="margin-top:6px; color:#9f9;">Opłacone ✅</div>`
+        : `<button class="full-btn" style="margin-top:8px;" onclick="adminConfirmPayment('${String(colNum)}', ${JSON.stringify(String(label))})">Zarejestruj płatność</button>`
+      }
+    </div>
+  `;
+}
+
+window.adminConfirmPayment = function(colNum, label) {
+  window.__adminConfirmPayment = {
+    numer: String(window.__adminSelectedNr || "").trim(),
+    col: String(colNum || "").trim(),
+    label: String(label || "").trim()
+  };
+
+  const pop = document.getElementById("trainerPaymentPopup");
+  const txt = document.getElementById("trainerPaymentPopupText");
+  if (txt) txt.textContent = `Czy zarejestrować płatność: ${window.__adminConfirmPayment.label || "wybrana pozycja"}?`;
+  if (pop) {
+    pop.style.display = "flex";
+    pop.style.position = "fixed";
+    pop.style.inset = "0";
+    pop.style.background = "rgba(0,0,0,.7)";
+    pop.style.alignItems = "center";
+    pop.style.justifyContent = "center";
+    pop.style.zIndex = "6000";
+  }
+}
+
+window.adminCancelConfirmPayment = function() {
+  const pop = document.getElementById("trainerPaymentPopup");
+  if (pop) pop.style.display = "none";
+  window.__adminConfirmPayment = null;
+}
+
+window.adminDoConfirmPayment = async function() {
+  const payload = window.__adminConfirmPayment || {};
+  const numer = String(payload.numer || "").trim();
+  const col = String(payload.col || "").trim();
+
+  if (!numer || !col) {
+    window.adminCancelConfirmPayment();
+    return;
+  }
+
+  try {
+    const r = await apiClubPost({ action: "adminConfirmPlatnosc", numer, col });
+    if (!r || (r.ok !== true && r.success !== true)) {
+      alert("❌ " + (r?.error || r?.message || "Nie udało się zapisać płatności."));
+      return;
+    }
+    window.adminCancelConfirmPayment();
+    await adminOpenPayments();
+  } catch (e) {
+    alert("❌ " + (e?.message || e));
+  }
+}
+
 async function trainerPokazZawodnicy() {
   goToView("trainerZawodnicyView");
   const box = document.getElementById("trainerListaZawodnikow");
@@ -1931,7 +2083,7 @@ async function trainerPokazZawodnicy() {
     }
 
     box.innerHTML = lista.map(z => `
-      <div class="card" style="text-align:left;">
+      <div class="card" style="text-align:left; cursor:pointer;" onclick="adminOpenZawodnik('${z.nr}', ${JSON.stringify(String(z.nazwisko || ''))})">
         <b>#${z.nr}</b> — ${z.nazwisko}<br>
         <span style="opacity:0.8;">${z.suma} treningów łącznie</span>
       </div>
@@ -2532,7 +2684,12 @@ window.addEventListener('load', () => {
   if (app) app.classList.remove('hidden');
 
   const wersja = document.getElementById("wersjaNum");
-  if (wersja) wersja.textContent = WERSJA_APKI;
+  if (wersja) wersja.textContent = APP_BUILD;
+
+  const setupSubmitBtn = document.getElementById("btnSetupSubmit");
+  if (setupSubmitBtn && !setupSubmitBtn.getAttribute("onclick")) {
+    setupSubmitBtn.addEventListener("click", submitSetupAndActivateClub);
+  }
 
   // START: najpierw ustaw clubId z URL (albo wyczyść na linku głównym)
   initClubFromUrl_();
