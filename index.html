@@ -249,16 +249,25 @@ input[type="number"] {
   // Ustaw globalnie dla Twojego dużego skryptu:
   window.APP_BUILD = 'BETA APP';
 
-  const poprzednia = localStorage.getItem('wersjaApki');
+    const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
     localStorage.setItem('wersjaApki', window.APP_BUILD);
-    location.reload(); // bez (true) — to już jest przestarzałe
-  }
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(r => console.log("✅ SW zarejestrowany:", r))
-      .catch(e => console.error("❌ Błąd SW:", e));
+    // ✅ twarde odświeżenie PWA cache przy zmianie wersji
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations()
+        .then(regs => Promise.all(regs.map(r => r.unregister())))
+        .finally(() => location.reload());
+    } else {
+      location.reload();
+    }
+  } else {
+    // normalna rejestracja SW
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(r => console.log("✅ SW zarejestrowany:", r))
+        .catch(e => console.error("❌ Błąd SW:", e));
+    }
   }
 </script>
 
