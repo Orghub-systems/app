@@ -7,6 +7,17 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
+    :root {
+  --color-accent-red: #8b0000;   /* główny czerwony aplikacji */
+  --color-accent-red-border: #ff2b2b;
+
+  --color-accent-green: #0f7a2a; /* główny zielony aplikacji */
+  --color-accent-green-border: #19a642;
+
+  --color-card-bg: #111;
+  --color-card-border: #555;
+}
+  
     body {
       font-family: Collage, sans-serif;
       margin: 0;
@@ -28,14 +39,14 @@
       border: none;
     }
 
-    button {
-      padding: 8px 16px;
-      border: none;
-      background: red;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+button {
+  padding: 8px 16px;
+  border: none;
+  background: var(--color-accent-red);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
     
     button[disabled] { background: gray !important; cursor: default; }
     #btnSetupPayments:disabled,
@@ -186,6 +197,53 @@ input[type="number"] {
   appearance: textfield;
 }
 
+  /* ===== GLOBALNY STATUS: OPŁACONE ===== */
+.status-red {
+  background: var(--color-accent-red) !important;
+  border: 1px solid var(--color-accent-red-border) !important;
+  color: #fff !important;
+}
+
+.status-green {
+  background: var(--color-accent-green) !important;
+  border: 1px solid var(--color-accent-green-border) !important;
+  color: #fff !important;
+}
+
+    .modal.hidden { display:none; }
+
+.modal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.65);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:9999;
+}
+
+.modal-card{
+  width:min(520px, 100%);
+  background:#111;
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 18px 60px rgba(0,0,0,0.55);
+}
+
+.modal-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* Zielony przycisk TAK */
+.full-btn.green{
+  background:#0a7a2f;
+  border:1px solid rgba(255,255,255,0.10);
+}
+.full-btn.green:active{ transform:scale(0.99); }
+  
   </style>
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
@@ -332,6 +390,42 @@ input[type="number"] {
   Płatności (ustaw daty sezonu)
     </button>
 
+<!-- HASŁO ADMINA -->
+<button class="full-btn alt" id="btnSetupAdminPass" disabled
+        style="margin-top:12px; width:100%;"
+        onclick="openAdminPassPopup()">
+  Utwórz hasło administratora
+</button>
+
+<!-- POPUP: HASŁO ADMINA -->
+<div id="adminPassPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4000; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:800; font-size:16px; margin-bottom:10px;">
+      Hasło administratora
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font-weight:700;">Ustaw hasło (min. 6 znaków)</div>
+      <input id="adminPassInput" type="password" placeholder="Wpisz hasło"
+             style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+      <div style="font-size:12px; opacity:0.75;">
+        Login admina jest stały: <b>admin</b>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="closeAdminPassPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="saveAdminPass()">Zapisz</button>
+    </div>
+
+    <p id="adminPassMsg" style="margin-top:12px; min-height:1.2em;"></p>
+  </div>
+</div>
+    
     <button class="full-btn" id="btnSetupSubmit" disabled
         style="margin-top:12px; width:100%;"
         onclick="submitSetupAndActivateClub()">Wyślij i aktywuj klub</button>
@@ -340,7 +434,9 @@ input[type="number"] {
             style="margin-top:12px; width:100%;">⬅ Powrót</button>
 
     <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
+    <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
   </div>
+  
   <!-- POPUP PŁATNOŚCI -->
 <div id="paymentsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
@@ -361,6 +457,25 @@ input[type="number"] {
              style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
     </div>
 
+        <div style="height:1px;background:#333;margin:14px 0;"></div>
+
+    <!-- LIMIT TRENINGÓW W RAMACH SKŁADKI -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font-weight:700;">Limit treningów w ramach składki</div>
+
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
+        <input id="noLimitCheckbox" type="checkbox" style="transform:scale(1.15);">
+        <span>Brak limitu</span>
+      </label>
+
+      <input id="membershipLimitInput" type="number" inputmode="numeric" min="0" step="1"
+             placeholder="np. 8"
+             style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+      <div style="font-size:12px; opacity:0.75;">
+        Jeśli zaznaczysz „Brak limitu”, pole liczby zostanie zablokowane.
+      </div>
+    </div>
+
     <div style="display:flex; gap:10px; margin-top:14px;">
       <button class="full-btn alt" style="flex:1;" type="button" onclick="closePaymentsPopup()">Anuluj</button>
       <button class="full-btn" style="flex:1;" type="button" onclick="applyPaymentsPopup()">Zapisz</button>
@@ -369,6 +484,8 @@ input[type="number"] {
     <p id="paymentsMsg" style="margin-top:12px; min-height:1.2em;"></p>
   </div>
 </div>
+
+  </div> <!-- /clubSetupView -->
 
     <!-- LOGOWANIE -->
     <div id="loginView" class="container hidden">
@@ -500,12 +617,14 @@ input[type="number"] {
       <h1 id="tytulTreningow">TWOJE WYDARZENIA</h1>
       <div id="listaTreningow">Ładowanie...</div>
       <button onclick="pokazStatystyki()" style="margin-top:20px;">📈 Pokaż statystyki</button>
-      <button onclick="powrotDoPlatnosci()" style="margin-top:10px;background:#333;">⬅ Powrót do płatności</button>
+    <button class="full-btn alt" onclick="powrotDoPlatnosci()" style="margin-top:10px;">   ⬅ Powrót do płatności
+</button>
+
     </div>
 
     <!-- STATYSTYKI -->
     <div id="statsView" class="container hidden">
-      <h1>Moje statystyki</h1>
+      <h1>Statystyki</h1>
       <div id="listaStatystyk">Ładowanie...</div>
       <button onclick="powrotDoTreningow()" style="margin-top:20px;">⬅ Powrót</button>
     </div>
@@ -518,6 +637,136 @@ input[type="number"] {
       <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
     </div>
 
+    <!-- PANEL ADMINISTRATORA -->
+<div id="adminPanelView" class="container hidden">
+  <h1>Panel administratora</h1>
+
+  <button class="full-btn" onclick="adminPokazZawodnikow()">👥 Zawodnicy</button>
+  <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
+</div>
+
+<!-- LISTA ZAWODNIKÓW (ADMIN) -->
+<div id="adminZawodnicyView" class="container hidden">
+  <h1>Lista zawodników</h1>
+  <div id="adminListaZawodnikow">Ładowanie...</div>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+</div>
+
+   <!-- KARTA ZAWODNIKA (ADMIN) -->
+<div id="adminZawodnikView" class="container hidden">
+  <h1 id="adminZawodnikTitle">Zawodnik</h1>
+
+  <button class="full-btn" onclick="adminOpenGroups()">Grupy</button>
+ <button class="full-btn" onclick="adminOpenStats();">Statystyki</button>
+  <button class="full-btn" onclick="adminOpenPayments()">Płatności</button>
+
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="adminZawodnikMsg" style="margin-top:10px;"></p>
+</div>
+
+<!-- ADMIN: GRUPY (EKRAN) -->
+<div id="adminGrupyView" class="container hidden">
+  <h1 id="adminGrupyTitle">Grupy</h1>
+
+  <!-- KAFEL 1: G1–G5 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6mm;
+      text-align:center;
+    ">
+      <label><input type="checkbox" class="adminGrupaChk" value="G1"> G1</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G2"> G2</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G3"> G3</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G4"> G4</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G5"> G5</label>
+    </div>
+  </div>
+
+  <!-- KAFEL 2: G6–G10 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6mm;
+      text-align:center;
+    ">
+      <label><input type="checkbox" class="adminGrupaChk" value="G6"> G6</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G7"> G7</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G8"> G8</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G9"> G9</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G10"> G10</label>
+    </div>
+  </div>
+
+  <button class="full-btn" onclick="adminSaveGrupyLocal()">Zapisz</button>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="adminGrupyMsg" style="margin-top:10px;"></p>
+</div>
+
+    <!-- ADMIN: STATYSTYKI (EKRAN) -->
+    
+    <div id="adminStatsView" class="container hidden">
+  <h1 id="adminStatsTitle">Statystyki</h1>
+
+  <div id="adminStatsBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
+  </div>
+
+  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
+
+  <p id="adminStatsMsg" style="margin-top:10px;"></p>
+</div>
+    
+    <!-- ADMIN: PŁATNOŚCI ZAWODNIKA -->
+
+    <div id="adminPaymentsView" class="container hidden">
+  <h1 id="adminPaymentsTitle">Płatności</h1>
+
+  <div id="adminPaymentsBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
+  </div>
+
+  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
+
+  <p id="adminPaymentsMsg" style="margin-top:10px;"></p>
+</div>
+
+    <!-- =================== ADMIN: MODAL POTWIERDZENIA PŁATNOŚCI =================== -->
+<div id="adminPayConfirmModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
+    <div id="adminPayConfirmText" style="opacity:0.9; line-height:1.35;">
+      Potwierdzam zapłatę
+    </div>
+
+    <div style="height:10px;"></div>
+
+    <div class="modal-actions">
+      <button class="full-btn green" id="adminPayConfirmYesBtn">TAK</button>
+      <button class="full-btn alt" id="adminPayConfirmNoBtn">NIE</button>
+    </div>
+
+    <p id="adminPayConfirmMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
+
+    <div id="confirmModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirmTitle">Potwierdzam zapłatę</h2>
+    <p id="confirmText" style="opacity:.85; margin-top:8px;"></p>
+
+    <div class="row" style="gap:10px; margin-top:14px;">
+      <button id="confirmYesBtn" class="full-btn" style="background:#1f7a3a;" onclick="confirmYes()">TAK</button>
+      <button class="full-btn alt" onclick="confirmNo()">NIE</button>
+    </div>
+
+    <p id="confirmMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
     <!-- LISTA ZAWODNIKÓW (TRENER) -->
     <div id="trainerZawodnicyView" class="container hidden">
       <h1>Lista zawodników</h1>
@@ -626,6 +875,110 @@ input[type="number"] {
   </div>
 </div>
 
+    <!-- =================== ADMIN: POPUP ZAWODNIK =================== -->
+<div id="adminZawodnikPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.75);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4600; padding:18px;
+">
+  <div class="card" style="max-width:340px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Zawodnik <span id="adminZawodnikHeader" style="opacity:.9;"></span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button class="full-btn alt" type="button" onclick="adminOpenGroups()">Grupy</button>
+      <button class="full-btn alt" type="button" onclick="adminOpenStats()">Statystyki</button>
+      <button class="full-btn alt" type="button" onclick="adminOpenPayments()">Płatności</button>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminCloseZawodnik()">Zamknij</button>
+    </div>
+
+    <div id="adminZawodnikMsg" style="margin-top:10px; opacity:.9;"></div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: POPUP GRUP (2 rzędy po 5) =================== -->
+<div id="adminGroupsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4700; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Grupy <span id="adminGroupsNrLabel" style="opacity:.85;"></span>
+    </div>
+
+    <div id="adminGroupsGrid" style="
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:10px;
+    "></div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="adminCloseGroupsPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminApplyGroupsPopup()">Zapisz</button>
+    </div>
+
+    <div id="adminGroupsMsg" style="margin-top:10px; opacity:.9;"></div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: POPUP STATYSTYKI =================== -->
+<div id="adminStatsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4700; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Statystyki <span id="adminStatsNrLabel" style="opacity:.85;"></span>
+    </div>
+
+    <div id="adminStatsBody">⏳ Ładowanie…</div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminCloseStatsPopup()">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: POPUP PŁATNOŚCI =================== -->
+<div id="adminConfirmPayPopup" class="container hidden">
+  <h1>Potwierdzenie</h1>
+
+  <div class="card">
+    <p id="adminConfirmPayMsg">Potwierdzam zapłatę</p>
+  </div>
+
+  <button id="adminConfirmPayYes" class="full-btn" style="background:#1a7f37;" onclick="adminDoConfirmPayment()">
+    TAK
+  </button>
+
+  <button class="full-btn alt" onclick="adminCancelConfirmPayment()">
+    NIE
+  </button>
+</div>
+    
+<div id="adminPaymentsPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:4700; padding:18px;
+">
+  <div class="card" style="max-width:380px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Płatności <span id="adminPayNrLabel" style="opacity:.85;"></span>
+    </div>
+
+    <div id="adminPaymentsBody">⏳ Ładowanie…</div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn" style="flex:1;" type="button" onclick="adminClosePaymentsPopup()">Zamknij</button>
+    </div>
+  </div>
+</div>
   </div><!-- /app -->
 
 <script>
@@ -679,6 +1032,9 @@ let numerZalogowanego = null;
 let grupaZalogowanego = null;
 window.grupyTrenera = "";
 let currentView = "loginView";
+
+window.__adminPendingPayCol = null;
+window.__adminPendingPayLabel = "";
 
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
@@ -748,7 +1104,10 @@ function hideBusy() {
 
 /* =================== 40 NAWIGACJA / ROUTER =================== */
 function ukryjWszystkie() {
-  document.querySelectorAll(".container").forEach(v => v.classList.add("hidden"));
+  document.querySelectorAll(".container").forEach(v => {
+    if (v.id === "app") return; // ✅ NIE chowamy wrappera
+    v.classList.add("hidden");
+  });
 }
 
 function goToView(viewId, options = {}) {
@@ -799,6 +1158,11 @@ async function startApp_() {
   const params = new URLSearchParams(window.location.search);
   const clubFromUrl = params.get("clubId");
 
+  // 🔧 KLUCZOWE – ustaw globalne clubId zanim apka coś zrobi
+if (clubFromUrl) {
+  clubId = String(clubFromUrl);
+}
+
   // --- KOLOR ---
   if (!clubFromUrl) {
 
@@ -840,8 +1204,34 @@ function requireClubId() {
 
 // POST do CORE bez clubId (np. createClub)
 async function apiCorePost(payload = {}) {
+  // DIAG_START: Panel 2 / CORE POST diagnostics
+  const safePayload = { ...payload };
+  ["haslo", "password", "token", "auth", "authorization"].forEach((k) => {
+    if (safePayload[k] != null) safePayload[k] = "[REDACTED]";
+  });
+  console.log("[DIAG][apiCorePost][request]", {
+    clubId: safePayload.clubId || clubId || "",
+    action: safePayload.action || "",
+    mode: safePayload.mode || "",
+    payload: safePayload
+  });
+  // DIAG_END
+
   const body = new URLSearchParams({ ...payload });
   const res = await fetch(CORE_URL, { method: "POST", body });
+
+  // DIAG_START: Panel 2 / CORE response diagnostics
+  const contentType = res.headers.get("content-type") || "";
+  console.log("[DIAG][apiCorePost][response-meta]", {
+    status: res.status,
+    contentType
+  });
+  if (!/json/i.test(contentType)) {
+    const raw = await res.clone().text();
+    console.log("[DIAG][apiCorePost][non-json-preview]", raw.slice(0, 200));
+  }
+  // DIAG_END
+
   return res.json();
 }
 
@@ -1336,8 +1726,31 @@ function openPaymentsPopup() {
 
   const pop = document.getElementById("paymentsPopup");
   if (pop) pop.classList.remove("hidden");
+  
+  wireMembershipLimitUI_();
+
 }
 
+function wireMembershipLimitUI_() {
+  const cb = document.getElementById("noLimitCheckbox");
+  const inp = document.getElementById("membershipLimitInput");
+  if (!cb || !inp) return;
+
+  function refresh() {
+    if (cb.checked) {
+      inp.value = "";
+      inp.disabled = true;
+      inp.style.opacity = "0.55";
+    } else {
+      inp.disabled = false;
+      inp.style.opacity = "1";
+    }
+  }
+
+  cb.onchange = refresh;
+  refresh();
+}
+  
 function closePaymentsPopup() {
   const pop = document.getElementById("paymentsPopup");
   if (pop) pop.classList.add("hidden");
@@ -1416,6 +1829,24 @@ function applyPaymentsPopup() {
 
   const btnSubmit = document.getElementById("btnSetupSubmit");
   if (btnSubmit) btnSubmit.disabled = false;
+
+    const noLimit = !!document.getElementById("noLimitCheckbox")?.checked;
+  const limitInp = document.getElementById("membershipLimitInput");
+  const limitRaw = String(limitInp?.value || "").trim();
+
+  if (noLimit) {
+    setupDraft.membershipLimit = "NO_LIMIT";
+  } else if (limitRaw === "") {
+    setupDraft.membershipLimit = ""; // brak ustawienia (albo wymusimy później)
+  } else {
+    const lim = Number(limitRaw.replace(",", "."));
+    if (!Number.isFinite(lim) || lim < 0) {
+      if (pmsg) pmsg.textContent = "❌ Nieprawidłowy limit treningów w ramach składki.";
+      if (limitInp) limitInp.focus();
+      return;
+    }
+    setupDraft.membershipLimit = lim;
+  }
 
   closePaymentsPopup();
   const smsg = document.getElementById("setupMsg");
@@ -1509,7 +1940,9 @@ function updateSetupPaymentsState_() {
     btnPay.textContent = enablePayments ? "Płatności" : "Płatności (ustaw daty sezonu)";
   }
 
-  // dalej zostawiamy disabled, odblokujemy po zapisaniu płatności
+   const btnAdmin = document.getElementById("btnSetupAdminPass");
+  if (btnAdmin) btnAdmin.disabled = !enablePayments; 
+
   if (btnSubmit) btnSubmit.disabled = true;
 
   if (msg) {
@@ -1531,10 +1964,81 @@ function monthKey_(m) {
   ).trim();
 }
 
+ /* =================== 62A PANEL 2: HASŁO ADMINA (UI) =================== */
+
+// stan roboczy hasła admina (na tym etapie tylko frontend)
+setupDraft.adminPass = setupDraft.adminPass || "";
+
+function openAdminPassPopup() {
+  const pop = document.getElementById("adminPassPopup");
+  const inp = document.getElementById("adminPassInput");
+  const msg = document.getElementById("adminPassMsg");
+
+  if (msg) msg.textContent = "";
+  if (inp) {
+    inp.value = setupDraft.adminPass || "";
+    inp.focus();
+  }
+  if (pop) pop.classList.remove("hidden");
+}
+
+function closeAdminPassPopup() {
+  const pop = document.getElementById("adminPassPopup");
+  const msg = document.getElementById("adminPassMsg");
+  if (msg) msg.textContent = "";
+  if (pop) pop.classList.add("hidden");
+}
+
+async function saveAdminPass() {
+  const inp = document.getElementById("adminPassInput");
+  const msg = document.getElementById("adminPassMsg");
+  const btn = document.getElementById("btnSetupAdminPass");
+
+  const pass = String(inp?.value || "").trim();
+
+  if (pass.length < 6) {
+    if (msg) msg.textContent = "❌ Hasło musi mieć minimum 6 znaków.";
+    return;
+  }
+
+  if (msg) msg.textContent = "⏳ Zapisuję hasło administratora...";
+
+  try {
+    const r = await apiClubPost({
+      action: "adminSetPassword",
+      adminPass: pass
+    });
+
+    if (!r || (r.success !== true && r.ok !== true)) {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu hasła.");
+      return;
+    }
+
+    // zapis lokalny (żeby UI wiedziało, że już jest ustawione)
+    setupDraft.adminPass = pass;
+
+    if (btn) btn.textContent = "Hasło administratora ✅";
+    if (msg) msg.textContent = "✅ Hasło zapisane w panelu administracyjnym.";
+
+    setTimeout(() => closeAdminPassPopup(), 500);
+
+  } catch (e) {
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
+}
+  
  async function submitSetupAndActivateClub() {
+  console.log('[DIAG] submitSetupAndActivateClub fired');
   const msg = document.getElementById("setupMsg");
   const btn = document.getElementById("btnSetupSubmit");
+  const errorBox = document.getElementById("setupErrorBox");
   if (msg) msg.textContent = "";
+  // DIAG_START: Panel 2 error box reset
+  if (errorBox) {
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+  }
+  // DIAG_END
 
   try {
     if (!clubId) {
@@ -1588,25 +2092,102 @@ function monthKey_(m) {
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
     // CORE zapisuje to do Administracja->Kartoteka
-    const activateClubCall = window.activateClub_ || (async (payload = {}) => apiCorePost({ action: "activateClub", ...payload }));
-    const r = await activateClubCall({
-      clubId,
-      sezonStart,
-      sezonEnd,
-      months: JSON.stringify(months),
-      fees: JSON.stringify(fees),
-      singleTrainingPrice
-    });
+    
+const membershipLimit =
+  setupDraft?.membershipLimit === "NO_LIMIT"
+    ? "NO_LIMIT"
+    : (setupDraft?.membershipLimit === "" || setupDraft?.membershipLimit == null)
+      ? ""
+      : String(setupDraft.membershipLimit).trim();
+
+console.log("[DIAG] activateClub payload preview", {
+  clubId,
+  sezonStart,
+  sezonEnd,
+  monthsType: typeof months,
+  monthsIsArray: Array.isArray(months),
+  feesType: typeof fees,
+  singleTrainingPrice,
+  membershipLimit_raw: setupDraft?.membershipLimit,
+  membershipLimit_type: typeof setupDraft?.membershipLimit,
+  membershipLimit
+});
+
+const r = await activateClub_({
+  clubId,
+  sezonStart,
+  sezonEnd,
+  months: JSON.stringify(months),
+  fees: JSON.stringify(fees),
+  singleTrainingPrice,
+  membershipLimit
+});
 
     if (!r || (r.success !== true && r.ok !== true)) {
+      const shortErr = (r?.error || r?.message || "Błąd odpowiedzi backendu");
       if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
+      // DIAG_START: Panel 2 error box backend error
+      if (errorBox) {
+        errorBox.textContent = "Błąd aktywacji klubu: " + shortErr;
+        errorBox.classList.remove("hidden");
+      }
+      // DIAG_END
       if (btn) btn.disabled = false;
       return;
     }
 
-    // tutaj: link klubowy dopiero po aktywacji
-    const link = r.clubLink || r.link || "";
-    if (msg) msg.textContent = link ? `✅ Gotowe. Link klubu: ${link}` : "✅ Gotowe. Klub aktywowany.";
+// Link klubu po aktywacji (budujemy po clubId — backend nie musi zwracać linku)
+const link = (r && (r.clubLink || r.link))
+  ? (r.clubLink || r.link)
+  : ("https://orghub-systems.github.io/app/?clubId=" + encodeURIComponent(String(clubId || "").trim()));
+
+if (msg) msg.textContent = "✅ Gotowe. Klub aktywowany. Link poniżej.";
+
+// dynamiczny box (nie wymaga zmian w HTML)
+let box = document.getElementById("clubLinkBox");
+if (!box) {
+  box = document.createElement("div");
+  box.id = "clubLinkBox";
+  box.style.marginTop = "12px";
+
+  box.innerHTML = `
+    <div style="font-weight:700; margin-bottom:6px;">Link Twojego klubu:</div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <input id="clubLinkInput" type="text" readonly style="flex:1; min-width:260px;" />
+      <button id="btnCopyClubLink" type="button">Skopiuj link Twojego klubu</button>
+    </div>
+    <div id="clubLinkCopyMsg" style="margin-top:6px; opacity:.9;"></div>
+  `;
+
+  // wpinamy pod setupMsg (albo na koniec panelu)
+  const anchor = document.getElementById("setupMsg");
+  if (anchor && anchor.parentNode) anchor.parentNode.appendChild(box);
+  else document.body.appendChild(box); // awaryjnie
+}
+
+const input = document.getElementById("clubLinkInput");
+const btnCopy = document.getElementById("btnCopyClubLink");
+const copyMsg = document.getElementById("clubLinkCopyMsg");
+
+if (input) input.value = link;
+if (copyMsg) copyMsg.textContent = "";
+
+if (btnCopy) {
+  btnCopy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      if (copyMsg) copyMsg.textContent = "✅ Skopiowano link.";
+    } catch (e) {
+      if (input) {
+        input.focus(); input.select();
+        document.execCommand("copy");
+        if (copyMsg) copyMsg.textContent = "✅ Skopiowano link (tryb zgodności).";
+      } else {
+        if (copyMsg) copyMsg.textContent = "❌ Skopiuj ręcznie z pola.";
+      }
+    }
+  };
+}
     
     // opcjonalnie: przejście na ekran login / landing
     // goToView("loginView");
@@ -1614,6 +2195,12 @@ function monthKey_(m) {
   } catch (e) {
     console.error(e);
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+    // DIAG_START: Panel 2 error box transport error
+    if (errorBox) {
+      errorBox.textContent = "Błąd połączenia z backendem: " + (e?.message || e);
+      errorBox.classList.remove("hidden");
+    }
+    // DIAG_END
     if (btn) btn.disabled = false;
   } finally {
     if (btn) { btn.classList.remove("loading"); }
@@ -1646,11 +2233,12 @@ async function zaloguj() {
 
   try {
     const data = await apiClubPost({ mode: "login", numer: login, haslo });
-
-    if (!data.success) {
-      komunikat.innerText = "❌ " + (data.message || "Błąd logowania");
-      return;
-    }
+    
+if (!data.success) {
+  const err = data?.error || data?.message || "Błąd logowania";
+  komunikat.innerText = "❌ " + err;
+  return;
+}
 
     komunikat.innerText = "✅ Zalogowano";
 
@@ -1674,6 +2262,11 @@ async function zaloguj() {
       goToView("trainerPanelView");
       return;
     }
+
+    if (data.role === "admin") {
+  goToView("adminPanelView");
+  return;
+}
 
   } catch (e) {
     komunikat.innerText = "Błąd połączenia: " + (e?.message || e);
@@ -1790,18 +2383,118 @@ async function wyslijRejestracjeTrener() {
 
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
+  
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
+
   if (!lista?.length) {
-    div.innerHTML = "<p>Brak zaległości ✅</p>" +
+    div.innerHTML =
+      "<p>Brak zaległości ✅</p>" +
       "<button class='full-btn' onclick='pokazTreningi()'>Dalej ➡</button>";
     return;
   }
 
   div.innerHTML =
-    "<h3>Zaległe płatności:</h3>" +
-    lista.map(p => `<div class='card' style='background:#a00;'>🔴 ${p.nazwa} – ${p.kwota} zł</div>`).join('') +
-    `<button class='full-btn' onclick='pokazTreningi()' style='margin-top:20px;'>Dalej ➡</button>`;
+    "<h3>PŁATNOŚCI</h3>" +
+    lista.map(p => {
+      // red = zaległość
+      // green = opłacone / w terminie
+      if (p.status === "green") {
+        return `
+          <div class="card status-green">
+            <div style="font-weight:700;">${p.nazwa}</div>
+            <div>${p.kwota} zł</div>
+          </div>
+        `;
+      } else {
+        // dokładnie styl aplikacji jak przycisk "Zapisz się"
+return `
+  <div class="card status-red">
+    <div style="font-weight:700;">${p.nazwa}</div>
+    <div>${p.kwota} zł</div>
+  </div>
+`;
+
+      }
+    }).join('') +
+    `<button class="full-btn" onclick="pokazTreningi()" style="margin-top:20px;">Dalej ➡</button>`;
+}
+
+  function parsePlatnoscMeta_(nazwa){
+  if (!nazwa) return null;
+
+  const lower = nazwa.toLowerCase();
+
+  const isSkladka = lower.startsWith("składka");
+  const isZajecia = lower.startsWith("zajęcia");
+
+  const yearMatch = nazwa.match(/20\d{2}/);
+  if (!yearMatch) return null;
+  const year = Number(yearMatch[0]);
+
+  const miesiace = [
+    "styczeń","luty","marzec","kwiecień","maj","czerwiec",
+    "lipiec","sierpień","wrzesień","październik","listopad","grudzień"
+  ];
+
+  const monthIdx = miesiace.findIndex(m => lower.includes(m));
+  if (monthIdx === -1) return null;
+
+  return {
+    type: isSkladka ? "S" : (isZajecia ? "Z" : null),
+    year,
+    monthIdx
+  };
+}
+
+ function getPlatnoscColor_(meta, today){
+  if (!meta) return "#b30000"; // mocna czerwień fallback
+
+  const GREEN = "#00c853";  // zielony jak sygnalizacja (mocny)
+  const RED   = "#ff0000";  // agresywna czerwień
+
+  const paymentMonth = new Date(meta.year, meta.monthIdx, 1);
+  const nextMonth = new Date(meta.year, meta.monthIdx + 1, 1);
+
+  // ======================
+  // SKŁADKA
+  // ======================
+  if (meta.type === "S") {
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // bieżący miesiąc → zielony
+    if (meta.year === currentYear && meta.monthIdx === currentMonth) {
+      return GREEN;
+    }
+
+    // zaległe → czerwony
+    return RED;
+  }
+
+  // ======================
+  // ZAJĘCIA DODATKOWE
+  // ======================
+  if (meta.type === "Z") {
+    // deadline: 15 dzień następnego miesiąca
+    const deadline = new Date(meta.year, meta.monthIdx + 1, 15);
+    deadline.setHours(0,0,0,0);
+
+    if (today <= deadline) {
+      return GREEN; // jeszcze czas na rozliczenie
+    } else {
+      return RED;   // po 15 – wali po oczach
+    }
+  }
+
+  return RED;
+}
+
+  function formatPlatnoscNazwa_(txt){
+  if (!txt) return "";
+  return String(txt)
+    .replace(/^Składka\s*\(.*?\)\s*/i, "Składka ")
+    .replace(/^Zajęcia dodatkowe\s*/i, "Zajęcia ");
 }
 
 async function pokazTreningi() {
@@ -1810,6 +2503,10 @@ async function pokazTreningi() {
   renderTreningi(lista);
 }
 
+function powrotDoPlatnosci() {
+  goToView("platnosciView", { replace: true });
+}
+  
 function renderTreningi(lista) {
   const div = document.getElementById('listaTreningow');
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
@@ -1927,6 +2624,70 @@ async function odswiezListeZapisanych(id) {
   }
 }
 
+async function pokazStatystyki() {
+  try {
+    goToView("statsView");
+
+    // WAŻNE: apiClubGet już powinno dokleić clubId i ogarnąć SCRIPT_URL wewnętrznie
+    const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
+
+    renderStatystyki(lista);
+  } catch (e) {
+    const div = document.getElementById("listaStatystyk");
+    if (div) div.innerHTML = `<p>Błąd ładowania statystyk: ${String(e)}</p>`;
+  }
+}
+function renderStatystyki(lista) {
+  // ✅ Kontener zależny od widoku (admin ma swój)
+  const isAdminStats = (currentView === "adminStatsView");
+  const div = isAdminStats
+    ? document.getElementById("adminStatsBody")
+    : document.getElementById("listaStatystyk");
+
+  if (!div) return;
+
+  if (!Array.isArray(lista) || lista.length === 0) {
+    div.innerHTML = "<p>Brak danych</p>";
+    return;
+  }
+
+  // Kolejność sezonowa: Wrzesień -> Sierpień
+  const seasonOrder = ["Wrzesień","Październik","Listopad","Grudzień","Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień"];
+  const orderIdx = Object.fromEntries(seasonOrder.map((m, i) => [m.toLowerCase(), i]));
+
+  const sorted = [...lista].sort((a, b) => {
+    const ai = orderIdx[String(a.miesiac || "").toLowerCase()];
+    const bi = orderIdx[String(b.miesiac || "").toLowerCase()];
+    const aIdx = (ai == null ? 999 : ai);
+    const bIdx = (bi == null ? 999 : bi);
+    return aIdx - bIdx;
+  });
+
+  const suma = sorted.reduce((acc, s) => acc + (Number(s.treningi) || 0), 0);
+
+  const now = new Date();
+  const currentMonthName = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec","Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"][now.getMonth()];
+
+  div.innerHTML =
+    sorted.map(s => {
+      const miesiac = String(s.miesiac || "").trim();
+      const treningi = Number(s.treningi) || 0;
+      const isCurrent = miesiac.toLowerCase() === currentMonthName.toLowerCase();
+      const badge = isCurrent ? ` <span style="opacity:.9;font-weight:700;">(teraz)</span>` : "";
+
+      return `<div class="card">
+        📅 ${miesiac}${badge} — 🏒 <b>${treningi}</b>
+      </div>`;
+    }).join("") +
+    `<div class="card" style="background:#222;margin-top:20px;font-weight:800;">
+      🔥 Łącznie: ${suma} treningów w sezonie
+    </div>`;
+}
+  
+function powrotDoTreningow() {
+  goToView("homeView"); // zamiast appBack() — stabilne
+}
+ 
 /* =================== 90 TRENER: LISTA / WYDARZENIA / DODAWANIE / USUWANIE =================== */
 window.trainerPaymentNumer = null;
 function trainerPowrot() { appBack(); }
@@ -1942,10 +2703,6 @@ window.trainerPokazWydarzenia = async function trainerPokazWydarzenia() {
     if (div) div.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 };
-
-window.adminOpenZawodnik = function(numer, nazwisko) {
-  window.trainerShowPaymentPopup(numer, nazwisko);
-}
 
 window.trainerShowPaymentPopup = function(numer, nazwisko) {
   window.trainerPaymentNumer = String(numer || "").trim();
@@ -2010,6 +2767,39 @@ async function trainerPokazZawodnicy() {
   }
 }
 
+  async function adminPokazZawodnikow() {
+  goToView("adminZawodnicyView");
+  const box = document.getElementById("adminListaZawodnikow");
+  if (box) box.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
+
+  try {
+    // admin widzi wszystkich – nie filtrujemy po grupach
+    const lista = await apiClubGet("listaZawodnikow", { grupy: "" });
+
+    if (!Array.isArray(lista) || lista.length === 0) {
+      if (box) box.innerHTML = "<div class='card' style='background:#111;'>Brak danych</div>";
+      return;
+    }
+
+    // prosta lista kart – klik w następnym kroku otworzy szczegóły zawodnika
+box.innerHTML = lista.map(z => {
+  const nr = String(z.nr || "").trim();
+  const nazw = String(z.nazwisko || "").replace(/'/g, "\\'");
+
+  return `
+    <div class="card" style="text-align:left; cursor:pointer;"
+         onclick="adminOpenZawodnik('${nr}','${nazw}')">
+      <b>#${nr}</b> — ${z.nazwisko}<br>
+      <span style="opacity:0.8;">${z.suma} treningów łącznie</span>
+    </div>
+  `;
+}).join('');
+
+  } catch (e) {
+    if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+  
 function renderTreningiTrainer(lista) {
   const div = document.getElementById("trainerListaWydarzen");
   if (!lista?.length) { div.innerHTML = "<p>Brak wydarzeń</p>"; return; }
@@ -2417,6 +3207,10 @@ async function trainerShowEditPopup(miesiac, col5) {
   // 3) pokaż popup od razu, ale z komunikatem "ładuję"
   if (pop) pop.style.display = "flex";
 
+  // ✅ zawsze podepnij klik do przycisku w tym popupie (unikamy duplikatów ID w innych miejscach)
+const saveBtn = pop ? pop.querySelector("#btnEditSave") : null;
+if (saveBtn) saveBtn.onclick = trainerSaveEditEvent;
+
   // 4) załaduj opcje trenerów do selectów
   await zaladujListeTrenerowDoEdycji();
 
@@ -2622,7 +3416,7 @@ window.addEventListener('load', () => {
 
   // router + theme
   startApp_();
-const btn = document.getElementById("btnEditSave");
+  const btn = document.getElementById("btnEditSave");
 if (btn) {
   btn.onclick = () => {
     const m = document.getElementById("editEventMsg");
@@ -2630,7 +3424,6 @@ if (btn) {
     trainerSaveEditEvent();
   };
 }
-
 
   // splash ma być zawsze widoczny minimalnie chwilę (żeby nie "mrugał")
   if (splash) {
