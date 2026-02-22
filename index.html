@@ -2404,7 +2404,11 @@ function renderAdminPayments_(res) {
   }
 
   const skladki = items.filter(x => x.typ === "skladka");
-  const zajecia = items.filter(x => x.typ === "zajecia");
+  const zajecia = items.filter(x =>
+  x.typ === "zajecia" &&
+  x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
+  Number(x.kwota) > 0
+);
 
   body.innerHTML = `
     ${renderPaymentsSection_("Składki", skladki)}
