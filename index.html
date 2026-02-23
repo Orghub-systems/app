@@ -2444,7 +2444,7 @@ function renderPaymentTile_(p) {
 
   // ✅ przekazujemy kolumnę, a nie nr zawodnika
   const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminAskConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
     : "";
 
   return `
@@ -2547,7 +2547,7 @@ function adminAskConfirmPayment(col, label) {
 }
 
 async function adminDoConfirmPayment() {
-  const yesBtn = document.getElementById("adminPayConfirmYesBtn");
+  const yesBtn = document.getElementById("adminConfirmPayYes");
   if (yesBtn) {
     yesBtn.disabled = true;
     yesBtn.style.opacity = "0.6";
@@ -2573,20 +2573,18 @@ async function adminDoConfirmPayment() {
       return; // IMPORTANT: finally odblokuje przycisk
     }
 
-     adminClosePayConfirmModal_();
+    document.getElementById("adminConfirmPayPopup").classList.add("hidden");
     await adminOpenPayments();
 
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
-} finally {
-  // zawsze odblokuj przycisk
-  if (yesBtn) {
-    yesBtn.disabled = false;
-    yesBtn.style.opacity = "1";
-    yesBtn.textContent = "TAK";
-  }
-  // i zamknij modal niezależnie od wyniku
-  adminClosePayConfirmModal_();
+  } finally {
+    // ✅ zawsze odblokuj TAK
+    if (yesBtn) {
+      yesBtn.disabled = false;
+      yesBtn.style.opacity = "1";
+      yesBtn.textContent = "TAK";
+    }
   }
 }
   
