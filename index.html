@@ -2444,7 +2444,7 @@ function renderPaymentTile_(p) {
 
   // ✅ przekazujemy kolumnę, a nie nr zawodnika
   const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
+    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminAskConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
     : "";
 
   return `
