@@ -2290,7 +2290,29 @@ function adminOpenGroups() {
   const msg = document.getElementById("adminGrupyMsg");
   if (msg) msg.textContent = "";
 }
+    // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
+  (async () => {
+    try {
+      const res = await apiClubGet("adminGrupy", { numer: nr });
+      if (!res || !res.success) {
+        console.warn("adminGrupy error:", res);
+        return;
+      }
 
+      const grupyStr = String(res.grupy || "").trim(); // np "G1, G3"
+      if (!grupyStr) return;
+
+      const selected = grupyStr.split(",").map(s => s.trim()).filter(Boolean);
+
+      document.querySelectorAll("#adminGrupyGrid .adminGrupaChk").forEach(ch => {
+        ch.checked = selected.includes(ch.value);
+      });
+
+    } catch (e) {
+      console.error("adminGrupy fetch failed:", e);
+  })();
+ }
+  
   function adminSaveGrupyLocal() {
   const msg = document.getElementById("adminGrupyMsg");
   const picks = document.querySelectorAll("#adminGrupyGrid .adminGrupaChk");
