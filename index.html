@@ -2387,6 +2387,55 @@ async function adminOpenPayments() {
   }
 }
   
+function renderAdminPayments_(res) {
+  const body = document.getElementById("adminPaymentsBody");
+  const msg  = document.getElementById("adminPaymentsMsg");
+  if (!body) return;
+
+  if (!res || res.success === false) {
+    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
+    return;
+  }
+
+  const items = Array.isArray(res.items) ? res.items : [];
+  if (items.length === 0) {
+    body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
+    return;
+  }
+
+// DEBUG: pokaż co przychodzi dla zajęć dodatkowych
+try {
+  const dbg = items
+    .filter(x => x && x.typ === "zajecia")
+    .map(x => ({
+      typ: x.typ,
+      label: x.label || x.nazwa || "",
+      kwota_raw: x.kwota,
+      kwota_type: typeof x.kwota,
+      kwota_num: Number(x.kwota),
+      zaplacono: x.zaplacono,
+      col: x.col
+    }));
+  console.table(dbg);
+} catch (e) {
+  console.warn("DEBUG zajecia table failed:", e);
+}
+  
+  const skladki = items.filter(x => x.typ === "skladka");
+  const zajecia = items.filter(x =>
+  x.typ === "zajecia" &&
+  x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
+  Number(x.kwota) > 0
+);
+
+  body.innerHTML = `
+    ${renderPaymentsSection_("Składki", skladki)}
+    ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
+  `;
+
+  if (msg) msg.textContent = "";
+}
+
 function renderPaymentsSection_(title, arr) {
   if (!arr || arr.length === 0) {
     return `<div class="card" style="background:#111; margin-top:10px;"><b>${title}</b><br><span style="opacity:.8;">Brak danych</span></div>`;
@@ -2516,29 +2565,15 @@ function adminAskConfirmPayment(col, label) {
 }
 
 async function adminDoConfirmPayment() {
-  const yesBtn = document.getElementById("adminPayConfirmYesBtn");
-  const noBtn  = document.getElementById("adminPayConfirmNoBtn");
-  const msgEl  = document.getElementById("adminPayConfirmMsg");
-
-  const col = Number(window.__adminPendingPayCol);
-  const nr  = String(window.__adminSelectedNr || "").trim();
-
-  if (!nr || !col) {
-    if (msgEl) msgEl.textContent = "❌ Brak numeru zawodnika lub kolumny płatności.";
-    return;
-  }
-
-  // UI: "Zapisuję…"
+  const yesBtn = document.getElementById("adminConfirmPayYes");
   if (yesBtn) {
     yesBtn.disabled = true;
     yesBtn.style.opacity = "0.6";
     yesBtn.textContent = "⏳ Zapisuję…";
   }
-  if (noBtn) {
-    noBtn.disabled = true;
-    noBtn.style.opacity = "0.6";
-  }
-  if (msgEl) msgEl.textContent = "";
+
+  const col = Number(window.__adminPendingPayCol);
+  const nr  = String(window.__adminSelectedNr || "").trim();
 
   try {
     const r = await apiClubPost({
@@ -2547,29 +2582,26 @@ async function adminDoConfirmPayment() {
       col: col
     });
 
+    // pokaż debug (TYLKO NA TERAZ, potem usuniemy)
+    console.log("potwierdzPlatnoscAdmin response:", r);
+    alert("DEBUG:\n" + JSON.stringify(r?.debug || r, null, 2));
+
     if (!r || !r.success) {
-      if (msgEl) msgEl.textContent = "❌ Nie zapisano: " + (r?.error || r?.message || "Błąd");
-      return;
+      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+      return; // IMPORTANT: finally odblokuje przycisk
     }
 
-    // ✅ Sukces: zamknij modal
-    adminClosePayConfirmModal_();
-
-    // ✅ Odśwież listę płatności
+    document.getElementById("adminConfirmPayPopup").classList.add("hidden");
     await adminOpenPayments();
 
   } catch (e) {
-    if (msgEl) msgEl.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+    alert("❌ Błąd połączenia: " + (e?.message || e));
   } finally {
-    // ✅ Przywróć przyciski (gdyby został otwarty modal ponownie)
+    // ✅ zawsze odblokuj TAK
     if (yesBtn) {
       yesBtn.disabled = false;
       yesBtn.style.opacity = "1";
       yesBtn.textContent = "TAK";
-    }
-    if (noBtn) {
-      noBtn.disabled = false;
-      noBtn.style.opacity = "1";
     }
   }
 }
@@ -2600,30 +2632,21 @@ function renderAdminPayments_(res) {
     return;
   }
 
-  // Składki – bez zmian
   const skladki = items.filter(x => x.typ === "skladka");
-
-  // Zajęcia dodatkowe – tylko jeśli jest realna kwota > 0
-  const zajecia = items.filter(x =>
-    x.typ === "zajecia" &&
-    x.kwota !== null &&
-    x.kwota !== undefined &&
-    String(x.kwota).trim() !== "" &&
-    Number(x.kwota) > 0
-  );
+  const zajecia = items.filter(x => x.typ === "zajecia");
 
   body.innerHTML = `
     ${renderPaymentsSection_("Składki", skladki)}
     ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
   `;
 
-  // 🔥 PODPIĘCIE KLAWISZY "Zarejestruj płatność"
+  // ✅ stabilny handler (bez inline onclick i bez ryzyka apostrofów)
   body.querySelectorAll("button.adminPayBtn").forEach(btn => {
     btn.addEventListener("click", (ev) => {
       const b = ev.currentTarget;
       const col = Number(b?.dataset?.col);
       const label = decodeURIComponent(String(b?.dataset?.label || ""));
-      adminAskConfirmPayment(col, label); // używamy nowego modala
+      adminConfirmPayment(col, label);
     });
   });
 
