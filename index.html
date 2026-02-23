@@ -2290,29 +2290,29 @@ function adminOpenGroups() {
   const msg = document.getElementById("adminGrupyMsg");
   if (msg) msg.textContent = "";
 
-  // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
-  (async () => {
-    try {
-      const res = await apiClubGet("adminGrupy", { numer: nr });
-      if (!res || !res.success) {
-        console.warn("adminGrupy error:", res);
-        return;
-      }
-
-      const grupyStr = String(res.grupy || "").trim(); // np "G1, G3"
-      if (!grupyStr) return;
-
-      const selected = grupyStr.split(",").map(s => s.trim()).filter(Boolean);
-
-      document.querySelectorAll("#adminGrupyGrid .adminGrupaChk").forEach(ch => {
-        ch.checked = selected.includes(ch.value);
-      });
-
-    } catch (e) {
-      console.error("adminGrupy fetch failed:", e);
+// === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY (adminGrupyView) ===
+(async () => {
+  try {
+    const res = await apiClubGet("adminGrupy", { numer: nr });
+    if (!res || !res.success) {
+      console.warn("adminGrupy error:", res);
+      return;
     }
-  })();
-}
+
+    const grupyStr = String(res.grupy || "").trim(); // np. "G1, G3" albo "G3"
+    const selected = grupyStr
+      ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
+      : [];
+
+    // ✅ U CIEBIE checkboxy są w HTML w adminGrupyView (a nie w adminGrupyGrid)
+    document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
+      ch.checked = selected.includes(ch.value);
+    });
+
+  } catch (e) {
+    console.error("adminGrupy fetch failed:", e);
+  }
+})();
   
   function adminSaveGrupyLocal() {
   const msg = document.getElementById("adminGrupyMsg");
