@@ -2386,37 +2386,6 @@ async function adminOpenPayments() {
     if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 }
-  
-function renderAdminPayments_(res) {
-  const body = document.getElementById("adminPaymentsBody");
-  const msg  = document.getElementById("adminPaymentsMsg");
-  if (!body) return;
-
-  if (!res || res.success === false) {
-    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
-    return;
-  }
-
-  const items = Array.isArray(res.items) ? res.items : [];
-  if (items.length === 0) {
-    body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
-    return;
-  }
-  
-  const skladki = items.filter(x => x.typ === "skladka");
-  const zajecia = items.filter(x =>
-  x.typ === "zajecia" &&
-  x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
-  Number(x.kwota) > 0
-);
-
-  body.innerHTML = `
-    ${renderPaymentsSection_("Składki", skladki)}
-    ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
-  `;
-
-  if (msg) msg.textContent = "";
-}
 
 function renderPaymentsSection_(title, arr) {
   if (!arr || arr.length === 0) {
