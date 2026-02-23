@@ -2578,13 +2578,16 @@ async function adminDoConfirmPayment() {
 
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
-  } finally {
-    // ✅ zawsze odblokuj TAK
-    if (yesBtn) {
-      yesBtn.disabled = false;
-      yesBtn.style.opacity = "1";
-      yesBtn.textContent = "TAK";
-    }
+} finally {
+  // zawsze odblokuj przycisk
+  if (yesBtn) {
+    yesBtn.disabled = false;
+    yesBtn.style.opacity = "1";
+    yesBtn.textContent = "TAK";
+  }
+  // i zamknij modal niezależnie od wyniku
+  adminClosePayConfirmModal_();
+}
   }
 }
   
