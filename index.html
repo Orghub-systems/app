@@ -2330,11 +2330,12 @@ try {
     // fallback: dociągnij jeśli cache nie ma
     res = await apiClubGet("adminGrupy", { numer: nr });
   }
-
-  if (!res || !res.success) {
-    console.warn("adminGrupy error:", res);
-    return;
-  }
+  
+if (!res || !res.success) {
+  console.warn("adminGrupy error:", res);
+  if (msg) msg.textContent = "❌ Błąd pobierania grup";
+  return;
+}
 
   const grupyStr = String(res.grupy || "").trim();
   const selected = grupyStr
