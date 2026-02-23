@@ -2342,9 +2342,11 @@ if (!res || !res.success) {
     ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
     : [];
 
-  document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
-    ch.checked = selected.includes(ch.value);
-  });
+document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
+  ch.checked = selected.includes(ch.value);
+});
+
+if (msg) msg.textContent = "";
 
 } catch (e) {
   console.error("adminGrupy fetch failed:", e);
