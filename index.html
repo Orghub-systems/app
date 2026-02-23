@@ -2402,6 +2402,24 @@ function renderAdminPayments_(res) {
     body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
     return;
   }
+
+// DEBUG: pokaż co przychodzi dla zajęć dodatkowych
+try {
+  const dbg = items
+    .filter(x => x && x.typ === "zajecia")
+    .map(x => ({
+      typ: x.typ,
+      label: x.label || x.nazwa || "",
+      kwota_raw: x.kwota,
+      kwota_type: typeof x.kwota,
+      kwota_num: Number(x.kwota),
+      zaplacono: x.zaplacono,
+      col: x.col
+    }));
+  console.table(dbg);
+} catch (e) {
+  console.warn("DEBUG zajecia table failed:", e);
+}
   
   const skladki = items.filter(x => x.typ === "skladka");
   const zajecia = items.filter(x =>
