@@ -2239,6 +2239,41 @@ function adminOpenZawodnik(nr, nazwisko) {
   const msg = document.getElementById("adminZawodnikMsg");
   if (msg) msg.textContent = "";
 
+
+  // =================== PREFETCH ADMIN (cache w RAM) ===================
+  if (!window.__adminCache) window.__adminCache = {};
+  const key = String(window.__adminSelectedNr || "").trim();
+  if (!window.__adminCache[key]) window.__adminCache[key] = { ts: Date.now() };
+
+  // Odpal w tle (nie blokuje UI)
+  (async () => {
+    try {
+      const nr2 = String(window.__adminSelectedNr || "").trim();
+      if (!nr2) return;
+
+      // 1) Grupy
+      if (window.__adminCache[nr2].grupy === undefined) {
+        window.__adminCache[nr2].grupy = await apiClubGet("adminGrupy", { numer: nr2 });
+      }
+
+      // 2) Statystyki (zwykły endpoint zawodnika)
+      if (window.__adminCache[nr2].staty === undefined) {
+        window.__adminCache[nr2].staty = await apiClubGet("statystyki", { numer: nr2 });
+      }
+
+      // 3) Płatności admin
+      if (window.__adminCache[nr2].platnosci === undefined) {
+        window.__adminCache[nr2].platnosci = await apiClubGet("platnosciAdmin", { numer: nr2 });
+      }
+
+      // (opcjonalnie) debug:
+      // console.log("✅ Prefetch done:", nr2, window.__adminCache[nr2]);
+
+    } catch (e) {
+      console.warn("Prefetch admin failed:", e);
+    }
+  })();
+  // =================== /PREFETCH ADMIN ===================
 }
 
 // =================== GRUPY ===================
