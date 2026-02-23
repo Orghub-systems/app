@@ -2350,13 +2350,35 @@ try {
 }
   }
   
-  function adminSaveGrupyLocal() {
+async function adminSaveGrupyLocal() {
+  const nr = String(window.__adminSelectedNr || "").trim();
   const msg = document.getElementById("adminGrupyMsg");
-  const picks = document.querySelectorAll("#adminGrupyGrid .adminGrupaChk");
-  const arr = [];
-  picks.forEach(ch => { if (ch.checked) arr.push(ch.value); });
+  if (!nr) { if (msg) msg.textContent = "❌ Brak numeru zawodnika."; return; }
 
-  if (msg) msg.textContent = "✅ Zapisano (lokalnie): " + (arr.length ? arr.join(", ") : "—");
+  // Zbieramy checkboxy z widoku adminGrupyView (u Ciebie są w HTML)
+  const picks = document.querySelectorAll("#adminGrupyView .adminGrupaChk");
+  const arr = [];
+  picks.forEach(ch => { if (ch.checked) arr.push(String(ch.value || "").trim()); });
+
+  // Format zapisu: "G1,G3" (bez spacji) – najbezpieczniej do arkusza
+  const grupyCsv = arr
+    .filter(Boolean)
+    .sort((a,b)=>Number(String(a).replace("G",""))-Number(String(b).replace("G","")))
+    .join(",");
+
+  if (msg) msg.textContent = "⏳ Zapisuję…";
+
+  try {
+    const r = await apiClubPost({ action:"adminSetGrupy", numer: nr, grupy: grupyCsv });
+    if (!r || !(r.success || r.ok)) {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
+      return;
+    }
+
+    if (msg) msg.textContent = "✅ Zapisane: " + (grupyCsv || "—");
+  } catch (e) {
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
 }
 
   /* =================== ADMIN: STATYSTYKI (reuse statsView) =================== */
