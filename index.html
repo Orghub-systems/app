@@ -2289,8 +2289,8 @@ function adminOpenGroups() {
 
   const msg = document.getElementById("adminGrupyMsg");
   if (msg) msg.textContent = "";
-}
-    // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
+
+  // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
   (async () => {
     try {
       const res = await apiClubGet("adminGrupy", { numer: nr });
@@ -2310,8 +2310,9 @@ function adminOpenGroups() {
 
     } catch (e) {
       console.error("adminGrupy fetch failed:", e);
+    }
   })();
- }
+}
   
   function adminSaveGrupyLocal() {
   const msg = document.getElementById("adminGrupyMsg");
