@@ -2516,15 +2516,29 @@ function adminAskConfirmPayment(col, label) {
 }
 
 async function adminDoConfirmPayment() {
-  const yesBtn = document.getElementById("adminConfirmPayYes");
+  const yesBtn = document.getElementById("adminPayConfirmYesBtn");
+  const noBtn  = document.getElementById("adminPayConfirmNoBtn");
+  const msgEl  = document.getElementById("adminPayConfirmMsg");
+
+  const col = Number(window.__adminPendingPayCol);
+  const nr  = String(window.__adminSelectedNr || "").trim();
+
+  if (!nr || !col) {
+    if (msgEl) msgEl.textContent = "❌ Brak numeru zawodnika lub kolumny płatności.";
+    return;
+  }
+
+  // UI: "Zapisuję…"
   if (yesBtn) {
     yesBtn.disabled = true;
     yesBtn.style.opacity = "0.6";
     yesBtn.textContent = "⏳ Zapisuję…";
   }
-
-  const col = Number(window.__adminPendingPayCol);
-  const nr  = String(window.__adminSelectedNr || "").trim();
+  if (noBtn) {
+    noBtn.disabled = true;
+    noBtn.style.opacity = "0.6";
+  }
+  if (msgEl) msgEl.textContent = "";
 
   try {
     const r = await apiClubPost({
@@ -2533,26 +2547,29 @@ async function adminDoConfirmPayment() {
       col: col
     });
 
-    // pokaż debug (TYLKO NA TERAZ, potem usuniemy)
-    console.log("potwierdzPlatnoscAdmin response:", r);
-    alert("DEBUG:\n" + JSON.stringify(r?.debug || r, null, 2));
-
     if (!r || !r.success) {
-      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
-      return; // IMPORTANT: finally odblokuje przycisk
+      if (msgEl) msgEl.textContent = "❌ Nie zapisano: " + (r?.error || r?.message || "Błąd");
+      return;
     }
 
+    // ✅ Sukces: zamknij modal
     adminClosePayConfirmModal_();
+
+    // ✅ Odśwież listę płatności
     await adminOpenPayments();
 
   } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
+    if (msgEl) msgEl.textContent = "❌ Błąd połączenia: " + (e?.message || e);
   } finally {
-    // ✅ zawsze odblokuj TAK
+    // ✅ Przywróć przyciski (gdyby został otwarty modal ponownie)
     if (yesBtn) {
       yesBtn.disabled = false;
       yesBtn.style.opacity = "1";
       yesBtn.textContent = "TAK";
+    }
+    if (noBtn) {
+      noBtn.disabled = false;
+      noBtn.style.opacity = "1";
     }
   }
 }
