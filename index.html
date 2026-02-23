@@ -2264,7 +2264,7 @@ function adminRenderGroupsGrid_() {
   }).join("");
 }
 
-function adminOpenGroups() {
+async function adminOpenGroups() {
   const nr = String(window.__adminSelectedNr || "").trim();
   const nazw = String(window.__adminSelectedNazw || "").trim();
 
@@ -2273,25 +2273,18 @@ function adminOpenGroups() {
   const t = document.getElementById("adminGrupyTitle");
   if (t) t.textContent = `Grupy — #${nr} ${nazw ? "— " + nazw : ""}`;
 
-  const grid = document.getElementById("adminGrupyGrid");
-  if (grid) {
-    grid.innerHTML = Array.from({ length: 10 }, (_, i) => {
-      const g = `G${i + 1}`;
-      return `
-        <label style="display:flex;align-items:center;justify-content:center;gap:8px;
-          padding:10px;border:1px solid #333;border-radius:12px;background:#111;">
-          <input type="checkbox" class="adminGrupaChk" value="${g}" style="transform:scale(1.25);">
-          <span style="font-weight:800;">${g}</span>
-        </label>
-      `;
-    }).join("");
-  }
+  // ✅ U CIEBIE checkboxy są już w HTML (#adminGrupyView .adminGrupaChk)
+  // więc NIE budujemy żadnego gridu dynamicznie.
 
   const msg = document.getElementById("adminGrupyMsg");
   if (msg) msg.textContent = "";
 
-// === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY (adminGrupyView) ===
-(async () => {
+  // wyczyść zaznaczenia zanim wczytamy z backendu
+  document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
+    ch.checked = false;
+  });
+
+  // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
   try {
     const res = await apiClubGet("adminGrupy", { numer: nr });
     if (!res || !res.success) {
@@ -2304,7 +2297,6 @@ function adminOpenGroups() {
       ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
       : [];
 
-    // ✅ U CIEBIE checkboxy są w HTML w adminGrupyView (a nie w adminGrupyGrid)
     document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
       ch.checked = selected.includes(ch.value);
     });
@@ -2312,8 +2304,7 @@ function adminOpenGroups() {
   } catch (e) {
     console.error("adminGrupy fetch failed:", e);
   }
-})();
-  
+}  
   function adminSaveGrupyLocal() {
   const msg = document.getElementById("adminGrupyMsg");
   const picks = document.querySelectorAll("#adminGrupyGrid .adminGrupaChk");
