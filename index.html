@@ -2387,55 +2387,6 @@ async function adminOpenPayments() {
   }
 }
   
-function renderAdminPayments_(res) {
-  const body = document.getElementById("adminPaymentsBody");
-  const msg  = document.getElementById("adminPaymentsMsg");
-  if (!body) return;
-
-  if (!res || res.success === false) {
-    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
-    return;
-  }
-
-  const items = Array.isArray(res.items) ? res.items : [];
-  if (items.length === 0) {
-    body.innerHTML = `<div class="card" style="background:#111;">Brak płatności do wyświetlenia</div>`;
-    return;
-  }
-
-// DEBUG: pokaż co przychodzi dla zajęć dodatkowych
-try {
-  const dbg = items
-    .filter(x => x && x.typ === "zajecia")
-    .map(x => ({
-      typ: x.typ,
-      label: x.label || x.nazwa || "",
-      kwota_raw: x.kwota,
-      kwota_type: typeof x.kwota,
-      kwota_num: Number(x.kwota),
-      zaplacono: x.zaplacono,
-      col: x.col
-    }));
-  console.table(dbg);
-} catch (e) {
-  console.warn("DEBUG zajecia table failed:", e);
-}
-  
-  const skladki = items.filter(x => x.typ === "skladka");
-  const zajecia = items.filter(x =>
-  x.typ === "zajecia" &&
-  x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
-  Number(x.kwota) > 0
-);
-
-  body.innerHTML = `
-    ${renderPaymentsSection_("Składki", skladki)}
-    ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
-  `;
-
-  if (msg) msg.textContent = "";
-}
-
 function renderPaymentsSection_(title, arr) {
   if (!arr || arr.length === 0) {
     return `<div class="card" style="background:#111; margin-top:10px;"><b>${title}</b><br><span style="opacity:.8;">Brak danych</span></div>`;
@@ -2632,21 +2583,30 @@ function renderAdminPayments_(res) {
     return;
   }
 
+  // Składki – bez zmian
   const skladki = items.filter(x => x.typ === "skladka");
-  const zajecia = items.filter(x => x.typ === "zajecia");
+
+  // Zajęcia dodatkowe – tylko jeśli jest realna kwota > 0
+  const zajecia = items.filter(x =>
+    x.typ === "zajecia" &&
+    x.kwota !== null &&
+    x.kwota !== undefined &&
+    String(x.kwota).trim() !== "" &&
+    Number(x.kwota) > 0
+  );
 
   body.innerHTML = `
     ${renderPaymentsSection_("Składki", skladki)}
     ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
   `;
 
-  // ✅ stabilny handler (bez inline onclick i bez ryzyka apostrofów)
+  // 🔥 PODPIĘCIE KLAWISZY "Zarejestruj płatność"
   body.querySelectorAll("button.adminPayBtn").forEach(btn => {
     btn.addEventListener("click", (ev) => {
       const b = ev.currentTarget;
       const col = Number(b?.dataset?.col);
       const label = decodeURIComponent(String(b?.dataset?.label || ""));
-      adminConfirmPayment(col, label);
+      adminAskConfirmPayment(col, label); // używamy nowego modala
     });
   });
 
