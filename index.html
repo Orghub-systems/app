@@ -2320,26 +2320,35 @@ async function adminOpenGroups() {
   });
 
   // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
-  try {
-    const res = await apiClubGet("adminGrupy", { numer: nr });
-    if (!res || !res.success) {
-      console.warn("adminGrupy error:", res);
-      return;
-    }
+try {
+  // 1) najpierw spróbuj z cache (prefetch z adminOpenZawodnik)
+  const cacheKey = String(nr || "").trim();
+  const cached = window.__adminCache && window.__adminCache[cacheKey] && window.__adminCache[cacheKey].grupy;
 
-    const grupyStr = String(res.grupy || "").trim(); // np. "G1, G3" albo "G3"
-    const selected = grupyStr
-      ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
-      : [];
-
-    document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
-      ch.checked = selected.includes(ch.value);
-    });
-
-  } catch (e) {
-    console.error("adminGrupy fetch failed:", e);
+  let res = cached;
+  if (!res) {
+    // fallback: dociągnij jeśli cache nie ma
+    res = await apiClubGet("adminGrupy", { numer: nr });
   }
-}  
+
+  if (!res || !res.success) {
+    console.warn("adminGrupy error:", res);
+    return;
+  }
+
+  const grupyStr = String(res.grupy || "").trim();
+  const selected = grupyStr
+    ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
+    : [];
+
+  document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
+    ch.checked = selected.includes(ch.value);
+  });
+
+} catch (e) {
+  console.error("adminGrupy fetch failed:", e);
+}
+  
   function adminSaveGrupyLocal() {
   const msg = document.getElementById("adminGrupyMsg");
   const picks = document.querySelectorAll("#adminGrupyGrid .adminGrupaChk");
