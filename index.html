@@ -243,9 +243,22 @@ input[type="number"] {
   border:1px solid rgba(255,255,255,0.10);
 }
 .full-btn.green:active{ transform:scale(0.99); }
-  
+
+    /* === ADMIN GRUPY: naprawa G10 + większe checkboxy === */
+#adminGrupyView label span{
+  white-space: nowrap;   /* G10 nie łamie się na dwie linie */
+}
+
+#adminGrupyView input.adminGrupaChk{
+  width: 28px;           /* większy rozmiar pod palec */
+  height: 28px;
+}
+    #adminGrupyView label { min-width: 0; }
+    
   </style>
+  
 <script>
+  
   // Ustaw globalnie dla Twojego dużego skryptu:
   window.APP_BUILD = 'BETA APP';
 
