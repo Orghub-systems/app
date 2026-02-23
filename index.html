@@ -2542,7 +2542,7 @@ async function adminDoConfirmPayment() {
       return; // IMPORTANT: finally odblokuje przycisk
     }
 
-    document.getElementById("adminConfirmPayPopup").classList.add("hidden");
+    adminClosePayConfirmModal_();
     await adminOpenPayments();
 
   } catch (e) {
