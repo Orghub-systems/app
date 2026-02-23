@@ -4,7 +4,7 @@
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#000000">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.jsonad
 
   <style>
     :root {
@@ -2220,7 +2220,28 @@ async function adminSaveGrupy(nr, selectedSetOrArray) {
   }
 }
 
-  /* =================== 66 ADMIN: POPUP ZAWODNIK + GRUPY/STATY/PŁATNOŚCI =================== */
+/* =================== 66 ADMIN: POPUP ZAWODNIK + GRUPY/STATY/PŁATNOŚCI =================== */
+
+/* =================== CACHE HELPERS (RAM) =================== */
+function adminCacheEnsure_(nr) {
+  if (!window.__adminCache) window.__adminCache = {};
+  const key = String(nr || "").trim();
+  if (!key) return null;
+  if (!window.__adminCache[key]) window.__adminCache[key] = { ts: Date.now() };
+  return key;
+}
+
+function adminCacheGet_(nr, prop) {
+  const key = String(nr || "").trim();
+  if (!key) return null;
+  const box = window.__adminCache && window.__adminCache[key];
+  if (!box) return null;
+  const v = box[prop];
+  return (v === undefined) ? null : v;
+}
+
+/* =================== /CACHE HELPERS =================== */
+
 
 // ---- Otwarcie okna zawodnika (wywołasz z listy zawodników) ----
 function adminOpenZawodnik(nr, nazwisko) {
@@ -2239,11 +2260,9 @@ function adminOpenZawodnik(nr, nazwisko) {
   const msg = document.getElementById("adminZawodnikMsg");
   if (msg) msg.textContent = "";
 
-
   // =================== PREFETCH ADMIN (cache w RAM) ===================
-  if (!window.__adminCache) window.__adminCache = {};
-  const key = String(window.__adminSelectedNr || "").trim();
-  if (!window.__adminCache[key]) window.__adminCache[key] = { ts: Date.now() };
+  const key = adminCacheEnsure_(window.__adminSelectedNr);
+  if (!key) return;
 
   // Odpal w tle (nie blokuje UI)
   (async () => {
@@ -2251,20 +2270,38 @@ function adminOpenZawodnik(nr, nazwisko) {
       const nr2 = String(window.__adminSelectedNr || "").trim();
       if (!nr2) return;
 
-      // 1) Grupy
-      if (window.__adminCache[nr2].grupy === undefined) {
-        window.__adminCache[nr2].grupy = await apiClubGet("adminGrupy", { numer: nr2 });
+      // Jeśli ktoś kliknie szybko innego zawodnika -> nie nadpisuj cache bieżącego wyboru
+      const stillSame = () => String(window.__adminSelectedNr || "").trim() === nr2;
+
+      // Prefetch równolegle (szybciej)
+      const tasks = [];
+
+      if (adminCacheGet_(nr2, "grupy") === null) {
+        tasks.push(
+          apiClubGet("adminGrupy", { numer: nr2 })
+            .then(r => { if (stillSame()) window.__adminCache[nr2].grupy = r; })
+            .catch(e => { if (stillSame()) window.__adminCache[nr2].grupy = { success:false, error:String(e) }; })
+        );
       }
 
-      // 2) Statystyki (zwykły endpoint zawodnika)
-      if (window.__adminCache[nr2].staty === undefined) {
-        window.__adminCache[nr2].staty = await apiClubGet("statystyki", { numer: nr2 });
+      if (adminCacheGet_(nr2, "staty") === null) {
+        tasks.push(
+          apiClubGet("statystyki", { numer: nr2 })
+            .then(r => { if (stillSame()) window.__adminCache[nr2].staty = r; })
+            .catch(e => { if (stillSame()) window.__adminCache[nr2].staty = { success:false, error:String(e) }; })
+        );
       }
 
-      // 3) Płatności admin
-      if (window.__adminCache[nr2].platnosci === undefined) {
-        window.__adminCache[nr2].platnosci = await apiClubGet("platnosciAdmin", { numer: nr2 });
+      if (adminCacheGet_(nr2, "platnosci") === null) {
+        tasks.push(
+          apiClubGet("platnosciAdmin", { numer: nr2 })
+            .then(r => { if (stillSame()) window.__adminCache[nr2].platnosci = r; })
+            .catch(e => { if (stillSame()) window.__adminCache[nr2].platnosci = { success:false, error:String(e) }; })
+        );
       }
+
+      await Promise.allSettled(tasks);
+      if (window.__adminCache[nr2]) window.__adminCache[nr2].ts = Date.now();
 
       // (opcjonalnie) debug:
       // console.log("✅ Prefetch done:", nr2, window.__adminCache[nr2]);
@@ -2275,6 +2312,7 @@ function adminOpenZawodnik(nr, nazwisko) {
   })();
   // =================== /PREFETCH ADMIN ===================
 }
+
 
 // =================== GRUPY ===================
 let __adminGroupsSet = new Set();
@@ -2308,9 +2346,6 @@ async function adminOpenGroups() {
   const t = document.getElementById("adminGrupyTitle");
   if (t) t.textContent = `Grupy — #${nr} ${nazw ? "— " + nazw : ""}`;
 
-  // ✅ U CIEBIE checkboxy są już w HTML (#adminGrupyView .adminGrupaChk)
-  // więc NIE budujemy żadnego gridu dynamicznie.
-
   const msg = document.getElementById("adminGrupyMsg");
   if (msg) msg.textContent = "";
 
@@ -2320,37 +2355,39 @@ async function adminOpenGroups() {
   });
 
   // === POBIERZ GRUPY Z BACKENDU I ZAZNACZ CHECKBOXY ===
-try {
-  // 1) najpierw spróbuj z cache (prefetch z adminOpenZawodnik)
-  const cacheKey = String(nr || "").trim();
-  const cached = window.__adminCache && window.__adminCache[cacheKey] && window.__adminCache[cacheKey].grupy;
+  try {
+    // 1) cache (prefetch z adminOpenZawodnik)
+    const cached = adminCacheGet_(nr, "grupy");
 
-  let res = cached;
-  if (!res) {
-    // fallback: dociągnij jeśli cache nie ma
-    res = await apiClubGet("adminGrupy", { numer: nr });
+    let res = cached;
+    if (!res) {
+      // fallback: dociągnij jeśli cache nie ma
+      res = await apiClubGet("adminGrupy", { numer: nr });
+      // zapisz do cache, żeby kolejne wejście było instant
+      const key = adminCacheEnsure_(nr);
+      if (key) window.__adminCache[key].grupy = res;
+    }
+
+    if (!res || !res.success) {
+      console.warn("adminGrupy error:", res);
+      return;
+    }
+
+    const grupyStr = String(res.grupy || "").trim();
+    const selected = grupyStr
+      ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
+      : [];
+
+    document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
+      ch.checked = selected.includes(ch.value);
+    });
+
+  } catch (e) {
+    console.error("adminGrupy fetch failed:", e);
   }
-
-  if (!res || !res.success) {
-    console.warn("adminGrupy error:", res);
-    return;
-  }
-
-  const grupyStr = String(res.grupy || "").trim();
-  const selected = grupyStr
-    ? grupyStr.split(",").map(s => s.trim()).filter(Boolean)
-    : [];
-
-  document.querySelectorAll("#adminGrupyView .adminGrupaChk").forEach(ch => {
-    ch.checked = selected.includes(ch.value);
-  });
-
-} catch (e) {
-  console.error("adminGrupy fetch failed:", e);
 }
-  }
-  
-  function adminSaveGrupyLocal() {
+
+function adminSaveGrupyLocal() {
   const msg = document.getElementById("adminGrupyMsg");
   const picks = document.querySelectorAll("#adminGrupyGrid .adminGrupaChk");
   const arr = [];
@@ -2359,9 +2396,9 @@ try {
   if (msg) msg.textContent = "✅ Zapisano (lokalnie): " + (arr.length ? arr.join(", ") : "—");
 }
 
-  /* =================== ADMIN: STATYSTYKI (reuse statsView) =================== */
+
+/* =================== ADMIN: STATYSTYKI (reuse statsView) =================== */
 // ADMIN: Statystyki zawodnika (reuse ekranu zawodnika)
-  
 async function adminOpenStats() {
   const nr = String(window.__adminSelectedNr || "").trim();
   const nazw = String(window.__adminSelectedNazw || "").trim();
@@ -2379,9 +2416,14 @@ async function adminOpenStats() {
   if (body) body.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie...</div>`;
 
   try {
-    const lista = await apiClubGet("statystyki", { numer: nr });
+    // 1) cache -> 2) fallback
+    let lista = adminCacheGet_(nr, "staty");
+    if (!lista) {
+      lista = await apiClubGet("statystyki", { numer: nr });
+      const key = adminCacheEnsure_(nr);
+      if (key) window.__adminCache[key].staty = lista;
+    }
 
-    // wstawiamy tymczasowy kontener o ID, którego używa renderStatystyki
     if (body) {
       body.innerHTML = `<div id="listaStatystyk"></div>`;
       renderStatystyki(lista);
@@ -2392,7 +2434,7 @@ async function adminOpenStats() {
       `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 }
-  
+
 function adminCloseGroupsPopup() {
   const pop = document.getElementById("adminGroupsPopup");
   if (pop) pop.classList.add("hidden");
@@ -2406,7 +2448,6 @@ async function adminApplyGroupsPopup() {
   __adminGroupsSet = new Set();
   picks.forEach(ch => { if (ch.checked) __adminGroupsSet.add(ch.value); });
 
-  // ⬇⬇⬇ TU leci zapis do backendu (akcję dopniemy w CORE)
   const grupyCsv = Array.from(__adminGroupsSet).sort((a,b)=>Number(a.slice(1))-Number(b.slice(1))).join(",");
 
   try {
@@ -2415,6 +2456,11 @@ async function adminApplyGroupsPopup() {
       if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
       return;
     }
+
+    // ✅ aktualizacja cache po zapisie (żeby wejście w Grupy nie pokazywało starych danych)
+    const key = adminCacheEnsure_(String(__adminSelectedNr || "").trim());
+    if (key) window.__adminCache[key].grupy = { success:true, grupy: grupyCsv };
+
     if (msg) msg.textContent = "✅ Zapisane: " + (grupyCsv || "—");
     setTimeout(adminCloseGroupsPopup, 350);
   } catch (e) {
@@ -2439,7 +2485,14 @@ async function adminOpenPayments() {
   if (body) body.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
 
   try {
-    const res = await apiClubGet("platnosciAdmin", { numer: nr });
+    // 1) cache -> 2) fallback
+    let res = adminCacheGet_(nr, "platnosci");
+    if (!res) {
+      res = await apiClubGet("platnosciAdmin", { numer: nr });
+      const key = adminCacheEnsure_(nr);
+      if (key) window.__adminCache[key].platnosci = res;
+    }
+
     renderAdminPayments_(res);
   } catch (e) {
     if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
@@ -2470,7 +2523,6 @@ function renderPaymentTile_(p) {
 
   const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
 
-  // ✅ przekazujemy kolumnę, a nie nr zawodnika
   const btn = (!paid)
     ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
     : "";
@@ -2491,7 +2543,7 @@ function renderPaymentTile_(p) {
     </div>
   `;
 }
-  
+
 function adminOpenPayConfirmModal_(text, onYes) {
   const modal = document.getElementById("adminPayConfirmModal");
   const txt   = document.getElementById("adminPayConfirmText");
@@ -2507,14 +2559,12 @@ function adminOpenPayConfirmModal_(text, onYes) {
   if (txt) txt.textContent = text || "Potwierdzam zapłatę";
   if (msg) msg.textContent = "";
 
-  // wyczyść stare bindy (najprościej przez klon)
   const yesClone = yes.cloneNode(true);
   yes.parentNode.replaceChild(yesClone, yes);
 
   const noClone = no.cloneNode(true);
   no.parentNode.replaceChild(noClone, no);
 
-  // bind: TAK
   yesClone.addEventListener("click", async () => {
     try {
       yesClone.disabled = true;
@@ -2523,7 +2573,6 @@ function adminOpenPayConfirmModal_(text, onYes) {
 
       await onYes();
 
-      // jeśli zapis OK -> zamykamy
       adminClosePayConfirmModal_();
     } catch (e) {
       if (msg) msg.textContent = "❌ " + (e?.message || e);
@@ -2532,21 +2581,20 @@ function adminOpenPayConfirmModal_(text, onYes) {
     }
   });
 
-  // bind: NIE
   noClone.addEventListener("click", () => {
-    adminClosePayConfirmModal_(); // zamyka modal
+    adminClosePayConfirmModal_();
   });
 
   modal.classList.remove("hidden");
 }
-  window.__adminPendingPayCol = null;
+
+window.__adminPendingPayCol = null;
 window.__adminPendingPayLabel = "";
 
 function adminAskConfirmPayment(col, label) {
   window.__adminPendingPayCol = Number(col);
   window.__adminPendingPayLabel = String(label || "");
 
-  // Nowy modal (spójny z Panelem 2)
   const modal = document.getElementById("adminPayConfirmModal");
   const text  = document.getElementById("adminPayConfirmText");
   const msg   = document.getElementById("adminPayConfirmMsg");
@@ -2559,18 +2607,15 @@ function adminAskConfirmPayment(col, label) {
     return;
   }
 
-  // Ustaw treść
   text.textContent = window.__adminPendingPayLabel
     ? ("Potwierdzam zapłatę: " + window.__adminPendingPayLabel)
     : "Potwierdzam zapłatę";
 
   if (msg) msg.textContent = "";
 
-  // Podłącz akcje (bez dublowania eventów)
   yes.onclick = () => adminDoConfirmPayment();
   no.onclick  = () => adminCancelConfirmPayment();
 
-  // Pokaż modal
   modal.classList.remove("hidden");
 }
 
@@ -2592,22 +2637,27 @@ async function adminDoConfirmPayment() {
       col: col
     });
 
-    // pokaż debug (TYLKO NA TERAZ, potem usuniemy)
     console.log("potwierdzPlatnoscAdmin response:", r);
     alert("DEBUG:\n" + JSON.stringify(r?.debug || r, null, 2));
 
     if (!r || !r.success) {
       alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
-      return; // IMPORTANT: finally odblokuje przycisk
+      return;
     }
 
     document.getElementById("adminConfirmPayPopup").classList.add("hidden");
+
+    // ✅ odśwież + zaktualizuj cache (żeby po powrocie było natychmiast)
+    // pobieramy na nowo i zapisujemy do cache
+    const fresh = await apiClubGet("platnosciAdmin", { numer: nr });
+    const key = adminCacheEnsure_(nr);
+    if (key) window.__adminCache[key].platnosci = fresh;
+
     await adminOpenPayments();
 
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
   } finally {
-    // ✅ zawsze odblokuj TAK
     if (yesBtn) {
       yesBtn.disabled = false;
       yesBtn.style.opacity = "1";
@@ -2615,7 +2665,7 @@ async function adminDoConfirmPayment() {
     }
   }
 }
-  
+
 function adminCancelConfirmPayment() {
   document.getElementById("adminConfirmPayPopup").classList.add("hidden");
 }
@@ -2624,6 +2674,7 @@ function adminClosePayConfirmModal_() {
   const modal = document.getElementById("adminPayConfirmModal");
   if (modal) modal.classList.add("hidden");
 }
+
 
 // =================== ADMIN: KLIK "Zarejestruj płatność" ===================
 function renderAdminPayments_(res) {
@@ -2642,19 +2693,18 @@ function renderAdminPayments_(res) {
     return;
   }
 
-   const skladki = items.filter(x => x.typ === "skladka");
+  const skladki = items.filter(x => x.typ === "skladka");
   const zajecia = items.filter(x =>
-  x.typ === "zajecia" &&
-  x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
-  Number(x.kwota) > 0
-);
+    x.typ === "zajecia" &&
+    x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
+    Number(x.kwota) > 0
+  );
 
   body.innerHTML = `
     ${renderPaymentsSection_("Składki", skladki)}
     ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
   `;
 
-  // ✅ stabilny handler (bez inline onclick i bez ryzyka apostrofów)
   body.querySelectorAll("button.adminPayBtn").forEach(btn => {
     btn.addEventListener("click", (ev) => {
       const b = ev.currentTarget;
@@ -2691,14 +2741,12 @@ function renderPaymentTile_(p) {
 
   const colNum = Number(p.col);
 
-  // Bezpieczny tekst do HTML (wyświetlanie)
   const labelTxt = String(p.label || p.nazwa || "");
   const labelHtml = labelTxt
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Bezpieczny tekst do dataset (klik) — percent-encoding (zero apostrofów / cudzysłowów / newlines problemów)
   const labelData = encodeURIComponent(labelTxt);
 
   const btn = (!paid)
@@ -2741,7 +2789,6 @@ function adminConfirmPayment(colNum, label) {
   window.__adminPendingPayCol = col;
   window.__adminPendingPayLabel = String(label || "");
 
-  // ✅ Overlay style (jeśli HTML nie ma) — ustawiamy raz
   const pop = document.getElementById("adminConfirmPayPopup");
   if (!pop) { alert("❌ Brak #adminConfirmPayPopup w HTML."); return; }
   if (!pop.dataset.styled) {
@@ -2761,11 +2808,9 @@ function adminConfirmPayment(colNum, label) {
     ? ("Potwierdzam zapłatę: " + window.__adminPendingPayLabel)
     : "Potwierdzam zapłatę";
 
-  // ✅ Podpinamy guziki na pewno (nie zakładamy onclick w HTML)
   const yesBtn = document.getElementById("adminConfirmPayYes");
   if (yesBtn) yesBtn.onclick = adminDoConfirmPayment;
 
-  // przycisk NIE: szukamy po ID jeśli masz, a jak nie masz — zostaje Twój istniejący onclick w HTML
   const noBtn =
     document.getElementById("adminConfirmPayNo") ||
     document.getElementById("adminConfirmPayCancel") ||
@@ -2789,7 +2834,7 @@ async function adminDoConfirmPayment() {
 
   try {
     const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",   // ✅ dokładnie jak było w confirm()
+      action: "adminConfirmPlatnosc",
       numer: nr,
       col: col
     });
@@ -2800,7 +2845,13 @@ async function adminDoConfirmPayment() {
     }
 
     adminCancelConfirmPayment();
-    await adminOpenPayments(); // odśwież jak było
+
+    // ✅ odśwież + zaktualizuj cache
+    const fresh = await apiClubGet("platnosciAdmin", { numer: nr });
+    const key = adminCacheEnsure_(nr);
+    if (key) window.__adminCache[key].platnosci = fresh;
+
+    await adminOpenPayments();
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
   } finally {
