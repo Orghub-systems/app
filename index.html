@@ -617,15 +617,17 @@ input[type="number"] {
   </div>
 </div>
 
-<div style="margin-top:10px; display:flex; flex-direction:column; align-items:center;">
-  <label style="display:flex; align-items:center; gap:10px; font-weight:700;">
-    <input id="eventStat" type="checkbox" style="transform:scale(1.4);">
-    Liczyć do statystyk
+<div style="margin-top:10px; display:flex; justify-content:center;">
+  <label style="display:flex; align-items:center; gap:10px;">
+    <input id="eventStat" type="checkbox" style="transform:scale(1.35);">
+    <span>Liczyć do statystyk</span>
   </label>
+</div>
 
-  <label style="display:flex; align-items:center; gap:10px; font-weight:700; margin-top:6px;">
-    <input id="eventReservation" type="checkbox" style="transform:scale(1.4);">
-    Rezerwacja obiektu
+<div style="margin-top:10px; display:flex; justify-content:center;">
+  <label style="display:flex; align-items:center; gap:10px;">
+    <input id="eventRez" type="checkbox" style="transform:scale(1.35);">
+    <span>Rezerwacja obiektu</span>
   </label>
 </div>
 
@@ -3725,20 +3727,20 @@ async function wyslijNoweWydarzenie() {
 
   msg.innerText = "⏳ Dodawanie wydarzenia...";
   try {
-    const r = await apiClubPost({
-      action: "dodajWydarzenie",
-      data,
-      godzStart: start,
-      godzKoniec: end,
-      rodzaj,
-      trener1,
-      trener2,
-      trener3,
-      trener4,
-      grupy,
-      liczDoStatystyk: String(liczDoStat)
-      rezerwacjaObiektu: rezerwacjaObiektu,
-    });
+const r = await apiClubPost({
+  action: "dodajWydarzenie",
+  data,
+  godzStart: start,
+  godzKoniec: end,
+  rodzaj,
+  trener1,
+  trener2,
+  trener3,
+  trener4,
+  grupy,
+  liczDoStatystyk: String(liczDoStat),
+  rezerwacjaObiektu: rezerwacjaObiektu
+});
 
     msg.innerText = r.message || "Nieznany wynik.";
 
