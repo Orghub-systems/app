@@ -617,9 +617,14 @@ input[type="number"] {
   </div>
 </div>
 
-  <div style="margin-top:10px;">
-    <label><input id="eventStat" type="checkbox"> Liczyć do statystyk</label>
-  </div>
+<div style="margin-top:10px;">
+  <label style="display:block;">
+    <input id="eventStat" type="checkbox"> Liczyć do statystyk
+  </label>
+  <label style="display:block; margin-top:6px;">
+    <input id="eventRezerwacja" type="checkbox"> Rezerwacja obiektu
+  </label>
+</div>
 
   <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
   <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
