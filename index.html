@@ -3652,13 +3652,11 @@ function resetEditGroups_() {
 
 function pokazDodajWydarzenie() {
   goToView("trainerDodajWydarzenieView");
-
-  // ✅ wymuś start kalendarza i zegarów po wejściu do widoku
-  try { initEventPickers_(); } catch (e) { console.warn("initEventPickers_ failed:", e); }
-
   resetTrenerSelects_();
   resetGroups_();
   zaladujListeTrenerow();
+
+  initTimePickers_(); // ✅ zegary okrągłe
 }
 
   /* ===== GRUPY: popup G1–G10 ===== */
