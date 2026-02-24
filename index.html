@@ -3716,6 +3716,7 @@ async function wyslijNoweWydarzenie() {
 
   const grupy = Array.from(selectedGroups).join(",");
   const liczDoStat = document.getElementById("eventStat").checked;
+  const rezerwacjaObiektu = document.getElementById("eventRez")?.checked ? 1 : 0;
   const msg = document.getElementById("eventMsg");
 
   if (!data || !start || !rodzaj) { msg.innerText = "Uzupełnij: Data, Godzina, Rodzaj."; return; }
@@ -3736,6 +3737,7 @@ async function wyslijNoweWydarzenie() {
       trener4,
       grupy,
       liczDoStatystyk: String(liczDoStat)
+      rezerwacjaObiektu: rezerwacjaObiektu,
     });
 
     msg.innerText = r.message || "Nieznany wynik.";
