@@ -5,7 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="manifest.json">
-
+  
+    <!-- flatpickr (kalendarz) -->
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/flatpickr.min.css">
+    <script src="https://npmcdn.com/flatpickr/dist/flatpickr.min.js"></script>
+    
+    <!-- clocklet (okrągły zegar) -->
+    <link rel="stylesheet" href="https://unpkg.com/clocklet@0.3.1/css/clocklet.min.css">
+    <script src="https://unpkg.com/clocklet@0.3.1"></script>
+                                                 
   <style>
     :root {
   --color-accent-red: #8b0000;   /* główny czerwony aplikacji */
@@ -254,6 +262,7 @@ input[type="number"] {
   height: 28px;
 }
     #adminGrupyView label { min-width: 0; }
+
     
   </style>
   
@@ -567,9 +576,9 @@ input[type="number"] {
   <h1>Dodaj wydarzenie</h1>
 
   <div class="login-box">
-    <input id="eventData" type="date">
-    <input id="eventStart" type="time">
-    <input id="eventEnd" type="time">
+    <input id="eventData" type="text" placeholder="RRRR-MM-DD" autocomplete="off">
+    <input id="eventStart" type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
+    <input id="eventEnd"   type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
     <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
 
     <!-- TRENERZY (kaskadowo, max 4) -->
@@ -3643,6 +3652,7 @@ function resetEditGroups_() {
 
 function pokazDodajWydarzenie() {
   goToView("trainerDodajWydarzenieView");
+  initEventPickers_();
   resetTrenerSelects_();
   resetGroups_();
   zaladujListeTrenerow();
@@ -3761,6 +3771,22 @@ const r = await apiClubPost({
   }
 }
 
+  function initEventPickers_() {
+  // KALENDARZ
+  const elDate = document.getElementById("eventData");
+  if (elDate && window.flatpickr && !elDate._flatpickr) {
+    flatpickr(elDate, {
+      dateFormat: "Y-m-d",
+      allowInput: true
+    });
+  }
+
+  // ZEGAR (Clocklet) – zwykle auto po data-clocklet,
+  // ale jakby kiedyś nie łapał, to to go „dopieści”:
+  if (window.clocklet) {
+    try { clocklet.init(); } catch (e) {}
+  }
+}
  // ===== EDYCJA WYDARZENIA =====
 
 function trainerShowDeletePopup(miesiac, czasCol) {
