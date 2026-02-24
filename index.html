@@ -3652,7 +3652,10 @@ function resetEditGroups_() {
 
 function pokazDodajWydarzenie() {
   goToView("trainerDodajWydarzenieView");
-  initEventPickers_();
+
+  // ✅ wymuś start kalendarza i zegarów po wejściu do widoku
+  try { initEventPickers_(); } catch (e) { console.warn("initEventPickers_ failed:", e); }
+
   resetTrenerSelects_();
   resetGroups_();
   zaladujListeTrenerow();
