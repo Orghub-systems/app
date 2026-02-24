@@ -3771,8 +3771,8 @@ const r = await apiClubPost({
   }
 }
 
-  function initEventPickers_() {
-  // KALENDARZ
+function initEventPickers_() {
+  // ===== KALENDARZ (flatpickr) =====
   const elDate = document.getElementById("eventData");
   if (elDate && window.flatpickr && !elDate._flatpickr) {
     flatpickr(elDate, {
@@ -3781,12 +3781,16 @@ const r = await apiClubPost({
     });
   }
 
-  // ZEGAR (Clocklet) – zwykle auto po data-clocklet,
-  // ale jakby kiedyś nie łapał, to to go „dopieści”:
+  // ===== ZEGARY (Clocklet – okrągłe) =====
+  const startEl = document.getElementById("eventStart");
+  const endEl   = document.getElementById("eventEnd");
+
   if (window.clocklet) {
-    try { clocklet.init(); } catch (e) {}
+    if (startEl) clocklet(startEl);
+    if (endEl)   clocklet(endEl);
   }
 }
+  
  // ===== EDYCJA WYDARZENIA =====
 
 function trainerShowDeletePopup(miesiac, czasCol) {
