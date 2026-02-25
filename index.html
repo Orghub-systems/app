@@ -3801,7 +3801,7 @@ function initEventPickers_() {
   }
 }
   
- // ===== EDYCJA WYDARZENIA =====
+ // ===== DELETE WYDARZENIA =====
 
 function trainerShowDeletePopup(miesiac, czasCol) {
   deleteMiesiac = miesiac;
@@ -3882,9 +3882,16 @@ if (saveBtn) saveBtn.onclick = trainerSaveEditEvent;
     if (details?.success) {
       const trenerArr = normalizeTrenerzy_(details?.trenerzy);
       const grupyArr  = normalizeGrupy_(details?.grupy);
-
+      
       setEditTrenerzy_(trenerArr);
       setEditGroups_(grupyArr);
+
+            // ✅ checkboxy (A8 Statystyki, C8 Rezerwacja)
+      const statEl = document.getElementById("editEventStat");
+      if (statEl) statEl.checked = !!details.liczDoStatystyk;
+      
+      const rezEl = document.getElementById("editEventRez");
+      if (rezEl) rezEl.checked = !!details.rezerwacjaObiektu;
 
       if (msg) msg.textContent = ""; // gotowe
     } else {
@@ -3966,7 +3973,6 @@ function setEditGroups_(arr) {
   renderEditGroupsList_();
 }
 
-// zapis do backendu
 // zapis do backendu
 async function trainerSaveEditEvent() {
   const msg = document.getElementById("editEventMsg");
