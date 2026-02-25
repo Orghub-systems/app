@@ -3879,21 +3879,22 @@ if (saveBtn) saveBtn.onclick = trainerSaveEditEvent;
     const treningId = `${editMiesiac}-${editCol5}`;
     const details = await apiClubGet("wydarzenieDetails", { treningId });
 
-    if (details?.success) {
-      const trenerArr = normalizeTrenerzy_(details?.trenerzy);
-      const grupyArr  = normalizeGrupy_(details?.grupy);
-      
-      setEditTrenerzy_(trenerArr);
-      setEditGroups_(grupyArr);
+if (details?.success) {
+  const trenerArr = normalizeTrenerzy_(details?.trenerzy);
+  const grupyArr  = normalizeGrupy_(details?.grupy);
 
-            // ✅ checkboxy (A8 Statystyki, C8 Rezerwacja)
-      const statEl = document.getElementById("editEventStat");
-      if (statEl) statEl.checked = !!details.liczDoStatystyk;
-      
-      const rezEl = document.getElementById("editEventRez");
-      if (rezEl) rezEl.checked = !!details.rezerwacjaObiektu;
+  setEditTrenerzy_(trenerArr);
+  setEditGroups_(grupyArr);
 
-      if (msg) msg.textContent = ""; // gotowe
+  // === NOWE: ustaw checkboxy z backendu ===
+  const chkStat = document.getElementById("editEventStat");
+  const chkRez  = document.getElementById("editEventRez");
+
+  if (chkStat) chkStat.checked = !!details.liczDoStatystyk;
+  if (chkRez)  chkRez.checked  = !!details.rezerwacjaObiektu;
+
+  if (msg) msg.textContent = ""; // gotowe
+
     } else {
       if (msg) msg.textContent = "⚠️ Nie udało się wczytać trenerów i grup.";
       console.warn("wydarzenieDetails:", details);
