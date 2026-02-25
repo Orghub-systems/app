@@ -3967,6 +3967,7 @@ function setEditGroups_(arr) {
 }
 
 // zapis do backendu
+// zapis do backendu
 async function trainerSaveEditEvent() {
   const msg = document.getElementById("editEventMsg");
   if (msg) msg.textContent = "";
@@ -4009,6 +4010,9 @@ async function trainerSaveEditEvent() {
     grupyArr.sort((a,b) => Number(a.slice(1)) - Number(b.slice(1)));
     const grupyCsv = grupyArr.join(",");
 
+    // ✅ NOWE: checkbox "Rezerwacja obiektu" w edycji
+    const rezerwacjaObiektu = document.getElementById("editEventRez")?.checked ? 1 : 0;
+
     const r = await apiClubPost({
       action: "edytujWydarzenie",
       treningId,
@@ -4017,25 +4021,27 @@ async function trainerSaveEditEvent() {
       godzKoniec: end,
       rodzaj,
       trenerzy: trenerzyArr.join(", "),
-      grupy: grupyCsv
+      grupy: grupyCsv,
+
+      // ✅ NOWE pole do backendu
+      rezerwacjaObiektu: rezerwacjaObiektu
     });
 
-if (r && (r.success || r.ok)) {
-  if (msg) msg.textContent = "✅ Zapisano. Odświeżam listę…";
+    if (r && (r.success || r.ok)) {
+      if (msg) msg.textContent = "✅ Zapisano. Odświeżam listę…";
 
-  try {
-    await trainerPokazWydarzenia();     // odśwież listę
-    setTimeout(trainerHideEditPopup, 300); // zamknij popup po krótkiej chwili
-  } catch (refreshErr) {
-    console.error("Refresh after save failed:", refreshErr);
-    if (msg) msg.textContent = "✅ Zapisano, ale nie udało się odświeżyć listy.";
-    // popup zostaje otwarty — i dobrze
-  }
+      try {
+        await trainerPokazWydarzenia();          // odśwież listę
+        setTimeout(trainerHideEditPopup, 300);  // zamknij popup po krótkiej chwili
+      } catch (refreshErr) {
+        console.error("Refresh after save failed:", refreshErr);
+        if (msg) msg.textContent = "✅ Zapisano, ale nie udało się odświeżyć listy.";
+      }
 
-  return;
-} else {
-  if (msg) msg.textContent = "❌ Nie udało się zapisać zmian: " + (r?.error || r?.message || "");
-}
+      return;
+    } else {
+      if (msg) msg.textContent = "❌ Nie udało się zapisać zmian: " + (r?.error || r?.message || "");
+    }
 
   } catch (err) {
     console.error(err);
@@ -4044,7 +4050,7 @@ if (r && (r.success || r.ok)) {
     if (btn) { btn.classList.remove("loading"); btn.disabled = false; }
   }
 }
-
+  
 /* =================== 99 START APLIKACJI =================== */
 window.addEventListener('load', () => {
   odtworzIntroSound();
