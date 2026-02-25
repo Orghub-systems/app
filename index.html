@@ -1311,7 +1311,7 @@ async function apiClubPost(payload = {}) {
     if (v === undefined || v === null) continue; // nie wysyłamy śmieci
     body.set(k, String(v)); // wymuszamy string → GAS dostaje stabilnie
   }
-
+console.log("[apiClubPost] OUT body:", body.toString());
   const res = await fetch(CORE_URL, { method: "POST", body });
   const text = await res.text();
 
