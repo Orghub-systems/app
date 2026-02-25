@@ -4006,9 +4006,9 @@ async function trainerSaveEditEvent() {
     }
 
     const dataISO = (document.getElementById("editEventData")?.value || "").trim();
-    const start = (document.getElementById("editEventStart")?.value || "").trim();
-    const end   = (document.getElementById("editEventEnd")?.value || "").trim();
-    const rodzaj = (document.getElementById("editEventRodzaj")?.value || "").trim();
+    const start   = (document.getElementById("editEventStart")?.value || "").trim();
+    const end     = (document.getElementById("editEventEnd")?.value || "").trim();
+    const rodzaj  = (document.getElementById("editEventRodzaj")?.value || "").trim();
 
     if (!dataISO || !start || !end) {
       if (msg) msg.textContent = "❌ Uzupełnij datę i godziny.";
@@ -4034,10 +4034,9 @@ async function trainerSaveEditEvent() {
     grupyArr.sort((a,b) => Number(a.slice(1)) - Number(b.slice(1)));
     const grupyCsv = grupyArr.join(",");
 
-    // ✅ NOWE: checkbox "Rezerwacja obiektu" w edycji
-    const rezerwacjaObiektu = !!document.getElementById("editEventRez")?.checked;
-    
-    const liczDoStatystyk = !!document.getElementById("editEventStat")?.checked;
+    // ✅ CHECKBOXY (EDYCJA)
+    const liczDoStat = document.getElementById("editEventStat")?.checked ? 1 : 0;
+    const rezerwacjaObiektu = document.getElementById("editEventRez")?.checked ? 1 : 0;
 
     const r = await apiClubPost({
       action: "edytujWydarzenie",
@@ -4049,7 +4048,8 @@ async function trainerSaveEditEvent() {
       trenerzy: trenerzyArr.join(", "),
       grupy: grupyCsv,
 
-      // ✅ NOWE pole do backendu
+      // ✅ ważne: nazwy MUSZĄ pasować do routera (p.liczDoStatystyk / p.rezerwacjaObiektu)
+      liczDoStatystyk: liczDoStat,
       rezerwacjaObiektu: rezerwacjaObiektu
     });
 
@@ -4057,13 +4057,12 @@ async function trainerSaveEditEvent() {
       if (msg) msg.textContent = "✅ Zapisano. Odświeżam listę…";
 
       try {
-        await trainerPokazWydarzenia();          // odśwież listę
-        setTimeout(trainerHideEditPopup, 300);  // zamknij popup po krótkiej chwili
+        await trainerPokazWydarzenia();
+        setTimeout(trainerHideEditPopup, 300);
       } catch (refreshErr) {
         console.error("Refresh after save failed:", refreshErr);
         if (msg) msg.textContent = "✅ Zapisano, ale nie udało się odświeżyć listy.";
       }
-
       return;
     } else {
       if (msg) msg.textContent = "❌ Nie udało się zapisać zmian: " + (r?.error || r?.message || "");
