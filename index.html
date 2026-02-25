@@ -4053,6 +4053,13 @@ async function trainerSaveEditEvent() {
       rezerwacjaObiektu: rezerwacjaObiektu
     });
 
+    console.log("DEBUG SAVE:", {
+  treningId,
+  liczDoStat,
+  rezerwacjaObiektu,
+  response: r
+});
+
     if (r && (r.success || r.ok)) {
       if (msg) msg.textContent = "✅ Zapisano. Odświeżam listę…";
 
