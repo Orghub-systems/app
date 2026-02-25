@@ -4035,7 +4035,9 @@ async function trainerSaveEditEvent() {
     const grupyCsv = grupyArr.join(",");
 
     // ✅ NOWE: checkbox "Rezerwacja obiektu" w edycji
-    const rezerwacjaObiektu = document.getElementById("editEventRez")?.checked ? 1 : 0;
+    const rezerwacjaObiektu = !!document.getElementById("editEventRez")?.checked;
+    
+    const liczDoStatystyk = !!document.getElementById("editEventStat")?.checked;
 
     const r = await apiClubPost({
       action: "edytujWydarzenie",
