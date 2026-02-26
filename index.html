@@ -2816,7 +2816,7 @@ function renderPaymentTile_(p) {
   `;
 }
 
-// =================== ADMIN: CONFIRM PŁATNOŚCI (POPUP #adminConfirmPayPopup) ===================
+// =================== ADMIN: CONFIRM PŁATNOŚCI (używamy WYŁĄCZNIE #adminPayConfirmModal) ===================
 window.__adminPendingPayCol = null;
 window.__adminPendingPayLabel = "";
 
@@ -2830,82 +2830,70 @@ function adminConfirmPayment(colNum, label) {
   window.__adminPendingPayCol = col;
   window.__adminPendingPayLabel = String(label || "");
 
-  // ✅ Overlay style (jeśli HTML nie ma) — ustawiamy raz
-  const pop = document.getElementById("adminConfirmPayPopup");
-  if (!pop) { alert("❌ Brak #adminConfirmPayPopup w HTML."); return; }
-  if (!pop.dataset.styled) {
-    pop.dataset.styled = "1";
-    pop.style.position = "fixed";
-    pop.style.inset = "0";
-    pop.style.zIndex = "99999";
-    pop.style.display = "flex";
-    pop.style.alignItems = "center";
-    pop.style.justifyContent = "center";
-    pop.style.padding = "16px";
-    pop.style.background = "rgba(0,0,0,0.65)";
+  const modal = document.getElementById("adminPayConfirmModal");
+  const text  = document.getElementById("adminPayConfirmText");
+  const msg   = document.getElementById("adminPayConfirmMsg");
+  const yes   = document.getElementById("adminPayConfirmYesBtn");
+  const no    = document.getElementById("adminPayConfirmNoBtn");
+
+  if (!modal || !text || !yes || !no) {
+    alert("❌ Brak elementów modala #adminPayConfirmModal w HTML.");
+    return;
   }
 
-  const msg = document.getElementById("adminConfirmPayMsg");
-  if (msg) msg.textContent = window.__adminPendingPayLabel
+  text.textContent = window.__adminPendingPayLabel
     ? ("Potwierdzam zapłatę: " + window.__adminPendingPayLabel)
     : "Potwierdzam zapłatę";
 
-  // ✅ Podpinamy guziki na pewno (nie zakładamy onclick w HTML)
-  const yesBtn = document.getElementById("adminConfirmPayYes");
-  if (yesBtn) yesBtn.onclick = adminDoConfirmPayment;
+  if (msg) msg.textContent = "";
 
-  // przycisk NIE: szukamy po ID jeśli masz, a jak nie masz — zostaje Twój istniejący onclick w HTML
-  const noBtn =
-    document.getElementById("adminConfirmPayNo") ||
-    document.getElementById("adminConfirmPayCancel") ||
-    pop.querySelector("button[data-no='1']");
+  // podpinamy akcje bez dublowania (nadpisujemy onclick)
+  yes.onclick = adminDoConfirmPayment;
+  no.onclick  = adminCancelConfirmPayment;
 
-  if (noBtn) noBtn.onclick = adminCancelConfirmPayment;
-
-  pop.classList.remove("hidden");
+  modal.classList.remove("hidden");
 }
 
 async function adminDoConfirmPayment() {
-  const yesBtn = document.getElementById("adminConfirmPayYes");
-  if (yesBtn) {
-    yesBtn.disabled = true;
-    yesBtn.style.opacity = "0.6";
-    yesBtn.textContent = "⏳ Zapisuję…";
-  }
+  const yes = document.getElementById("adminPayConfirmYesBtn");
+  const no  = document.getElementById("adminPayConfirmNoBtn");
+  const msg = document.getElementById("adminPayConfirmMsg");
+
+  if (yes) { yes.disabled = true; yes.style.opacity = "0.65"; yes.textContent = "⏳ Zapisuję…"; }
+  if (no)  { no.disabled = true;  no.style.opacity  = "0.65"; }
 
   const col = Number(window.__adminPendingPayCol);
   const nr  = String(window.__adminSelectedNr || "").trim();
 
   try {
     const r = await apiClubPost({
-      action: "adminConfirmPlatnosc",   // ✅ dokładnie jak było w confirm()
+      action: "adminConfirmPlatnosc",
       numer: nr,
       col: col
     });
 
     if (!r || !(r.success || r.ok)) {
-      alert("❌ Nie zapisano: " + (r?.error || r?.message || "Błąd"));
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
       return;
     }
 
-    adminCancelConfirmPayment();
-    await adminOpenPayments(); // odśwież jak było
+    adminCancelConfirmPayment();   // zamknij modal
+    await adminOpenPayments();      // odśwież widok płatności
+
   } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
   } finally {
-    if (yesBtn) {
-      yesBtn.disabled = false;
-      yesBtn.style.opacity = "1";
-      yesBtn.textContent = "TAK";
-    }
+    // reset przycisków
+    if (yes) { yes.disabled = false; yes.style.opacity = "1"; yes.textContent = "TAK"; }
+    if (no)  { no.disabled = false;  no.style.opacity  = "1"; }
     window.__adminPendingPayCol = null;
     window.__adminPendingPayLabel = "";
   }
 }
 
 function adminCancelConfirmPayment() {
-  const pop = document.getElementById("adminConfirmPayPopup");
-  if (pop) pop.classList.add("hidden");
+  const modal = document.getElementById("adminPayConfirmModal");
+  if (modal) modal.classList.add("hidden");
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
