@@ -136,17 +136,19 @@
       z-index: 4000;
     }
 
-    .select-like-input {
-      width: 200px;
-      height: 36px;
-      margin: 10px auto;
-      border-radius: 6px;
-      border: none;
-      padding: 6px;
+     .select-like-input {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #111;
+      color: #fff;
       font-size: 14px;
       display: block;
     }
-
+    
     .grupa-check {
       display: flex;
       flex-direction: column;
@@ -862,24 +864,24 @@ input[type="number"] {
 
       <!-- TRENERZY (kaskadowo, max 4) -->
       <select id="editTrener1" class="select-like-input" onchange="onEditTrenerPick(1)">
-        <option value="">— wybierz trenera —</option>
+        <option value="">Trenerzy</option>
       </select>
 
       <div id="editTrener2Wrap" class="hidden">
         <select id="editTrener2" class="select-like-input" onchange="onEditTrenerPick(2)">
-          <option value="">— kolejny trener —</option>
+          <option value=""> kolejny trener </option>
         </select>
       </div>
 
       <div id="editTrener3Wrap" class="hidden">
         <select id="editTrener3" class="select-like-input" onchange="onEditTrenerPick(3)">
-          <option value="">— kolejny trener —</option>
+          <option value=""> kolejny trener </option>
         </select>
       </div>
 
       <div id="editTrener4Wrap" class="hidden">
         <select id="editTrener4" class="select-like-input">
-          <option value="">— kolejny trener —</option>
+          <option value=""> kolejny trener </option>
         </select>
       </div>
 
