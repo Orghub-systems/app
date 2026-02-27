@@ -862,28 +862,19 @@ input[type="number"] {
       <input id="editEventEnd" type="time">
       <input id="editEventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
 
-      <!-- TRENERZY (kaskadowo, max 4) -->
-      <select id="editTrener1" class="select-like-input" onchange="onEditTrenerPick(1)">
-        <option value="">Trenerzy</option>
-      </select>
+<!-- TRENERZY: przycisk + popup -->
+<button class="full-btn alt" id="btnEditPickTrenerzy" type="button" onclick="openEditTrenerzyPopup()">
+  Trenerzy
+</button>
+<div id="editTrenerzySummary" style="margin-top:6px;opacity:0.85;font-size:13px;">Bez trenera</div>
 
-      <div id="editTrener2Wrap" class="hidden">
-        <select id="editTrener2" class="select-like-input" onchange="onEditTrenerPick(2)">
-          <option value=""> kolejny trener </option>
-        </select>
-      </div>
-
-      <div id="editTrener3Wrap" class="hidden">
-        <select id="editTrener3" class="select-like-input" onchange="onEditTrenerPick(3)">
-          <option value=""> kolejny trener </option>
-        </select>
-      </div>
-
-      <div id="editTrener4Wrap" class="hidden">
-        <select id="editTrener4" class="select-like-input">
-          <option value=""> kolejny trener </option>
-        </select>
-      </div>
+<!-- SILNIK (ukryte selecty - zostają dla logiki zapisu) -->
+<div style="display:none;">
+  <select id="editTrener1" onchange="onEditTrenerPick(1)"><option value="">Bez trenera</option></select>
+  <select id="editTrener2" onchange="onEditTrenerPick(2)"><option value="">Bez trenera</option></select>
+  <select id="editTrener3" onchange="onEditTrenerPick(3)"><option value="">Bez trenera</option></select>
+  <select id="editTrener4"><option value="">Bez trenera</option></select>
+</div>
 
       <!-- GRUPY -->
       <button class="full-btn alt" id="btnEditPickGroups" type="button" onclick="openEditGroupsPopup()">
@@ -909,6 +900,54 @@ input[type="number"] {
         </div>
       </div>
     </div>
+
+    <!-- POPUP TRENERZY (edycja) -->
+<div id="editTrenerzyPopup" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:flex; justify-content:center; align-items:center;
+  z-index:3002; padding:18px;
+">
+  <div class="card" style="max-width:360px;width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">Trenerzy</div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Trener 1</div>
+        <select id="pickEditTrener1" class="select-like-input">
+          <option value="">Bez trenera</option>
+        </select>
+      </div>
+
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Trener 2</div>
+        <select id="pickEditTrener2" class="select-like-input">
+          <option value="">Bez trenera</option>
+        </select>
+      </div>
+
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Trener 3</div>
+        <select id="pickEditTrener3" class="select-like-input">
+          <option value="">Bez trenera</option>
+        </select>
+      </div>
+
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Trener 4</div>
+        <select id="pickEditTrener4" class="select-like-input">
+          <option value="">Bez trenera</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="closeEditTrenerzyPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="applyEditTrenerzyPopup()">Zapisz</button>
+    </div>
+
+    <div id="editTrenerzyMsg" style="margin-top:10px; opacity:.9;"></div>
+  </div>
+</div>
 
     <div style="margin-top:10px; display:flex; justify-content:center;">
   <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
@@ -3547,6 +3586,72 @@ function applyEditGroupsPopup() {
   closeEditGroupsPopup();
 }
 
+  /* =================== EDIT: POPUP TRENERZY =================== */
+function openEditTrenerzyPopup() {
+  const pop = document.getElementById("editTrenerzyPopup");
+  if (!pop) return;
+
+  // skopiuj aktualne wartości z "silnika" (ukryte editTrener1..4) do pickerów w popupie
+  copySelectValue_("editTrener1", "pickEditTrener1");
+  copySelectValue_("editTrener2", "pickEditTrener2");
+  copySelectValue_("editTrener3", "pickEditTrener3");
+  copySelectValue_("editTrener4", "pickEditTrener4");
+
+  // pokaż popup (flex, bo tak jest zrobiony overlay)
+  pop.classList.remove("hidden");
+}
+
+function closeEditTrenerzyPopup() {
+  const pop = document.getElementById("editTrenerzyPopup");
+  if (!pop) return;
+  pop.classList.add("hidden");
+}
+
+function applyEditTrenerzyPopup() {
+  // przepisz wybory z popupu do ukrytych selectów (silnik)
+  copySelectValue_("pickEditTrener1", "editTrener1");
+  copySelectValue_("pickEditTrener2", "editTrener2");
+  copySelectValue_("pickEditTrener3", "editTrener3");
+  copySelectValue_("pickEditTrener4", "editTrener4");
+
+  // odpal istniejącą logikę kaskadową (jeśli masz)
+  try { if (typeof onEditTrenerPick === "function") onEditTrenerPick(1); } catch(e){}
+  try { if (typeof onEditTrenerPick === "function") onEditTrenerPick(2); } catch(e){}
+  try { if (typeof onEditTrenerPick === "function") onEditTrenerPick(3); } catch(e){}
+
+  // zaktualizuj podgląd na ekranie edycji
+  updateEditTrenerzySummary_();
+
+  closeEditTrenerzyPopup();
+}
+
+/* helper: kopiowanie value między selectami */
+function copySelectValue_(fromId, toId) {
+  const from = document.getElementById(fromId);
+  const to = document.getElementById(toId);
+  if (!from || !to) return;
+
+  // jeśli "to" nie ma jeszcze opcji, a "from" ma — skopiuj options (bezpiecznie)
+  if (to.tagName === "SELECT" && from.tagName === "SELECT" && to.options.length <= 1 && from.options.length > 1) {
+    to.innerHTML = from.innerHTML;
+  }
+
+  to.value = from.value || "";
+}
+
+/* helper: podgląd trenerów na ekranie edycji */
+function updateEditTrenerzySummary_() {
+  const out = document.getElementById("editTrenerzySummary");
+  if (!out) return;
+
+  const t1 = (document.getElementById("editTrener1")?.value || "").trim();
+  const t2 = (document.getElementById("editTrener2")?.value || "").trim();
+  const t3 = (document.getElementById("editTrener3")?.value || "").trim();
+  const t4 = (document.getElementById("editTrener4")?.value || "").trim();
+
+  const arr = [t1, t2, t3, t4].filter(Boolean);
+  out.textContent = arr.length ? arr.join(", ") : "Bez trenera";
+}
 function updateEditGroupsSummary_() {
   const el = document.getElementById("editGroupsSummary");
   if (!el) return;
