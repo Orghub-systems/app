@@ -41,20 +41,25 @@
     .login-box input, .login-box select {
       display: block;
       margin: 10px auto;
-      padding: 8px;
+      padding: 10px;
       width: 200px;
-      border-radius: 6px;
-      border: none;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #111;
+      color: #fff;
     }
+    .login-box input::placeholder { color: rgba(255,255,255,0.55); }
 
-button {
-  padding: 8px 16px;
-  border: none;
-  background: var(--color-accent-red);
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-}
+    button {
+      padding: 10px 14px;
+      border: 1px solid #333;
+      background: #111;
+      color: #fff;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    button:active { transform: scale(0.99); }
     
     button[disabled] { background: gray !important; cursor: default; }
     #btnSetupPayments:disabled,
@@ -68,14 +73,22 @@ button {
       display: block;
       width: 200px;
       margin: 10px auto;
-      padding: 8px;
-      border-radius: 6px;
-      background: red;
-      border: none;
-      color: white;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--color-accent-red);
+      border: 1px solid var(--color-accent-red-border);
+      color: #fff;
       cursor: pointer;
+      font-weight: 900;
+      letter-spacing: 0.2px;
     }
-    .full-btn.alt { background: #333; }
+    .full-btn:active { transform: scale(0.99); }
+
+    .full-btn.alt {
+      background: #111;
+      border: 1px solid #333;
+      color: #fff;
+    }
 
     .card {
       border: 1px solid #555;
