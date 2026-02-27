@@ -89,6 +89,11 @@
       height: auto;
       line-height: 1.25;
     }
+
+        .full-btn {
+      justify-content: flex-start;
+      text-align: left;
+    }
     
     .full-btn:active { transform: scale(0.99); }
     
@@ -295,7 +300,22 @@ input[type="number"] {
   height: 28px;
 }
     #adminGrupyView label { min-width: 0; }
+/* Checkboxy jako pełne klawisze w popupie edycji */
+#trainerEditPopup .full-btn.alt {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  text-align: left;
+}
 
+#trainerEditPopup .full-btn.alt input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
+#trainerEditPopup .full-btn.alt {
+  white-space: nowrap;
+}
     
   </style>
   
