@@ -84,7 +84,12 @@
       letter-spacing: 0.2px;
       box-sizing: border-box;
       text-align: center;
+    
+      white-space: normal;
+      height: auto;
+      line-height: 1.25;
     }
+    
     .full-btn:active { transform: scale(0.99); }
     
     .full-btn.alt {
@@ -867,7 +872,7 @@ input[type="number"] {
 
 <!-- TRENERZY: przycisk + popup -->
 <button class="full-btn alt" id="btnEditPickTrenerzy" type="button" onclick="openEditTrenerzyPopup()">
-  Trenerzy
+  Trener: Bez trenera
 </button>
 <div id="editTrenerzySummary" style="margin-top:6px;opacity:0.85;font-size:13px;">Bez trenera</div>
 
@@ -3644,8 +3649,8 @@ function copySelectValue_(fromId, toId) {
 
 /* helper: podgląd trenerów na ekranie edycji */
 function updateEditTrenerzySummary_() {
-  const out = document.getElementById("editTrenerzySummary");
-  if (!out) return;
+  const btn = document.getElementById("btnEditPickTrenerzy");
+  if (!btn) return;
 
   const t1 = (document.getElementById("editTrener1")?.value || "").trim();
   const t2 = (document.getElementById("editTrener2")?.value || "").trim();
@@ -3653,8 +3658,16 @@ function updateEditTrenerzySummary_() {
   const t4 = (document.getElementById("editTrener4")?.value || "").trim();
 
   const arr = [t1, t2, t3, t4].filter(Boolean);
-  out.textContent = arr.length ? arr.join(", ") : "Bez trenera";
+
+  if (arr.length === 0) {
+    btn.textContent = "Trener: Bez trenera";
+  } else if (arr.length === 1) {
+    btn.textContent = "Trener: " + arr[0];
+  } else {
+    btn.textContent = "Trenerzy: " + arr.join(", ");
+  }
 }
+  
 function updateEditGroupsSummary_() {
   const el = document.getElementById("editGroupsSummary");
   if (!el) return;
