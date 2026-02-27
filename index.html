@@ -887,8 +887,6 @@ input[type="number"] {
       <button class="full-btn alt" id="btnEditPickGroups" type="button" onclick="openEditGroupsPopup()">
         Wybierz grupy
       </button>
-      <div id="editGroupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
-    </div>
 
     <!-- POPUP GRUP (edycja) -->
     <div id="editGroupsPopup" class="hidden" style="
@@ -3668,13 +3666,13 @@ function updateEditTrenerzySummary_() {
 }
   
 function updateEditGroupsSummary_() {
-  const el = document.getElementById("editGroupsSummary");
-  if (!el) return;
+  const btn = document.getElementById("btnEditPickGroups");
+  if (!btn) return;
 
-  const arr = Array.from(selectedEditGroups);
-  arr.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+  const arr = Array.from(selectedEditGroups || []);
+  arr.sort((a,b) => Number(a.slice(1)) - Number(b.slice(1)));
 
-  el.textContent = arr.length ? `✅ Wybrane: ${arr.join(", ")}` : "—";
+  btn.textContent = arr.length ? ("Grupy: " + arr.join(", ")) : "Grupy: —";
 }
 
 function resetEditGroups_() {
