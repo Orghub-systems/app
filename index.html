@@ -42,7 +42,8 @@
       display: block;
       margin: 10px auto;
       padding: 10px;
-      width: 200px;
+      width: min(360px, 100%);
+      box-sizing: border-box;
       border-radius: 12px;
       border: 1px solid #333;
       background: #111;
@@ -71,7 +72,7 @@
 
     .full-btn {
       display: block;
-      width: 200px;
+      width: min(360px, 100%);
       margin: 10px auto;
       padding: 12px 14px;
       border-radius: 14px;
@@ -81,9 +82,11 @@
       cursor: pointer;
       font-weight: 900;
       letter-spacing: 0.2px;
+      box-sizing: border-box;
+      text-align: center;
     }
     .full-btn:active { transform: scale(0.99); }
-
+    
     .full-btn.alt {
       background: #111;
       border: 1px solid #333;
