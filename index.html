@@ -950,20 +950,18 @@ input[type="number"] {
       <button class="full-btn" style="flex:1;" type="button" onclick="applyEditTrenerzyPopup()">Zapisz</button>
     </div>
 
-    <div id="editTrenerzyMsg" style="margin-top:10px; opacity:.9;"></div>
-  </div>
-</div>
+          <div id="editTrenerzyMsg" style="margin-top:10px; opacity:.9;"></div>
+        </<button class="full-btn alt" type="button" id="btnEditRez" onclick="toggleEditRez()">
+        Rezerwacja obiektu
+      </button>
+      <input id="editEventRez" type="checkbox" class="hidden">
       
-<label class="full-btn alt" style="display:flex; align-items:center; gap:12px; text-align:left;" for="editEventRez">
-  <input id="editEventRez" type="checkbox" style="transform:scale(1.35); margin:0;">
-  Rezerwacja obiektu
-</label>
-
-<label class="full-btn alt" style="display:flex; align-items:center; gap:12px; text-align:left;" for="editEventStat">
-  <input id="editEventStat" type="checkbox" style="transform:scale(1.35); margin:0;">
-  Liczyć do statystyk
-</label>
-    
+      <button class="full-btn alt" type="button" id="btnEditStat" onclick="toggleEditStat()">
+        Liczyć do statystyk
+      </button>
+      <input id="editEventStat" type="checkbox" class="hidden">div>
+      </div>
+      
     <div style="margin-top:10px;">
      <button class="full-btn" id="btnEditSave">💾 Zapisz zmiany</button>
       <button class="full-btn alt" onclick="trainerHideEditPopup()">Anuluj</button>
