@@ -731,6 +731,19 @@ input[type="number"] {
   <button class="full-btn alt" onclick="goToView('adminPanelView')">⬅ Powrót</button>
 </div>
 
+    <!-- ADMIN: RAPORT WYDARZEŃ -->
+<div id="adminRaportWydarzeniaView" class="container hidden">
+  <h1>Raport wydarzeń</h1>
+
+  <div id="adminRaportWydarzeniaBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
+  </div>
+
+  <div id="adminRaportWydarzeniaSummary" style="margin-top:12px; opacity:.9;"></div>
+
+  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
+</div>
+
 <!-- LISTA ZAWODNIKÓW (ADMIN) -->
 <div id="adminZawodnicyView" class="container hidden">
   <h1>Lista zawodników</h1>
@@ -4124,6 +4137,100 @@ async function trainerSaveEditEvent() {
   } finally {
     if (btn) { btn.classList.remove("loading"); btn.disabled = false; }
   }
+}
+
+  /* =================== 92 ADMIN: RAPORTY (WIDOKI) =================== */
+
+// menu -> raport wydarzeń
+function adminRaportyOpenWydarzenia() {
+  goToView("adminRaportWydarzeniaView");
+  adminLoadRaportWydarzenia_();
+}
+
+// pobierz + wyrenderuj raport wydarzeń (kolumny A..F)
+async function adminLoadRaportWydarzenia_() {
+  const body = document.getElementById("adminRaportWydarzeniaBody");
+  const sumEl = document.getElementById("adminRaportWydarzeniaSummary");
+
+  if (body) body.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie…</div>`;
+  if (sumEl) sumEl.textContent = "";
+
+  try {
+    // month opcjonalny — na razie bierzemy bieżący miesiąc z backendu
+    const res = await apiClubGet("raportWydarzenia", {});
+
+    if (!res || res.success !== true) {
+      const err = (res && (res.error || res.message)) ? (res.error || res.message) : "Nieznany błąd";
+      if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ ${escapeHtml_(err)}</div>`;
+      return;
+    }
+
+    const events = Array.isArray(res.events) ? res.events : [];
+    renderAdminRaportWydarzenia_(events);
+
+    const cnt = res?.summary?.count ?? events.length;
+    const month = res?.month ? String(res.month) : "";
+    if (sumEl) sumEl.textContent = `Ilość wydarzeń${month ? " (" + month + ")" : ""}: ${cnt}`;
+
+  } catch (e) {
+    console.error(e);
+    if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu</div>`;
+  }
+}
+
+function renderAdminRaportWydarzenia_(events) {
+  const body = document.getElementById("adminRaportWydarzeniaBody");
+  if (!body) return;
+
+  if (!events.length) {
+    body.innerHTML = `<div class="card" style="background:#222;">Brak wydarzeń w raporcie.</div>`;
+    return;
+  }
+
+  // tabela A..F: Rodzaj, Data, Dzień, Start, Koniec, Czas
+  let html = `
+    <div class="card" style="padding:12px;text-align:left;">
+      <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
+                  font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+        <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Start</div><div>Koniec</div><div>Czas</div>
+      </div>
+  `;
+
+  for (const ev of events) {
+    html += `
+      <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
+                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>${escapeHtml_(ev.rodzaj || "")}</div>
+        <div>${escapeHtml_(ev.data || "")}</div>
+        <div>${escapeHtml_(ev.dzien || "")}</div>
+        <div>${escapeHtml_(ev.start || "")}</div>
+        <div>${escapeHtml_(ev.koniec || "")}</div>
+        <div>${formatHours_(ev.czas)}</div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  body.innerHTML = html;
+}
+
+function formatHours_(h) {
+  const n = Number(h);
+  if (!isFinite(n)) return "";
+  // 5.5 -> "5,5"
+  const s = String(Math.round(n * 100) / 100).replace(".", ",");
+  return s;
+}
+
+// minimalny escape do HTML (żeby nazwiska/rodzaje nie rozwaliły DOM)
+function escapeHtml_(s) {
+  
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
   
 /* =================== 99 START APLIKACJI =================== */
