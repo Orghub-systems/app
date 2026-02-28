@@ -2849,24 +2849,21 @@ function adminCancelConfirmPayment() {
 
 function adminOpenRaporty() {
   const el = document.getElementById("adminRaportyView");
-  const splash = document.getElementById("splash");
-  const ov = document.getElementById("busyOverlay");
+  if (!el) { alert("Brak #adminRaportyView"); return; }
 
-  console.log("RAPORTY DEBUG:", {
-    hasEl: !!el,
-    elClass: el ? el.className : null,
-    elHidden: el ? el.classList.contains("hidden") : null,
-    splashDisplay: splash ? getComputedStyle(splash).display : "no splash",
-    busyDisplay: ov ? getComputedStyle(ov).display : "no busyOverlay"
-  });
+  try {
+    goToView("adminRaportyView");
+  } catch (err) {
+    console.error("goToView failed:", err);
+  }
 
-  // na twardo schowaj splash jeśli wisi
-  if (splash) splash.style.display = "none";
-
-  // na twardo schowaj busy overlay (na wszelki)
-  if (typeof hideBusy === "function") hideBusy();
-
-  goToView("adminRaportyView");
+  // jeśli nadal hidden → coś przerwało goToView lub router nie zadziałał
+  if (el.classList.contains("hidden")) {
+    console.warn("FORCE SHOW adminRaportyView (goToView nie zdjął hidden)");
+    ukryjWszystkie();              // schowaj inne
+    el.classList.remove("hidden"); // pokaż raporty ręcznie
+    currentView = "adminRaportyView";
+  }
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
