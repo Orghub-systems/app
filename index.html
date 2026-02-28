@@ -744,6 +744,32 @@ input[type="number"] {
   <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
 </div>
 
+    <!-- ADMIN: RAPORT TRENERZY -->
+<div id="adminRaportTrenerzyView" class="container hidden">
+  <h1>Raport trenerzy</h1>
+
+  <div id="adminRaportTrenerzyBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
+  </div>
+
+  <div id="adminRaportTrenerzySummary" style="margin-top:12px; opacity:.9;"></div>
+
+  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
+</div>
+
+<!-- ADMIN: RAPORT REZERWACJA -->
+<div id="adminRaportRezerwacjaView" class="container hidden">
+  <h1>Raport rezerwacja obiektu</h1>
+
+  <div id="adminRaportRezerwacjaBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
+  </div>
+
+  <div id="adminRaportRezerwacjaSummary" style="margin-top:12px; opacity:.9;"></div>
+
+  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
+</div>
+
 <!-- LISTA ZAWODNIKÓW (ADMIN) -->
 <div id="adminZawodnicyView" class="container hidden">
   <h1>Lista zawodników</h1>
@@ -4231,6 +4257,168 @@ function escapeHtml_(s) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+  // menu -> raport trenerzy
+function adminRaportyOpenTrenerzy() {
+  goToView("adminRaportTrenerzyView");
+  adminLoadRaportTrenerzy_();
+}
+
+// menu -> raport rezerwacja
+function adminRaportyOpenRezerwacja() {
+  goToView("adminRaportRezerwacjaView");
+  adminLoadRaportRezerwacja_();
+}
+
+/* =================== RAPORT: TRENERZY =================== */
+
+async function adminLoadRaportTrenerzy_() {
+  const body = document.getElementById("adminRaportTrenerzyBody");
+  const sumEl = document.getElementById("adminRaportTrenerzySummary");
+
+  if (body) body.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie…</div>`;
+  if (sumEl) sumEl.textContent = "";
+
+  try {
+    const res = await apiClubGet("raportTrenerzy", {});
+
+    if (!res || res.success !== true) {
+      const err = (res && (res.error || res.message)) ? (res.error || res.message) : "Nieznany błąd";
+      if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ ${escapeHtml_(err)}</div>`;
+      return;
+    }
+
+    const trainers = Array.isArray(res.trainers) ? res.trainers : [];
+    renderAdminRaportTrenerzy_(trainers);
+
+    const month = res?.month ? String(res.month) : "";
+    const cnt = res?.summary?.trainersCount ?? trainers.length;
+    if (sumEl) sumEl.textContent = `Trenerzy${month ? " (" + month + ")" : ""}: ${cnt}`;
+
+  } catch (e) {
+    console.error(e);
+    if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu trenerów</div>`;
+  }
+}
+
+function renderAdminRaportTrenerzy_(trainers) {
+  const body = document.getElementById("adminRaportTrenerzyBody");
+  if (!body) return;
+
+  if (!trainers.length) {
+    body.innerHTML = `<div class="card" style="background:#222;">Brak trenerów w tym miesiącu.</div>`;
+    return;
+  }
+
+  // Sekcje per trener
+  let html = "";
+
+  for (const t of trainers) {
+    const name = t?.name || "";
+    const rows = Array.isArray(t?.rows) ? t.rows : [];
+    const presence = t?.summary?.presence ?? rows.length;
+    const hours = t?.summary?.hours ?? 0;
+
+    html += `
+      <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
+        <div style="font-weight:900;font-size:16px;margin-bottom:8px;">${escapeHtml_(name)}</div>
+
+        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                    font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+          <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
+        </div>
+    `;
+
+    for (const r of rows) {
+      html += `
+        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                    padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div>${escapeHtml_(r.rodzaj || "")}</div>
+          <div>${escapeHtml_(r.data || "")}</div>
+          <div>${escapeHtml_(r.dzien || "")}</div>
+          <div>${formatHours_(r.czas)}</div>
+        </div>
+      `;
+    }
+
+    html += `
+        <div style="margin-top:10px;opacity:.9;font-weight:800;">
+          Podsumowanie: Obecność: ${presence}, Godzin: ${formatHours_(hours)}
+        </div>
+      </div>
+    `;
+  }
+
+  body.innerHTML = html;
+}
+
+/* =================== RAPORT: REZERWACJA =================== */
+
+async function adminLoadRaportRezerwacja_() {
+  const body = document.getElementById("adminRaportRezerwacjaBody");
+  const sumEl = document.getElementById("adminRaportRezerwacjaSummary");
+
+  if (body) body.innerHTML = `<div class="card" style="background:#222;">⏳ Ładowanie…</div>`;
+  if (sumEl) sumEl.textContent = "";
+
+  try {
+    const res = await apiClubGet("raportRezerwacja", {});
+
+    if (!res || res.success !== true) {
+      const err = (res && (res.error || res.message)) ? (res.error || res.message) : "Nieznany błąd";
+      if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ ${escapeHtml_(err)}</div>`;
+      return;
+    }
+
+    const rows = Array.isArray(res.rows) ? res.rows : [];
+    renderAdminRaportRezerwacja_(rows);
+
+    const month = res?.month ? String(res.month) : "";
+    const reservations = res?.summary?.reservations ?? rows.length;
+    const hours = res?.summary?.hours ?? 0;
+
+    if (sumEl) {
+      sumEl.textContent = `Podsumowanie${month ? " (" + month + ")" : ""}: Rezerwacje: ${reservations}, Godziny: ${formatHours_(hours)}`;
+    }
+
+  } catch (e) {
+    console.error(e);
+    if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu rezerwacji</div>`;
+  }
+}
+
+function renderAdminRaportRezerwacja_(rows) {
+  const body = document.getElementById("adminRaportRezerwacjaBody");
+  if (!body) return;
+
+  if (!rows.length) {
+    body.innerHTML = `<div class="card" style="background:#222;">Brak rezerwacji w tym miesiącu.</div>`;
+    return;
+  }
+
+  let html = `
+    <div class="card" style="padding:12px;text-align:left;">
+      <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                  font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+        <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
+      </div>
+  `;
+
+  for (const r of rows) {
+    html += `
+      <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>${escapeHtml_(r.rodzaj || "")}</div>
+        <div>${escapeHtml_(r.data || "")}</div>
+        <div>${escapeHtml_(r.dzien || "")}</div>
+        <div>${formatHours_(r.czas)}</div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  body.innerHTML = html;
 }
   
 /* =================== 99 START APLIKACJI =================== */
