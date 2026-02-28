@@ -1078,9 +1078,22 @@ input[type="number"] {
     </div>
   </div>
 </div>
+
+  <!-- ADMIN: RAPORTY (MENU) -->
+<div id="adminRaportyView" class="container hidden">
+  <h1>Raporty</h1>
+
+  <button class="full-btn" onclick="adminRaportyOpenWydarzenia()">📅 Wydarzenia</button>
+  <button class="full-btn" onclick="adminRaportyOpenTrenerzy()">🏒 Trenerzy</button>
+  <button class="full-btn" onclick="adminRaportyOpenRezerwacja()">🏟️ Rezerwacja obiektu</button>
+
+  <button class="full-btn alt" onclick="goToView('adminPanelView')">⬅ Powrót</button>
+</div>
+  
   </div><!-- /app -->
 
 <script>
+  
 /* =================== 00 START / INTRO =================== */
 function odtworzIntroSound() {
   try {
@@ -2829,6 +2842,12 @@ async function adminDoConfirmPayment() {
 function adminCancelConfirmPayment() {
   const modal = document.getElementById("adminPayConfirmModal");
   if (modal) modal.classList.add("hidden");
+}
+
+  // =================== 67 ADMIN: RAPORTY ===================
+
+  function adminOpenRaporty() {
+  goToView("adminRaportyView");
 }
   
   /* =================== 70 LOGOWANIE / REJESTRACJA =================== */
