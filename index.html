@@ -720,6 +720,17 @@ input[type="number"] {
   <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
 </div>
 
+      <!-- ADMIN: RAPORTY (MENU) -->
+<div id="adminRaportyView" class="container hidden">
+  <h1>Raporty</h1>
+
+  <button class="full-btn" onclick="adminRaportyOpenWydarzenia()">📅 Wydarzenia</button>
+  <button class="full-btn" onclick="adminRaportyOpenTrenerzy()">🏒 Trenerzy</button>
+  <button class="full-btn" onclick="adminRaportyOpenRezerwacja()">🏟️ Rezerwacja obiektu</button>
+
+  <button class="full-btn alt" onclick="goToView('adminPanelView')">⬅ Powrót</button>
+</div>
+
 <!-- LISTA ZAWODNIKÓW (ADMIN) -->
 <div id="adminZawodnicyView" class="container hidden">
   <h1>Lista zawodników</h1>
@@ -1079,16 +1090,7 @@ input[type="number"] {
   </div>
 </div>
 
-  <!-- ADMIN: RAPORTY (MENU) -->
-<div id="adminRaportyView" class="container hidden">
-  <h1>Raporty</h1>
 
-  <button class="full-btn" onclick="adminRaportyOpenWydarzenia()">📅 Wydarzenia</button>
-  <button class="full-btn" onclick="adminRaportyOpenTrenerzy()">🏒 Trenerzy</button>
-  <button class="full-btn" onclick="adminRaportyOpenRezerwacja()">🏟️ Rezerwacja obiektu</button>
-
-  <button class="full-btn alt" onclick="goToView('adminPanelView')">⬅ Powrót</button>
-</div>
   
   </div><!-- /app -->
 
