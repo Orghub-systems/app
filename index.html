@@ -2846,7 +2846,14 @@ function adminCancelConfirmPayment() {
 
   // =================== 67 ADMIN: RAPORTY ===================
 
-  function adminOpenRaporty() {
+function adminOpenRaporty() {
+  const el = document.getElementById("adminRaportyView");
+  if (!el) {
+    alert("❌ Brak elementu #adminRaportyView w DOM (zły wkład HTML albo zepsute domknięcia div).");
+    // awaryjnie wróć na panel admina
+    goToView("adminPanelView");
+    return;
+  }
   goToView("adminRaportyView");
 }
   
