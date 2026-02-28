@@ -2849,12 +2849,23 @@ function adminCancelConfirmPayment() {
 
 function adminOpenRaporty() {
   const el = document.getElementById("adminRaportyView");
-  if (!el) {
-    alert("❌ Brak elementu #adminRaportyView w DOM (zły wkład HTML albo zepsute domknięcia div).");
-    // awaryjnie wróć na panel admina
-    goToView("adminPanelView");
-    return;
-  }
+  const splash = document.getElementById("splash");
+  const ov = document.getElementById("busyOverlay");
+
+  console.log("RAPORTY DEBUG:", {
+    hasEl: !!el,
+    elClass: el ? el.className : null,
+    elHidden: el ? el.classList.contains("hidden") : null,
+    splashDisplay: splash ? getComputedStyle(splash).display : "no splash",
+    busyDisplay: ov ? getComputedStyle(ov).display : "no busyOverlay"
+  });
+
+  // na twardo schowaj splash jeśli wisi
+  if (splash) splash.style.display = "none";
+
+  // na twardo schowaj busy overlay (na wszelki)
+  if (typeof hideBusy === "function") hideBusy();
+
   goToView("adminRaportyView");
 }
   
