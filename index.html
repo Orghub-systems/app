@@ -4227,10 +4227,10 @@ function renderAdminRaportWydarzenia_(events) {
       <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
                   padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <div>${escapeHtml_(ev.rodzaj || "")}</div>
-        <div>${escapeHtml_(ev.data || "")}</div>
+        <div>${escapeHtml_(fmtDate_(ev.data))}</div>
         <div>${escapeHtml_(ev.dzien || "")}</div>
-        <div>${escapeHtml_(ev.start || "")}</div>
-        <div>${escapeHtml_(ev.koniec || "")}</div>
+        <div>${escapeHtml_(fmtTime_(ev.start))}</div>
+        <div>${escapeHtml_(fmtTime_(ev.koniec))}</div>
         <div>${formatHours_(ev.czas)}</div>
       </div>
     `;
@@ -4259,6 +4259,37 @@ function escapeHtml_(s) {
     .replace(/'/g, "&#39;");
 }
 
+ function fmtDate_(v) {
+  if (!v) return "";
+  // Date object
+  if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v.getTime())) {
+    const y = v.getFullYear();
+    const m = String(v.getMonth() + 1).padStart(2, "0");
+    const d = String(v.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  // ISO string -> YYYY-MM-DD
+  const s = String(v);
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  return s;
+}
+
+function fmtTime_(v) {
+  if (!v) return "";
+  // Date object (np. 1899-12-30 HH:MM)
+  if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v.getTime())) {
+    const hh = String(v.getHours()).padStart(2, "0");
+    const mm = String(v.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+  // "HH:MM" w stringu
+  const s = String(v).trim();
+  const t = s.match(/(\d{1,2}):(\d{2})/);
+  if (t) return `${String(t[1]).padStart(2,"0")}:${t[2]}`;
+  return s;
+}
+  
   // menu -> raport trenerzy
 function adminRaportyOpenTrenerzy() {
   goToView("adminRaportTrenerzyView");
@@ -4335,7 +4366,7 @@ function renderAdminRaportTrenerzy_(trainers) {
         <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
                     padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
           <div>${escapeHtml_(r.rodzaj || "")}</div>
-          <div>${escapeHtml_(r.data || "")}</div>
+          <div>${escapeHtml_(fmtDate_(r.data))}</div>
           <div>${escapeHtml_(r.dzien || "")}</div>
           <div>${formatHours_(r.czas)}</div>
         </div>
@@ -4410,7 +4441,7 @@ function renderAdminRaportRezerwacja_(rows) {
       <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
                   padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <div>${escapeHtml_(r.rodzaj || "")}</div>
-        <div>${escapeHtml_(r.data || "")}</div>
+        <div>${escapeHtml_(fmtDate_(r.data))}</div>
         <div>${escapeHtml_(r.dzien || "")}</div>
         <div>${formatHours_(r.czas)}</div>
       </div>
