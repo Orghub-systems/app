@@ -1225,12 +1225,15 @@ function ukryjWszystkie() {
 function goToView(viewId, options = {}) {
   const { replace = false } = options;
   ukryjWszystkie();
-  hideBusy(); // ✅ ważne: busyOverlay nie jest .container i potrafi przykryć ekran
-
+  hideBusy();
   const el = document.getElementById(viewId);
   if (el) el.classList.remove("hidden");
   currentView = viewId;
-  ...
+  const state = { view: viewId };
+  try {
+    if (replace) history.replaceState(state, "", "");
+    else history.pushState(state, "", "");
+  } catch (e) {}
 }
 
 function showViewFromHistory(viewId) {
