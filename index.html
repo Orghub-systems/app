@@ -4232,8 +4232,7 @@ function adminRaportyOpenWydarzenia() {
   adminLoadRaportWydarzenia_();
 }
 
-// pobierz + wyrenderuj raport wydarzeń (kolumny A..F)
-// pobierz + wyrenderuj raport wydarzeń (SEZON: miesiące wstecz)
+// pobierz + wyrenderuj raport wydarzeń (NOWE: bloki MIESIĄC: z arkusza raportu)
 async function adminLoadRaportWydarzenia_() {
   const body = document.getElementById("adminRaportWydarzeniaBody");
   const sumEl = document.getElementById("adminRaportWydarzeniaSummary");
@@ -4242,36 +4241,61 @@ async function adminLoadRaportWydarzenia_() {
   if (sumEl) sumEl.textContent = "";
 
   try {
-    const months = getMonthsBackward_(12);
+    // NOWE: backend zwraca gotową siatkę zakładki "Wydarzenia"
+    const res = await apiClubGet("raportWydarzenia", {}); // bez monthName
 
-    let totalCount = 0;
-    let htmlAll = "";
-
-    for (const m of months) {
-      const res = await apiClubGet("raportWydarzenia", { monthName: m });
-
-      // jeśli brak arkusza raportu -> pomijamy miesiąc
-      if (!res || res.success !== true) continue;
-
-      const events = Array.isArray(res.events) ? res.events : [];
-      totalCount += (res?.summary?.count ?? events.length);
-
-      htmlAll += `
-        <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
-          <div style="font-weight:900;font-size:16px;margin-bottom:10px;">${escapeHtml_(m)}</div>
-          ${renderAdminRaportWydarzeniaTableHtml_(events)}
-        </div>
-      `;
-    }
-
-    if (!htmlAll) {
-      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak danych w raportach (brak arkuszy / brak wydarzeń).</div>`;
+    if (!res || res.success !== true || !Array.isArray(res.grid)) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak danych raportu (albo brak zakładki/endpointu).</div>`;
       if (sumEl) sumEl.textContent = "";
       return;
     }
 
+    const blocks = parseReportBlocksFromGrid_(res.grid);
+
+    if (!blocks.length) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak bloków MIESIĄC: w raporcie.</div>`;
+      if (sumEl) sumEl.textContent = "";
+      return;
+    }
+
+    // Kolejność w arkuszu: stare -> nowe (dopisywane w dół).
+    // W UI chcemy: bieżący na górze.
+    blocks.reverse();
+
+    let totalCount = 0;
+    let htmlAll = "";
+
+    for (const b of blocks) {
+      // b.rows zawiera: nagłówek tabeli + dane + linie podsumowania
+      // My renderujemy tabelę z danych, a podsumowanie pokażemy jako tekst.
+      const header = b.rows[0] || [];
+      const dataRows = [];
+      const summaryLines = [];
+
+      for (let i = 1; i < b.rows.length; i++) {
+        const row = b.rows[i] || [];
+        const a0 = String(row[0] || "").trim();
+        if (a0.toUpperCase().startsWith("PODSUMOWANIE:")) {
+          summaryLines.push(a0);
+        } else if (String(row.join("")).trim() !== "") {
+          dataRows.push(row);
+        }
+      }
+
+      // ilość wydarzeń = ilość wierszy danych (przyjmujemy, że nagłówek jest 1. wierszem)
+      totalCount += dataRows.length;
+
+      htmlAll += `
+        <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
+          <div style="font-weight:900;font-size:16px;margin-bottom:10px;">${escapeHtml_(b.monthLabel)}</div>
+          ${renderAdminRaportWydarzeniaTableFromGrid_(header, dataRows)}
+          ${summaryLines.length ? `<div style="margin-top:10px;opacity:.9;font-weight:800;">${escapeHtml_(summaryLines.join(" • "))}</div>` : ``}
+        </div>
+      `;
+    }
+
     if (body) body.innerHTML = htmlAll;
-    if (sumEl) sumEl.textContent = `Ilość wydarzeń (sezon): ${totalCount}`;
+    if (sumEl) sumEl.textContent = `Ilość wydarzeń (wszystkie raporty): ${totalCount}`;
 
   } catch (e) {
     console.error(e);
@@ -4305,6 +4329,44 @@ function renderAdminRaportWydarzeniaTableHtml_(events) {
       </div>
     `;
   }
+  return html;
+}
+
+  // helper: tabela wydarzeń z wierszy arkusza (grid), kolumny: Rodzaj, Data, Dzień, Start, Koniec, Czas
+function renderAdminRaportWydarzeniaTableFromGrid_(headerRow, dataRows) {
+  if (!dataRows || !dataRows.length) {
+    return `<div style="opacity:.85;">Brak wydarzeń w tym miesiącu.</div>`;
+  }
+
+  // Zakładamy układ backendu (A..F): Rodzaj, Data, Dzień, Start, Koniec, Czas
+  let html = `
+    <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
+                font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+      <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Start</div><div>Koniec</div><div>Czas</div>
+    </div>
+  `;
+
+  for (const row of dataRows) {
+    const rodzaj = row[0] ?? "";
+    const data   = row[1] ?? "";
+    const dzien  = row[2] ?? "";
+    const start  = row[3] ?? "";
+    const koniec = row[4] ?? "";
+    const czas   = row[5] ?? "";
+
+    html += `
+      <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
+                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>${escapeHtml_(rodzaj)}</div>
+        <div>${escapeHtml_(fmtDate_(data))}</div>
+        <div>${escapeHtml_(dzien)}</div>
+        <div>${escapeHtml_(fmtTime_(start))}</div>
+        <div>${escapeHtml_(fmtTime_(koniec))}</div>
+        <div>${escapeHtml_(czas)}</div>
+      </div>
+    `;
+  }
+
   return html;
 }
 
