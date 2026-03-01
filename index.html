@@ -4167,6 +4167,20 @@ async function trainerSaveEditEvent() {
 
   /* =================== 92 ADMIN: RAPORTY (WIDOKI) =================== */
 
+// ===== RAPORTY: lista miesięcy od bieżącego wstecz (max 12) =====
+function getMonthsBackward_(max = 12) {
+  const miesiace = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec",
+                    "Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
+  const now = new Date();
+  let idx = now.getMonth(); // 0..11
+  const out = [];
+  for (let i = 0; i < Math.min(12, max); i++) {
+    out.push(miesiace[idx]);
+    idx = (idx - 1 + 12) % 12;
+  }
+  return out;
+}
+  
 // menu -> raport wydarzeń
 function adminRaportyOpenWydarzenia() {
   goToView("adminRaportWydarzeniaView");
@@ -4174,6 +4188,7 @@ function adminRaportyOpenWydarzenia() {
 }
 
 // pobierz + wyrenderuj raport wydarzeń (kolumny A..F)
+// pobierz + wyrenderuj raport wydarzeń (SEZON: miesiące wstecz)
 async function adminLoadRaportWydarzenia_() {
   const body = document.getElementById("adminRaportWydarzeniaBody");
   const sumEl = document.getElementById("adminRaportWydarzeniaSummary");
@@ -4182,26 +4197,70 @@ async function adminLoadRaportWydarzenia_() {
   if (sumEl) sumEl.textContent = "";
 
   try {
-    // month opcjonalny — na razie bierzemy bieżący miesiąc z backendu
-    const res = await apiClubGet("raportWydarzenia", {});
+    const months = getMonthsBackward_(12);
 
-    if (!res || res.success !== true) {
-      const err = (res && (res.error || res.message)) ? (res.error || res.message) : "Nieznany błąd";
-      if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ ${escapeHtml_(err)}</div>`;
+    let totalCount = 0;
+    let htmlAll = "";
+
+    for (const m of months) {
+      const res = await apiClubGet("raportWydarzenia", { monthName: m });
+
+      // jeśli brak arkusza raportu -> pomijamy miesiąc
+      if (!res || res.success !== true) continue;
+
+      const events = Array.isArray(res.events) ? res.events : [];
+      totalCount += (res?.summary?.count ?? events.length);
+
+      htmlAll += `
+        <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
+          <div style="font-weight:900;font-size:16px;margin-bottom:10px;">${escapeHtml_(m)}</div>
+          ${renderAdminRaportWydarzeniaTableHtml_(events)}
+        </div>
+      `;
+    }
+
+    if (!htmlAll) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak danych w raportach (brak arkuszy / brak wydarzeń).</div>`;
+      if (sumEl) sumEl.textContent = "";
       return;
     }
 
-    const events = Array.isArray(res.events) ? res.events : [];
-    renderAdminRaportWydarzenia_(events);
-
-    const cnt = res?.summary?.count ?? events.length;
-    const month = res?.month ? String(res.month) : "";
-    if (sumEl) sumEl.textContent = `Ilość wydarzeń${month ? " (" + month + ")" : ""}: ${cnt}`;
+    if (body) body.innerHTML = htmlAll;
+    if (sumEl) sumEl.textContent = `Ilość wydarzeń (sezon): ${totalCount}`;
 
   } catch (e) {
     console.error(e);
     if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu</div>`;
   }
+}
+
+// helper: sama tabela (A..F) jako HTML, żeby dało się wkleić per miesiąc
+function renderAdminRaportWydarzeniaTableHtml_(events) {
+  if (!events || !events.length) {
+    return `<div style="opacity:.85;">Brak wydarzeń w tym miesiącu.</div>`;
+  }
+
+  let html = `
+    <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
+                font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+      <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Start</div><div>Koniec</div><div>Czas</div>
+    </div>
+  `;
+
+  for (const ev of events) {
+    html += `
+      <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
+                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>${escapeHtml_(ev.rodzaj || "")}</div>
+        <div>${escapeHtml_(fmtDate_(ev.data))}</div>
+        <div>${escapeHtml_(ev.dzien || "")}</div>
+        <div>${escapeHtml_(fmtTime_(ev.start))}</div>
+        <div>${escapeHtml_(fmtTime_(ev.koniec))}</div>
+        <div>${formatHours_(ev.czas)}</div>
+      </div>
+    `;
+  }
+  return html;
 }
 
 function renderAdminRaportWydarzenia_(events) {
@@ -4312,20 +4371,77 @@ async function adminLoadRaportTrenerzy_() {
   if (sumEl) sumEl.textContent = "";
 
   try {
-    const res = await apiClubGet("raportTrenerzy", {});
+    const months = getMonthsBackward_(12);
 
-    if (!res || res.success !== true) {
-      const err = (res && (res.error || res.message)) ? (res.error || res.message) : "Nieznany błąd";
-      if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ ${escapeHtml_(err)}</div>`;
+    // agregacja: trener -> {name, rows:[], presence, hours}
+    const map = new Map();
+
+    for (const m of months) {
+      const res = await apiClubGet("raportTrenerzy", { monthName: m });
+      if (!res || res.success !== true) continue;
+
+      const trainers = Array.isArray(res.trainers) ? res.trainers : [];
+      for (const t of trainers) {
+        const name = String(t?.name || "").trim();
+        if (!name) continue;
+
+        if (!map.has(name)) map.set(name, { name, rows: [], presence: 0, hours: 0 });
+
+        const obj = map.get(name);
+        const rows = Array.isArray(t?.rows) ? t.rows : [];
+        const pres = Number(t?.summary?.presence ?? rows.length) || 0;
+        const hrs  = Number(String(t?.summary?.hours ?? 0).replace(",", ".")) || 0;
+
+        // dopisz wiersze (dodamy miesiąc jako kontekst)
+        rows.forEach(r => obj.rows.push({ ...r, __month: m }));
+
+        obj.presence += pres;
+        obj.hours += hrs;
+      }
+    }
+
+    const trainersAll = Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name, "pl"));
+    if (!trainersAll.length) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak trenerów w sezonie (brak arkuszy / brak danych).</div>`;
+      if (sumEl) sumEl.textContent = "";
       return;
     }
 
-    const trainers = Array.isArray(res.trainers) ? res.trainers : [];
-    renderAdminRaportTrenerzy_(trainers);
+    // render
+    let html = "";
+    for (const t of trainersAll) {
+      html += `
+        <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
+          <div style="font-weight:900;font-size:16px;margin-bottom:8px;">${escapeHtml_(t.name)}</div>
 
-    const month = res?.month ? String(res.month) : "";
-    const cnt = res?.summary?.trainersCount ?? trainers.length;
-    if (sumEl) sumEl.textContent = `Trenerzy${month ? " (" + month + ")" : ""}: ${cnt}`;
+          <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                      font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+            <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
+          </div>
+      `;
+
+      for (const r of (t.rows || [])) {
+        html += `
+          <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                      padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div>${escapeHtml_(r.rodzaj || "")}</div>
+            <div>${escapeHtml_(fmtDate_(r.data))}</div>
+            <div>${escapeHtml_(r.dzien || "")}</div>
+            <div>${formatHours_(r.czas)}</div>
+          </div>
+        `;
+      }
+
+      html += `
+          <div style="margin-top:10px;opacity:.9;font-weight:800;">
+            Podsumowanie (sezon): Obecność: ${t.presence}, Godzin: ${formatHours_(Math.round(t.hours*100)/100)}
+          </div>
+        </div>
+      `;
+    }
+
+    if (body) body.innerHTML = html;
+    if (sumEl) sumEl.textContent = `Trenerzy (sezon): ${trainersAll.length}`;
 
   } catch (e) {
     console.error(e);
@@ -4394,31 +4510,59 @@ async function adminLoadRaportRezerwacja_() {
   if (sumEl) sumEl.textContent = "";
 
   try {
-    const res = await apiClubGet("raportRezerwacja", {});
+    const months = getMonthsBackward_(12);
 
-    if (!res || res.success !== true) {
-      const err = (res && (res.error || res.message)) ? (res.error || res.message) : "Nieznany błąd";
-      if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ ${escapeHtml_(err)}</div>`;
+    let rowsAll = [];
+    let hoursSum = 0;
+
+    for (const m of months) {
+      const res = await apiClubGet("raportRezerwacja", { monthName: m });
+      if (!res || res.success !== true) continue;
+
+      const rows = Array.isArray(res.rows) ? res.rows : [];
+      rows.forEach(r => rowsAll.push({ ...r, __month: m }));
+
+      hoursSum += Number(String(res?.summary?.hours ?? 0).replace(",", ".")) || 0;
+    }
+
+    if (!rowsAll.length) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak rezerwacji w sezonie.</div>`;
+      if (sumEl) sumEl.textContent = "";
       return;
     }
 
-    const rows = Array.isArray(res.rows) ? res.rows : [];
-    renderAdminRaportRezerwacja_(rows);
+    // render tabeli
+    let html = `
+      <div class="card" style="padding:12px;text-align:left;">
+        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                    font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+          <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
+        </div>
+    `;
 
-    const month = res?.month ? String(res.month) : "";
-    const reservations = res?.summary?.reservations ?? rows.length;
-    const hours = res?.summary?.hours ?? 0;
-
-    if (sumEl) {
-      sumEl.textContent = `Podsumowanie${month ? " (" + month + ")" : ""}: Rezerwacje: ${reservations}, Godziny: ${formatHours_(hours)}`;
+    for (const r of rowsAll) {
+      html += `
+        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                    padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div>${escapeHtml_(r.rodzaj || "")}</div>
+          <div>${escapeHtml_(fmtDate_(r.data))}</div>
+          <div>${escapeHtml_(r.dzien || "")}</div>
+          <div>${formatHours_(r.czas)}</div>
+        </div>
+      `;
     }
+
+    html += `</div>`;
+    if (body) body.innerHTML = html;
+
+    const reservations = rowsAll.length;
+    if (sumEl) sumEl.textContent = `Podsumowanie (sezon): Rezerwacje: ${reservations}, Godziny: ${formatHours_(Math.round(hoursSum*100)/100)}`;
 
   } catch (e) {
     console.error(e);
     if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu rezerwacji</div>`;
   }
 }
-
 function renderAdminRaportRezerwacja_(rows) {
   const body = document.getElementById("adminRaportRezerwacjaBody");
   if (!body) return;
