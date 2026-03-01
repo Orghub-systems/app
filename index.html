@@ -4167,20 +4167,6 @@ async function trainerSaveEditEvent() {
 
   /* =================== 92 ADMIN: RAPORTY (WIDOKI) =================== */
 
-// ===== RAPORTY: lista miesięcy od bieżącego wstecz (max 12) =====
-function getMonthsBackward_(max = 12) {
-  const miesiace = ["Styczeń","Luty","Marzec","Kwiecień","Maj","Czerwiec",
-                    "Lipiec","Sierpień","Wrzesień","Październik","Listopad","Grudzień"];
-  const now = new Date();
-  let idx = now.getMonth(); // 0..11
-  const out = [];
-  for (let i = 0; i < Math.min(12, max); i++) {
-    out.push(miesiace[idx]);
-    idx = (idx - 1 + 12) % 12;
-  }
-  return out;
-}
-
   // ===== RAPORTY v2: parser bloków "MIESIĄC:" z siatki arkusza =====
 // grid = 2D array (np. getDisplayValues), gdzie interesuje nas głównie kolumna A (index 0)
 // Zwraca: [{ monthLabel, rows }] w kolejności jak w arkuszu (od góry do dołu)
@@ -4370,42 +4356,6 @@ function renderAdminRaportWydarzeniaTableFromGrid_(headerRow, dataRows) {
   return html;
 }
 
-function renderAdminRaportWydarzenia_(events) {
-  const body = document.getElementById("adminRaportWydarzeniaBody");
-  if (!body) return;
-
-  if (!events.length) {
-    body.innerHTML = `<div class="card" style="background:#222;">Brak wydarzeń w raporcie.</div>`;
-    return;
-  }
-
-  // tabela A..F: Rodzaj, Data, Dzień, Start, Koniec, Czas
-  let html = `
-    <div class="card" style="padding:12px;text-align:left;">
-      <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
-                  font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
-        <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Start</div><div>Koniec</div><div>Czas</div>
-      </div>
-  `;
-
-  for (const ev of events) {
-    html += `
-      <div style="display:grid;grid-template-columns: 1.2fr .9fr .9fr .7fr .7fr .6fr;gap:8px;
-                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div>${escapeHtml_(ev.rodzaj || "")}</div>
-        <div>${escapeHtml_(fmtDate_(ev.data))}</div>
-        <div>${escapeHtml_(ev.dzien || "")}</div>
-        <div>${escapeHtml_(fmtTime_(ev.start))}</div>
-        <div>${escapeHtml_(fmtTime_(ev.koniec))}</div>
-        <div>${formatHours_(ev.czas)}</div>
-      </div>
-    `;
-  }
-
-  html += `</div>`;
-  body.innerHTML = html;
-}
-
 function formatHours_(h) {
   const n = Number(h);
   if (!isFinite(n)) return "";
@@ -4523,57 +4473,6 @@ async function adminLoadRaportTrenerzy_() {
     console.error(e);
     if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu trenerów</div>`;
   }
-}
-
-function renderAdminRaportTrenerzy_(trainers) {
-  const body = document.getElementById("adminRaportTrenerzyBody");
-  if (!body) return;
-
-  if (!trainers.length) {
-    body.innerHTML = `<div class="card" style="background:#222;">Brak trenerów w tym miesiącu.</div>`;
-    return;
-  }
-
-  // Sekcje per trener
-  let html = "";
-
-  for (const t of trainers) {
-    const name = t?.name || "";
-    const rows = Array.isArray(t?.rows) ? t.rows : [];
-    const presence = t?.summary?.presence ?? rows.length;
-    const hours = t?.summary?.hours ?? 0;
-
-    html += `
-      <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
-        <div style="font-weight:900;font-size:16px;margin-bottom:8px;">${escapeHtml_(name)}</div>
-
-        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                    font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
-          <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
-        </div>
-    `;
-
-    for (const r of rows) {
-      html += `
-        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                    padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-          <div>${escapeHtml_(r.rodzaj || "")}</div>
-          <div>${escapeHtml_(fmtDate_(r.data))}</div>
-          <div>${escapeHtml_(r.dzien || "")}</div>
-          <div>${formatHours_(r.czas)}</div>
-        </div>
-      `;
-    }
-
-    html += `
-        <div style="margin-top:10px;opacity:.9;font-weight:800;">
-          Podsumowanie: Obecność: ${presence}, Godzin: ${formatHours_(hours)}
-        </div>
-      </div>
-    `;
-  }
-
-  body.innerHTML = html;
 }
 
   // Parsuje zawartość bloku miesiąca w zakładce "Trenerzy".
@@ -4760,39 +4659,6 @@ async function adminLoadRaportRezerwacja_() {
   }
 }
   
-function renderAdminRaportRezerwacja_(rows) {
-  const body = document.getElementById("adminRaportRezerwacjaBody");
-  if (!body) return;
-
-  if (!rows.length) {
-    body.innerHTML = `<div class="card" style="background:#222;">Brak rezerwacji w tym miesiącu.</div>`;
-    return;
-  }
-
-  let html = `
-    <div class="card" style="padding:12px;text-align:left;">
-      <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                  font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
-        <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
-      </div>
-  `;
-
-  for (const r of rows) {
-    html += `
-      <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div>${escapeHtml_(r.rodzaj || "")}</div>
-        <div>${escapeHtml_(fmtDate_(r.data))}</div>
-        <div>${escapeHtml_(r.dzien || "")}</div>
-        <div>${formatHours_(r.czas)}</div>
-      </div>
-    `;
-  }
-
-  html += `</div>`;
-  body.innerHTML = html;
-}
-
   function renderAdminRaportRezerwacjaTableFromGrid_(dataRows) {
   if (!dataRows || !dataRows.length) {
     return `<div style="opacity:.85;">Brak rezerwacji w tym miesiącu.</div>`;
