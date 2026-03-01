@@ -4608,6 +4608,7 @@ function renderAdminRaportTrenerzy_(trainers) {
 }
 
 /* =================== RAPORT: REZERWACJA =================== */
+/* =================== RAPORT: REZERWACJA (NOWE: bloki MIESIĄC:) =================== */
 
 async function adminLoadRaportRezerwacja_() {
   const body = document.getElementById("adminRaportRezerwacjaBody");
@@ -4617,59 +4618,75 @@ async function adminLoadRaportRezerwacja_() {
   if (sumEl) sumEl.textContent = "";
 
   try {
-    const months = getMonthsBackward_(12);
+    // NOWE: backend zwraca siatkę zakładki "Rezerwacja obiektu"
+    const res = await apiClubGet("raportRezerwacja", {}); // bez monthName
 
-    let rowsAll = [];
-    let hoursSum = 0;
-
-    for (const m of months) {
-      const res = await apiClubGet("raportRezerwacja", { monthName: m });
-      if (!res || res.success !== true) continue;
-
-      const rows = Array.isArray(res.rows) ? res.rows : [];
-      rows.forEach(r => rowsAll.push({ ...r, __month: m }));
-
-      hoursSum += Number(String(res?.summary?.hours ?? 0).replace(",", ".")) || 0;
-    }
-
-    if (!rowsAll.length) {
-      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak rezerwacji w sezonie.</div>`;
+    if (!res || res.success !== true || !Array.isArray(res.grid)) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak danych raportu rezerwacji (albo brak zakładki/endpointu).</div>`;
       if (sumEl) sumEl.textContent = "";
       return;
     }
 
-    // render tabeli
-    let html = `
-      <div class="card" style="padding:12px;text-align:left;">
-        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                    font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
-          <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
-        </div>
-    `;
+    const blocks = parseReportBlocksFromGrid_(res.grid);
 
-    for (const r of rowsAll) {
-      html += `
-        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                    padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-          <div>${escapeHtml_(r.rodzaj || "")}</div>
-          <div>${escapeHtml_(fmtDate_(r.data))}</div>
-          <div>${escapeHtml_(r.dzien || "")}</div>
-          <div>${formatHours_(r.czas)}</div>
+    if (!blocks.length) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak bloków MIESIĄC: w raporcie rezerwacji.</div>`;
+      if (sumEl) sumEl.textContent = "";
+      return;
+    }
+
+    // UI: bieżący na górze
+    blocks.reverse();
+
+    let totalReservations = 0;
+    let totalHours = 0;
+    let htmlAll = "";
+
+    for (const b of blocks) {
+      // układ w arkuszu (A..D): Rodzaj, Data, Dzień, Czas
+      const dataRows = [];
+      const summaryLines = [];
+
+      // b.rows[0] to nagłówek tabeli, pomijamy
+      for (let i = 1; i < b.rows.length; i++) {
+        const row = b.rows[i] || [];
+        const a0 = String(row[0] || "").trim();
+
+        if (a0.toUpperCase().startsWith("PODSUMOWANIE:")) {
+          summaryLines.push(a0);
+        } else if (String(row.join("")).trim() !== "") {
+          dataRows.push(row);
+        }
+      }
+
+      // podsumowania globalne
+      totalReservations += dataRows.length;
+      for (const r of dataRows) {
+        const h = Number(String(r[3] ?? "").replace(",", "."));
+        if (isFinite(h)) totalHours += h;
+      }
+
+      htmlAll += `
+        <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
+          <div style="font-weight:900;font-size:16px;margin-bottom:10px;">${escapeHtml_(b.monthLabel)}</div>
+          ${renderAdminRaportRezerwacjaTableFromGrid_(dataRows)}
+          ${summaryLines.length ? `<div style="margin-top:10px;opacity:.9;font-weight:800;">${escapeHtml_(summaryLines.join(" • "))}</div>` : ``}
         </div>
       `;
     }
 
-    html += `</div>`;
-    if (body) body.innerHTML = html;
+    if (body) body.innerHTML = htmlAll;
 
-    const reservations = rowsAll.length;
-    if (sumEl) sumEl.textContent = `Podsumowanie (sezon): Rezerwacje: ${reservations}, Godziny: ${formatHours_(Math.round(hoursSum*100)/100)}`;
+    // jeśli backend w summary ma „Godziny: X” to i tak policzyliśmy swoje — spójnie „z tabelek”
+    if (sumEl) sumEl.textContent =
+      `Podsumowanie (wszystkie raporty): Rezerwacje: ${totalReservations}, Godziny: ${formatHours_(Math.round(totalHours*100)/100)}`;
 
   } catch (e) {
     console.error(e);
     if (body) body.innerHTML = `<div class="card" style="background:#2b1111;border-color:#933;color:#ffb3b3;">❌ Błąd pobierania raportu rezerwacji</div>`;
   }
 }
+  
 function renderAdminRaportRezerwacja_(rows) {
   const body = document.getElementById("adminRaportRezerwacjaBody");
   if (!body) return;
@@ -4701,6 +4718,38 @@ function renderAdminRaportRezerwacja_(rows) {
 
   html += `</div>`;
   body.innerHTML = html;
+}
+
+  function renderAdminRaportRezerwacjaTableFromGrid_(dataRows) {
+  if (!dataRows || !dataRows.length) {
+    return `<div style="opacity:.85;">Brak rezerwacji w tym miesiącu.</div>`;
+  }
+
+  let html = `
+    <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+      <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
+    </div>
+  `;
+
+  for (const row of dataRows) {
+    const rodzaj = row[0] ?? "";
+    const data   = row[1] ?? "";
+    const dzien  = row[2] ?? "";
+    const czas   = row[3] ?? "";
+
+    html += `
+      <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>${escapeHtml_(rodzaj)}</div>
+        <div>${escapeHtml_(fmtDate_(data))}</div>
+        <div>${escapeHtml_(dzien)}</div>
+        <div>${escapeHtml_(czas)}</div>
+      </div>
+    `;
+  }
+
+  return html;
 }
   
 /* =================== 99 START APLIKACJI =================== */
