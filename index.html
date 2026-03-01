@@ -4180,6 +4180,51 @@ function getMonthsBackward_(max = 12) {
   }
   return out;
 }
+
+  // ===== RAPORTY v2: parser bloków "MIESIĄC:" z siatki arkusza =====
+// grid = 2D array (np. getDisplayValues), gdzie interesuje nas głównie kolumna A (index 0)
+// Zwraca: [{ monthLabel, rows }] w kolejności jak w arkuszu (od góry do dołu)
+function parseReportBlocksFromGrid_(grid) {
+  const out = [];
+  if (!Array.isArray(grid) || !grid.length) return out;
+
+  const isMonthLine = (v) => String(v || "").trim().startsWith("MIESIĄC:");
+  const cleanCell = (v) => {
+    const s = String(v ?? "");
+    // wytnij GAP_MARK (NBSP) i zwykłe spacje
+    const t = s.replace(/\u00A0/g, "").trim();
+    return t;
+  };
+  const isEmptyRow = (row) => {
+    if (!Array.isArray(row)) return true;
+    for (let i = 0; i < row.length; i++) {
+      if (cleanCell(row[i]) !== "") return false;
+    }
+    return true;
+  };
+
+  let i = 0;
+  while (i < grid.length) {
+    const a0 = grid[i]?.[0];
+    if (!isMonthLine(a0)) { i++; continue; }
+
+    const monthLabel = String(a0 || "").trim().replace(/^MIESIĄC:\s*/i, "").trim();
+
+    // zbieraj wiersze aż do następnego MIESIĄC: albo końca
+    const rows = [];
+    i++; // przejdź za linię MIESIĄC:
+    while (i < grid.length && !isMonthLine(grid[i]?.[0])) {
+      const row = grid[i] || [];
+      // ignoruj realne przerwy (GAP_MARK / puste wiersze)
+      if (!isEmptyRow(row)) rows.push(row);
+      i++;
+    }
+
+    out.push({ monthLabel, rows });
+  }
+
+  return out;
+}
   
 // menu -> raport wydarzeń
 function adminRaportyOpenWydarzenia() {
