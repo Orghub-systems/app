@@ -4470,6 +4470,8 @@ function adminRaportyOpenRezerwacja() {
 
 /* =================== RAPORT: TRENERZY =================== */
 
+/* =================== RAPORT: TRENERZY (NOWE: bloki MIESIĄC:) =================== */
+
 async function adminLoadRaportTrenerzy_() {
   const body = document.getElementById("adminRaportTrenerzyBody");
   const sumEl = document.getElementById("adminRaportTrenerzySummary");
@@ -4478,77 +4480,44 @@ async function adminLoadRaportTrenerzy_() {
   if (sumEl) sumEl.textContent = "";
 
   try {
-    const months = getMonthsBackward_(12);
+    // NOWE: backend zwraca siatkę zakładki "Trenerzy"
+    const res = await apiClubGet("raportTrenerzy", {}); // bez monthName
 
-    // agregacja: trener -> {name, rows:[], presence, hours}
-    const map = new Map();
-
-    for (const m of months) {
-      const res = await apiClubGet("raportTrenerzy", { monthName: m });
-      if (!res || res.success !== true) continue;
-
-      const trainers = Array.isArray(res.trainers) ? res.trainers : [];
-      for (const t of trainers) {
-        const name = String(t?.name || "").trim();
-        if (!name) continue;
-
-        if (!map.has(name)) map.set(name, { name, rows: [], presence: 0, hours: 0 });
-
-        const obj = map.get(name);
-        const rows = Array.isArray(t?.rows) ? t.rows : [];
-        const pres = Number(t?.summary?.presence ?? rows.length) || 0;
-        const hrs  = Number(String(t?.summary?.hours ?? 0).replace(",", ".")) || 0;
-
-        // dopisz wiersze (dodamy miesiąc jako kontekst)
-        rows.forEach(r => obj.rows.push({ ...r, __month: m }));
-
-        obj.presence += pres;
-        obj.hours += hrs;
-      }
-    }
-
-    const trainersAll = Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name, "pl"));
-    if (!trainersAll.length) {
-      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak trenerów w sezonie (brak arkuszy / brak danych).</div>`;
+    if (!res || res.success !== true || !Array.isArray(res.grid)) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak danych raportu trenerów (albo brak zakładki/endpointu).</div>`;
       if (sumEl) sumEl.textContent = "";
       return;
     }
 
-    // render
-    let html = "";
-    for (const t of trainersAll) {
-      html += `
+    const blocks = parseReportBlocksFromGrid_(res.grid);
+    if (!blocks.length) {
+      if (body) body.innerHTML = `<div class="card" style="background:#222;">Brak bloków MIESIĄC: w raporcie trenerów.</div>`;
+      if (sumEl) sumEl.textContent = "";
+      return;
+    }
+
+    // UI: bieżący na górze
+    blocks.reverse();
+
+    let htmlAll = "";
+
+    // globalne staty (opcjonalnie)
+    const trainersSet = new Set();
+
+    for (const b of blocks) {
+      const trainers = parseTrainersSectionFromMonthBlock_(b.rows);
+      trainers.forEach(t => trainersSet.add(t.name));
+
+      htmlAll += `
         <div class="card" style="padding:12px;text-align:left;margin-bottom:12px;">
-          <div style="font-weight:900;font-size:16px;margin-bottom:8px;">${escapeHtml_(t.name)}</div>
-
-          <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                      font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
-            <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
-          </div>
-      `;
-
-      for (const r of (t.rows || [])) {
-        html += `
-          <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
-                      padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <div>${escapeHtml_(r.rodzaj || "")}</div>
-            <div>${escapeHtml_(fmtDate_(r.data))}</div>
-            <div>${escapeHtml_(r.dzien || "")}</div>
-            <div>${formatHours_(r.czas)}</div>
-          </div>
-        `;
-      }
-
-      html += `
-          <div style="margin-top:10px;opacity:.9;font-weight:800;">
-            Podsumowanie (sezon): Obecność: ${t.presence}, Godzin: ${formatHours_(Math.round(t.hours*100)/100)}
-          </div>
+          <div style="font-weight:900;font-size:16px;margin-bottom:10px;">${escapeHtml_(b.monthLabel)}</div>
+          ${renderAdminRaportTrenerzyMonth_(trainers)}
         </div>
       `;
     }
 
-    if (body) body.innerHTML = html;
-    if (sumEl) sumEl.textContent = `Trenerzy (sezon): ${trainersAll.length}`;
+    if (body) body.innerHTML = htmlAll;
+    if (sumEl) sumEl.textContent = `Trenerzy (w raportach): ${trainersSet.size}`;
 
   } catch (e) {
     console.error(e);
@@ -4607,7 +4576,111 @@ function renderAdminRaportTrenerzy_(trainers) {
   body.innerHTML = html;
 }
 
-/* =================== RAPORT: REZERWACJA =================== */
+  // Parsuje zawartość bloku miesiąca w zakładce "Trenerzy".
+// Oczekiwany format (kol A używana jako główna):
+// "TRENER: Jan Kowalski"
+// "Rodzaj wydarzenia | Data | Dzień tygodnia | Czas trwania"
+// ...wiersze danych...
+// "Podsumowanie: Obecność: X, Godzin: Y"
+function parseTrainersSectionFromMonthBlock_(rows) {
+  const out = [];
+  if (!Array.isArray(rows) || !rows.length) return out;
+
+  const clean = (v) => String(v ?? "").replace(/\u00A0/g, "").trim();
+
+  let i = 0;
+  while (i < rows.length) {
+    const a0 = clean(rows[i]?.[0]);
+    if (!a0.toUpperCase().startsWith("TRENER:")) { i++; continue; }
+
+    const name = a0.replace(/^TRENER:\s*/i, "").trim();
+    const t = { name, rows: [], summaryText: "" };
+
+    i++; // po "TRENER:"
+    // opcjonalnie: nagłówek tabeli w następnym wierszu - pomijamy
+    if (i < rows.length) i++;
+
+    while (i < rows.length) {
+      const line = clean(rows[i]?.[0]);
+
+      // następny trener
+      if (line.toUpperCase().startsWith("TRENER:")) break;
+
+      // podsumowanie
+      if (line.toUpperCase().startsWith("PODSUMOWANIE:") || line.toUpperCase().startsWith("PODSUMOWANIE")) {
+        t.summaryText = line;
+        i++;
+        // zwykle po podsumowaniu jest pusty wiersz — zjedz go
+        if (i < rows.length && clean(rows[i]?.[0]) === "") i++;
+        break;
+      }
+
+      // wiersz danych: oczekujemy 4 kolumn (A..D)
+      // [rodzaj, data, dzien, czas]
+      const row = rows[i] || [];
+      const rodzaj = clean(row[0]);
+      const data   = clean(row[1]);
+      const dzien  = clean(row[2]);
+      const czas   = clean(row[3]);
+
+      // jeśli cały wiersz pusty — pomiń
+      if (rodzaj || data || dzien || czas) {
+        t.rows.push({ rodzaj, data, dzien, czas });
+      }
+      i++;
+    }
+
+    if (name) out.push(t);
+  }
+
+  return out;
+}
+
+// Renderuje listę trenerów w obrębie jednego miesiąca
+function renderAdminRaportTrenerzyMonth_(trainers) {
+  if (!trainers || !trainers.length) {
+    return `<div style="opacity:.85;">Brak trenerów w tym miesiącu.</div>`;
+  }
+
+  let html = "";
+
+  for (const t of trainers) {
+    html += `
+      <div class="card" style="background:#161616;border-color:#333;padding:12px;text-align:left;margin:10px 0;">
+        <div style="font-weight:900;font-size:15px;margin-bottom:8px;">${escapeHtml_(t.name)}</div>
+
+        <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                    font-weight:900;opacity:.9;border-bottom:1px solid #333;padding-bottom:8px;">
+          <div>Rodzaj</div><div>Data</div><div>Dzień</div><div>Czas</div>
+        </div>
+    `;
+
+    if (!t.rows || !t.rows.length) {
+      html += `<div style="opacity:.85;padding:10px 0;">Brak wpisów.</div>`;
+    } else {
+      for (const r of t.rows) {
+        html += `
+          <div style="display:grid;grid-template-columns: 1.3fr 1fr 1fr .7fr;gap:8px;
+                      padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div>${escapeHtml_(r.rodzaj || "")}</div>
+            <div>${escapeHtml_(fmtDate_(r.data))}</div>
+            <div>${escapeHtml_(r.dzien || "")}</div>
+            <div>${escapeHtml_(r.czas || "")}</div>
+          </div>
+        `;
+      }
+    }
+
+    if (t.summaryText) {
+      html += `<div style="margin-top:10px;opacity:.9;font-weight:800;">${escapeHtml_(t.summaryText)}</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  return html;
+}
+
 /* =================== RAPORT: REZERWACJA (NOWE: bloki MIESIĄC:) =================== */
 
 async function adminLoadRaportRezerwacja_() {
