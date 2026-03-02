@@ -1324,12 +1324,16 @@ function applyTheme_(theme) {
 }
 
 async function startApp_() {
+const clubFromUrl = getClubIdFromUrl_();
 
-  const clubFromUrl = getClubIdFromUrl_();
-
-  // 🔧 KLUCZOWE – ustaw globalne clubId zanim apka coś zrobi
-if (clubFromUrl) {
-  clubId = String(clubFromUrl);
+// jeśli NIE ma clubId w URL → to jest link ogólny: reset + odblokuj konfigurację
+if (!clubFromUrl) {
+  saveClubId_("");
+  unlockCfg_();
+  clearLocalClubConfig();
+} else {
+  // jeśli jest clubId → ustaw i zapamiętaj stabilnie
+  saveClubId_(clubFromUrl);
 }
 
   // --- KOLOR ---
