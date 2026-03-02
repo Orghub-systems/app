@@ -2904,19 +2904,24 @@ async function adminSetRozlicz(kod) {
   try {
     if (msg) msg.textContent = "⏳ Zapisuję…";
 
-    const r = await apiClubPost({
-      action: "adminSetRozliczanie",
-      numer: nr,
-      kod: String(kod || "").toUpperCase()
-    });
+const r = await apiClubPost({
+  action: "adminSetRozliczanie",
+  numer: nr,
+  kod: String(kod || "").toUpperCase()
+});
 
-    if (!r || !(r.success || r.ok)) {
-      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
-      return;
-    }
+if (!r || !(r.success || r.ok)) {
+  if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
+  console.warn("adminSetRozliczanie resp:", r);
+  return;
+}
 
-    adminCloseRozliczPopup();
-    await adminOpenPayments(); // odśwież: przycisk + płatności liczone wg nowego S/O/B
+// pokaż twardy dowód (chwilowo, do debug)
+console.log("✅ adminSetRozliczanie:", r);
+if (msg) msg.textContent = `✅ Zapis: ${r.kodWritten} (odczyt: ${r.kodReadBack}) w ${r.cell} / ssid=${r.adminSsid}`;
+
+adminCloseRozliczPopup();
+await adminOpenPayments();
 
   } catch (e) {
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
@@ -2940,9 +2945,9 @@ async function adminOpenPayments() {
 
   try {
     const [resPay, resRozl] = await Promise.all([
-      apiClubGet("platnosciAdmin", { numer: nr }),
-      apiClubGet("adminGetRozliczanie", { numer: nr })
-    ]);
+      apiClubGet("platnosciAdmin", { numer: nr, t: Date.now() }),
+      apiClubGet("adminGetRozliczanie", { numer: nr, t: Date.now() })
+]);
 
     // cache na potrzeby renderu
     window.__adminRozliczKod = (resRozl && (resRozl.kod || resRozl.value))
