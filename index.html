@@ -2393,6 +2393,84 @@ window.submitSetupAndActivateClub = submitSetupAndActivateClub;
 
   /* =================== 65 ADMIN PANEL (frontend) =================== */
 
+async function adminPokazZawodnikow() {
+  goToView("adminZawodnicyView");
+  const box = document.getElementById("adminListaZawodnikow");
+  if (box) box.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
+
+  try {
+    // admin widzi wszystkich – nie filtrujemy po grupach
+    const lista = await apiClubGet("listaZawodnikow", { grupy: "" });
+
+    if (!Array.isArray(lista) || lista.length === 0) {
+      if (box) box.innerHTML = "<div class='card' style='background:#111;'>Brak danych</div>";
+      return;
+    }
+
+    box.innerHTML = lista.map(z => {
+      const nr = String(z.nr || "").trim();
+      const nazwSafe = String(z.nazwisko || "").replace(/'/g, "\\'");
+      const nazw = String(z.nazwisko || "");
+      
+      // ⬇️ Na razie bierzemy z backendu jeśli jest, a jak nie ma – domyślnie TRUE
+      // (zmienimy domyślne, jak ustalisz docelową logikę)
+      const access = (z.dostepDoApki !== undefined) ? !!z.dostepDoApki
+                   : (z.access !== undefined) ? !!z.access
+                   : true;
+
+      return `
+        <div class="card" style="text-align:left; cursor:pointer;"
+             onclick="adminOpenZawodnik('${nr}','${nazwSafe}')">
+          
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+            <div style="min-width:0;">
+              <b>#${nr}</b> — ${nazw}<br>
+              <span style="opacity:0.8;">${z.suma} treningów łącznie</span>
+            </div>
+
+            <label style="display:flex; gap:6px; align-items:center; white-space:nowrap;"
+                   onclick="event.stopPropagation();">
+              <input type="checkbox"
+                     ${access ? "checked" : ""}
+                     onchange="adminSetAccessFromList('${nr}', this.checked)"
+                     onclick="event.stopPropagation();"
+                     style="transform:scale(1.15);">
+              <span style="opacity:0.9;">Dostęp</span>
+            </label>
+          </div>
+
+        </div>
+      `;
+    }).join("");
+
+  } catch (e) {
+    if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ Błąd: ${e?.message || e}</div>`;
+  }
+}
+
+  async function adminSetAccessFromList(nr, isOn) {
+  const numer = String(nr || "").trim();
+  if (!numer) return;
+
+  try {
+    const r = await apiClubPost({
+      action: "adminSetAppAccess",
+      numer,
+      access: isOn ? 1 : 0
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      alert("❌ Nie zapisano dostępu: " + (r?.error || r?.message || JSON.stringify(r)));
+      return;
+    }
+
+    // opcjonalnie: cichy sukces (bez alertów), ale na razie niech krzyknie jak trzeba
+    // alert("✅ Zapisano dostęp");
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  }
+}
+  
 async function adminSaveGrupy(nr, selectedSetOrArray) {
   const numer = String(nr || "").trim();
   if (!numer) { alert("❌ Brak numeru zawodnika"); return; }
@@ -3443,39 +3521,6 @@ async function trainerPokazZawodnicy() {
     `).join('');
   } catch {
     box.innerHTML = "<div class='card' style='background:#700;'>Błąd pobierania danych</div>";
-  }
-}
-
-  async function adminPokazZawodnikow() {
-  goToView("adminZawodnicyView");
-  const box = document.getElementById("adminListaZawodnikow");
-  if (box) box.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
-
-  try {
-    // admin widzi wszystkich – nie filtrujemy po grupach
-    const lista = await apiClubGet("listaZawodnikow", { grupy: "" });
-
-    if (!Array.isArray(lista) || lista.length === 0) {
-      if (box) box.innerHTML = "<div class='card' style='background:#111;'>Brak danych</div>";
-      return;
-    }
-
-    // prosta lista kart – klik w następnym kroku otworzy szczegóły zawodnika
-box.innerHTML = lista.map(z => {
-  const nr = String(z.nr || "").trim();
-  const nazw = String(z.nazwisko || "").replace(/'/g, "\\'");
-
-  return `
-    <div class="card" style="text-align:left; cursor:pointer;"
-         onclick="adminOpenZawodnik('${nr}','${nazw}')">
-      <b>#${nr}</b> — ${z.nazwisko}<br>
-      <span style="opacity:0.8;">${z.suma} treningów łącznie</span>
-    </div>
-  `;
-}).join('');
-
-  } catch (e) {
-    if (box) box.innerHTML = `<div class='card' style='background:#700;'>❌ Błąd: ${e?.message || e}</div>`;
   }
 }
   
