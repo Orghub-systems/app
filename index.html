@@ -896,22 +896,19 @@ input[type="number"] {
   <p id="adminPaymentsMsg" style="margin-top:10px;"></p>
 </div>
 
-    <!-- =================== ADMIN: MODAL POTWIERDZENIA PŁATNOŚCI =================== -->
-<div id="adminPayConfirmModal" class="modal hidden">
+<d<!-- =================== ADMIN: MODAL SPOSÓB ROZLICZANIA =================== -->
+<div id="adminRozliczModal" class="modal hidden">
   <div class="modal-card">
-    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
-    <div id="adminPayConfirmText" style="opacity:0.9; line-height:1.35;">
-      Potwierdzam zapłatę
+    <h2 style="margin:0 0 8px 0;">Sposób rozliczania</h2>
+
+    <p id="adminRozliczMsg" style="margin:0 0 10px 0; opacity:0.9;"></p>
+
+    <div class="modal-actions" style="flex-direction:column; gap:8px;">
+      <button class="full-btn" onclick="adminSetRozlicz('S')">Składka członkowska</button>
+      <button class="full-btn" onclick="adminSetRozlicz('O')">Uczestnik okazjonalny</button>
+      <button class="full-btn" onclick="adminSetRozlicz('B')">Uczestnik bezpłatny</button>
+      <button class="full-btn alt" onclick="adminCloseRozliczPopup()">Anuluj</button>
     </div>
-
-    <div style="height:10px;"></div>
-
-    <div class="modal-actions">
-      <button class="full-btn green" id="adminPayConfirmYesBtn">TAK</button>
-      <button class="full-btn alt" id="adminPayConfirmNoBtn">NIE</button>
-    </div>
-
-    <p id="adminPayConfirmMsg" style="margin-top:10px;"></p>
   </div>
 </div>
     
