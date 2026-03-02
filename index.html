@@ -1241,17 +1241,19 @@ function initClubFromUrl_() {
   } catch (e) {}
 }
 
-  function getClubIdFromUrl_() {
+function getClubIdFromUrl_() {
   try {
-    // 1) query ?clubId=
+    // 1) query ?clubId=...
     const params = new URLSearchParams(window.location.search);
-    const q = (params.get("clubId") || "").trim();
-    if (q) return q;
+    const q = params.get("clubId");
+    if (q) return String(q).trim();
 
-    // 2) hash #clubId=
-    const hash = (window.location.hash || "").replace(/^#/, "");
-    const hp = new URLSearchParams(hash);
-    return (hp.get("clubId") || "").trim();
+    // 2) hash #clubId=... (PWA start_url)
+    const hash = String(window.location.hash || "");
+    const m = hash.match(/clubId=([^&]+)/i);
+    if (m && m[1]) return decodeURIComponent(m[1]).trim();
+
+    return "";
   } catch (e) {
     return "";
   }
