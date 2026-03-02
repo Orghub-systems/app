@@ -4,7 +4,7 @@
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#000000">
-  <link rel="manifest" href="manifest.json">
+  <link id="appManifestLink" rel="manifest" href="manifest.json">
   
     <!-- flatpickr (kalendarz) -->
     <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/flatpickr.min.css">
@@ -1295,6 +1295,22 @@ function initClubFromUrl_() {
   } catch (e) {}
 }
 
+function applyClubManifest_(clubId) {
+  try {
+    const id = String(clubId || "").trim().toLowerCase();
+    const link = document.getElementById("appManifestLink");
+    if (!link) return;
+
+    // Jeśli nie ma clubId → wracamy do głównego manifestu
+    if (!id) {
+      link.setAttribute("href", "manifest.json");
+      return;
+    }
+
+    // Jeśli jest clubId → manifest per klub
+    link.setAttribute("href", `/manifests/manifest-${id}.json`);
+  } catch (e) {}
+}
   
 function getClubIdFromUrl_() {
   try {
@@ -1390,6 +1406,7 @@ if (!clubFromUrl) {
   // jeśli jest clubId → ustaw i zapamiętaj stabilnie
   saveClubId_(clubFromUrl);
 }
+  applyClubManifest_(clubId);
 
   // --- KOLOR ---
   if (!clubFromUrl) {
