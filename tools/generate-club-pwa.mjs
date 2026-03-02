@@ -82,7 +82,7 @@ async function main() {
       id: `orghub-${c.clubId}`,
       name: `OrgHub – ${c.name || c.clubId}`,
       short_name: c.shortName || c.clubId,
-      start_url: `/app/#clubId=${clubId}`,
+      start_url: `/app/#clubId=${c.clubId}`,
       scope: `/app/`,
       display: "standalone",
       orientation: "portrait",
