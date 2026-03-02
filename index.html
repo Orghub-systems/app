@@ -790,6 +790,42 @@ input[type="number"] {
   <p id="adminZawodnikMsg" style="margin-top:10px;"></p>
 </div>
 
+    <!-- ===== ADMIN: POPUP USUWANIA ZAWODNIKA ===== -->
+<div id="adminDeletePopup" style="display:none; position:fixed; inset:0; z-index:9999;">
+  <div style="position:absolute; inset:0; background:rgba(0,0,0,0.65);" onclick="adminCloseDeletePopup()"></div>
+
+  <div class="card" style="
+      position:relative;
+      max-width:420px;
+      margin:18vh auto 0 auto;
+      padding:16px;
+      background:#111;
+      border:1px solid #333;
+      border-radius:16px;
+      box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  " onclick="event.stopPropagation();">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Usunąć zawodnika?
+    </div>
+
+    <div id="adminDeletePopupText" style="opacity:0.9; margin-bottom:14px;">
+      Czy napewno chcesz usunąć zawodnika?
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn" style="background:#222; border:1px solid #444;"
+              onclick="adminCloseDeletePopup()">
+        NIE
+      </button>
+
+      <button class="btn" style="background:#0f7a2a; border:1px solid #19a642; font-weight:900;"
+              onclick="adminDoDeletePlayer()">
+        TAK
+      </button>
+    </div>
+  </div>
+</div>
+    
 <!-- ADMIN: GRUPY (EKRAN) -->
 <div id="adminGrupyView" class="container hidden">
   <h1 id="adminGrupyTitle">Grupy</h1>
