@@ -2876,11 +2876,17 @@ async function adminApplyGroupsPopup() {
   
 // =================== SPOSÓB ROZLICZANIA PŁATNOŚCI ===================
 
-  function adminOpenRozliczPopup() {
+function adminOpenRozliczPopup() {
   const modal = document.getElementById("adminRozliczModal");
   const msg = document.getElementById("adminRozliczMsg");
+
+  if (!modal) {
+    alert("❌ Brak #adminRozliczModal w DOM");
+    return;
+  }
+
   if (msg) msg.textContent = "";
-  if (modal) modal.classList.remove("hidden");
+  modal.classList.remove("hidden");
 }
 
 function adminCloseRozliczPopup() {
