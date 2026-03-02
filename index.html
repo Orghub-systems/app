@@ -2492,6 +2492,59 @@ async function adminPokazZawodnikow() {
   }
 }
 
+  // ===== ADMIN: USUWANIE ZAWODNIKA (POPUP TAK/NIE) =====
+function adminOpenDeletePopup(nr, nazwisko) {
+  const numer = String(nr || "").trim();
+  if (!numer) return;
+
+  window.__adminDeleteNr = numer;
+  window.__adminDeleteNazw = String(nazwisko || "").trim();
+
+  const txt = document.getElementById("adminDeletePopupText");
+  if (txt) {
+    // dokładnie jak chcesz w treści:
+    txt.textContent = "Czy napewno chcesz usunąć zawodnika ?";
+    // opcjonalnie wersja z numerem/nazwiskiem (jak zechcesz):
+    // txt.textContent = `Czy napewno chcesz usunąć zawodnika #${numer} — ${window.__adminDeleteNazw || "—"} ?`;
+  }
+
+  const pop = document.getElementById("adminDeletePopup");
+  if (pop) pop.style.display = "block";
+}
+
+function adminCloseDeletePopup() {
+  const pop = document.getElementById("adminDeletePopup");
+  if (pop) pop.style.display = "none";
+  window.__adminDeleteNr = "";
+  window.__adminDeleteNazw = "";
+}
+
+async function adminDoDeletePlayer() {
+  const numer = String(window.__adminDeleteNr || "").trim();
+  if (!numer) { adminCloseDeletePopup(); return; }
+
+  // zamykamy od razu, żeby UI było szybkie
+  adminCloseDeletePopup();
+
+  try {
+    const r = await apiClubPost({
+      action: "adminDeletePlayer",
+      numer
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      alert("❌ Nie udało się usunąć: " + (r?.error || r?.message || JSON.stringify(r)));
+      return;
+    }
+
+    alert("🗑️ Zawodnik usunięty");
+    adminPokazZawodnikow(); // odśwież listę
+
+  } catch (e) {
+    alert("❌ Błąd połączenia: " + (e?.message || e));
+  }
+}
+  
   async function adminSetAccessFromList(nr, isOn) {
   const numer = String(nr || "").trim();
   if (!numer) return;
