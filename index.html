@@ -2470,13 +2470,13 @@ async function adminPokazZawodnikow() {
                        onchange="adminSetAccessFromList('${nr}', this.checked)"
                        onclick="event.stopPropagation();"
                        style="transform:scale(1.15);">
-                <span style="opacity:0.9;">Dostęp do aplikacji</span>
+                <span style="opacity:0.9;">Dostęp</span>
               </label>
 
               <!-- USUŃ ZAWODNIKA -->
               <button
                 style="background:#700; border:1px solid #a00; color:#fff; border-radius:10px; padding:6px 10px; cursor:pointer;"
-                onclick="event.stopPropagation(); adminOpenDeletePopup('${nr}','${nazwSafe}')"
+                onclick="event.stopPropagation(); adminOpenDeletePopup('${nr}','${nazwSafe}')">
                 Usuń
               </button>
 
