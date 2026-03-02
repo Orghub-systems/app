@@ -2476,7 +2476,7 @@ async function adminPokazZawodnikow() {
               <!-- USUŃ ZAWODNIKA -->
               <button
                 style="background:#700; border:1px solid #a00; color:#fff; border-radius:10px; padding:6px 10px; cursor:pointer;"
-                onclick="event.stopPropagation(); adminConfirmDeletePlayer('${nr}','${nazwSafe}')">
+                onclick="event.stopPropagation(); adminOpenDeletePopup('${nr}','${nazwSafe}')"
                 Usuń zawodnika
               </button>
 
