@@ -1243,6 +1243,22 @@ function initClubFromUrl_() {
   } catch (e) {}
 }
 
+  function getClubIdFromUrl_() {
+  try {
+    // 1) query ?clubId=
+    const params = new URLSearchParams(window.location.search);
+    const q = (params.get("clubId") || "").trim();
+    if (q) return q;
+
+    // 2) hash #clubId=
+    const hash = (window.location.hash || "").replace(/^#/, "");
+    const hp = new URLSearchParams(hash);
+    return (hp.get("clubId") || "").trim();
+  } catch (e) {
+    return "";
+  }
+}
+
 /* =================== 30 BUSY OVERLAY =================== */
 function showBusy(text) {
   const ov = document.getElementById("busyOverlay");
@@ -1309,8 +1325,7 @@ function applyTheme_(theme) {
 
 async function startApp_() {
 
-  const params = new URLSearchParams(window.location.search);
-  const clubFromUrl = params.get("clubId");
+  const clubFromUrl = getClubIdFromUrl_();
 
   // 🔧 KLUCZOWE – ustaw globalne clubId zanim apka coś zrobi
 if (clubFromUrl) {
