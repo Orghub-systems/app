@@ -75,6 +75,7 @@ async function main() {
     }
   }
 
+  
   // Generuj per klub
   for (const c of clubs) {
     const manifest = {
