@@ -1117,6 +1117,23 @@ input[type="number"] {
   </div>
 </div>
 
+<!-- =================== ADMIN: POPUP SPOSÓB ROZLICZANIA ZAWODNIKA =================== -->
+  
+<div id="adminRozliczModal" class="hidden">
+  <div class="modal-backdrop" onclick="adminCloseRozliczPopup()"></div>
+
+  <div class="modal-card" onclick="event.stopPropagation();">
+    <div class="modal-title">Sposób rozliczania</div>
+    <div id="adminRozliczMsg" class="modal-msg"></div>
+
+    <button class="full-btn" onclick="adminSetRozlicz('S')">Składka członkowska</button>
+    <button class="full-btn" onclick="adminSetRozlicz('O')">Uczestnik okazjonalny</button>
+    <button class="full-btn" onclick="adminSetRozlicz('B')">Uczestnik bezpłatny</button>
+
+    <button class="full-btn" style="margin-top:10px; opacity:.8;" onclick="adminCloseRozliczPopup()">Anuluj</button>
+  </div>
+</div>
+  
 <!-- =================== ADMIN: POPUP PŁATNOŚCI =================== -->
 <div id="adminConfirmPayPopup" class="modal hidden">
   <div class="modal-card">
@@ -2856,7 +2873,47 @@ async function adminApplyGroupsPopup() {
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
   }
 }
+  
+// =================== SPOSÓB ROZLICZANIA PŁATNOŚCI ===================
 
+  function adminOpenRozliczPopup() {
+  const modal = document.getElementById("adminRozliczModal");
+  const msg = document.getElementById("adminRozliczMsg");
+  if (msg) msg.textContent = "";
+  if (modal) modal.classList.remove("hidden");
+}
+
+function adminCloseRozliczPopup() {
+  const modal = document.getElementById("adminRozliczModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+async function adminSetRozlicz(kod) {
+  const nr = String(window.__adminSelectedNr || "").trim();
+  const msg = document.getElementById("adminRozliczMsg");
+  if (!nr) return;
+
+  try {
+    if (msg) msg.textContent = "⏳ Zapisuję…";
+
+    const r = await apiClubPost({
+      action: "adminSetRozliczanie",
+      numer: nr,
+      kod: String(kod || "").toUpperCase()
+    });
+
+    if (!r || !(r.success || r.ok)) {
+      if (msg) msg.textContent = "❌ " + (r?.error || r?.message || "Błąd zapisu");
+      return;
+    }
+
+    adminCloseRozliczPopup();
+    await adminOpenPayments(); // odśwież: przycisk + płatności liczone wg nowego S/O/B
+
+  } catch (e) {
+    if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
+}
 
 // =================== PŁATNOŚCI ===================
 async function adminOpenPayments() {
@@ -2874,8 +2931,17 @@ async function adminOpenPayments() {
   if (body) body.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie...</div>";
 
   try {
-    const res = await apiClubGet("platnosciAdmin", { numer: nr });
-    renderAdminPayments_(res);
+    const [resPay, resRozl] = await Promise.all([
+      apiClubGet("platnosciAdmin", { numer: nr }),
+      apiClubGet("adminGetRozliczanie", { numer: nr })
+    ]);
+
+    // cache na potrzeby renderu
+    window.__adminRozliczKod = (resRozl && (resRozl.kod || resRozl.value))
+      ? String(resRozl.kod || resRozl.value).trim().toUpperCase()
+      : "S";
+
+    renderAdminPayments_(resPay);
   } catch (e) {
     if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
@@ -2944,14 +3010,27 @@ function renderAdminPayments_(res) {
     return;
   }
 
-   const skladki = items.filter(x => x.typ === "skladka");
+  const skladki = items.filter(x => x.typ === "skladka");
   const zajecia = items.filter(x =>
-  x.typ === "zajecia" &&
-  x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
-  Number(x.kwota) > 0
-);
+    x.typ === "zajecia" &&
+    x.kwota !== null && x.kwota !== undefined && String(x.kwota).trim() !== "" &&
+    Number(x.kwota) > 0
+  );
+
+  // ===== PRZYCISK ROZLICZANIA (NAD "Składki") =====
+  const kod = String(window.__adminRozliczKod || "S").toUpperCase();
+  const label =
+    kod === "S" ? "Składka członkowska" :
+    kod === "O" ? "Uczestnik okazjonalny" :
+    kod === "B" ? "Uczestnik bezpłatny" :
+    "Składka członkowska";
 
   body.innerHTML = `
+    <button class="full-btn" style="margin-top:10px;"
+            onclick="adminOpenRozliczPopup()">
+      Sposób rozliczania: ${label}
+    </button>
+
     ${renderPaymentsSection_("Składki", skladki)}
     ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
   `;
