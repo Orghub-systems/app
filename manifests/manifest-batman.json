@@ -1,0 +1,28 @@
+{
+  "id": "orghub-batman",
+  "name": "OrgHub – Batman",
+  "short_name": "Batman",
+  "start_url": "/#clubId=batman",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1E3F",
+  "theme_color": "#F47B20",
+  "description": "Panel klubu Batman w systemie OrgHub.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "pl",
+  "dir": "ltr"
+}
