@@ -1,17 +1,28 @@
-<!doctype html>
-<html lang="pl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Instaluj: Warriors</title>
-
-  <link rel="manifest" href="/app/manifests/manifest-warriors.json">
-  <meta name="theme-color" content="#F47B20">
-</head>
-<body style="font-family:system-ui;padding:20px;background:#0B1E3F;color:#fff;">
-  <h2>OrgHub – Warriors</h2>
-  <p>Dodaj aplikację klubu do ekranu głównego.</p>
-  <p><b>Chrome:</b> menu ⋮ → „Dodaj do ekranu głównego”.</p>
-  <p>Po instalacji ta ikona zawsze otworzy klub Warriors.</p>
-</body>
-</html>
+{
+  "id": "orghub-warriors",
+  "name": "OrgHub – Warriors",
+  "short_name": "Warriors",
+  "start_url": "/app/#clubId=warriors",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1E3F",
+  "theme_color": "#F47B20",
+  "description": "Panel klubu Warriors w systemie OrgHub.",
+  "icons": [
+    {
+      "src": "/app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "pl",
+  "dir": "ltr"
+}
