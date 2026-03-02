@@ -1,23 +1,23 @@
 {
-  "id": "orghub-warriors",
-  "name": "OrgHub – Warriors",
-  "short_name": "Warriors",
-  "start_url": "/app/#clubId=warriors",
-  "scope": "/app/",
+  "id": "orghub-app_test",
+  "name": "OrgHub – Aplikacja testowa",
+  "short_name": "Aplikacja testowa",
+  "start_url": "/#clubId=app_test",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0B1E3F",
   "theme_color": "#F47B20",
-  "description": "Panel klubu Warriors w systemie OrgHub.",
+  "description": "Panel klubu Aplikacja testowa w systemie OrgHub.",
   "icons": [
     {
-      "src": "/app/icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/app/icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
