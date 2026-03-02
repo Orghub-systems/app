@@ -1346,9 +1346,11 @@ if (clubFromUrl) {
 
   }
 
-  // --- ROUTER ---
-  refreshClubBadge_();
-  goToView(clubFromUrl ? "loginView" : "orgHubLandingView", { replace: true });
+ 
+    // --- ROUTER ---
+    refreshClubBadge_();
+    const effectiveClubId = (clubFromUrl || clubId || "").trim();
+    goToView(effectiveClubId ? "loginView" : "orgHubLandingView", { replace: true });
 }
 
 /* =================== 50 API (CORE / CLUB) =================== */
