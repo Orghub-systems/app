@@ -1280,14 +1280,18 @@ function loadTheme_() {
 
 function initClubFromUrl_() {
   try {
+    // 1) ?clubId=
     const params = new URLSearchParams(window.location.search);
-    const urlClubId = (params.get("clubId") || "").trim();
+    const q = params.get("clubId");
+    if (q) { saveClubId_(q); return; }
 
-    // ✅ TYLKO jeśli clubId jest w URL — ustaw/zapisz
-    // ❌ Jeśli go nie ma (start z ikony PWA), NIE kasujemy zapisanego klubu
-    if (urlClubId) {
-      saveClubId_(urlClubId);
-    }
+    // 2) #clubId=  (PWA start_url z manifestu)
+    const hash = String(window.location.hash || "");
+    const m = hash.match(/clubId=([^&]+)/i);
+    if (m && m[1]) { saveClubId_(decodeURIComponent(m[1])); return; }
+
+    // 3) brak clubId w URL → NIE resetujemy (zostaje ostatni zapisany)
+    //    (to jest kluczowe, bo Chrome czasem uruchamia standalone bez query)
   } catch (e) {}
 }
 
