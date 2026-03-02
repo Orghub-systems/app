@@ -1233,12 +1233,12 @@ function loadTheme_() {
 function initClubFromUrl_() {
   try {
     const params = new URLSearchParams(window.location.search);
-    const urlClubId = params.get("clubId");
+    const urlClubId = (params.get("clubId") || "").trim();
 
+    // ✅ TYLKO jeśli clubId jest w URL — ustaw/zapisz
+    // ❌ Jeśli go nie ma (start z ikony PWA), NIE kasujemy zapisanego klubu
     if (urlClubId) {
-      saveClubId_(urlClubId);   // klub z linku
-    } else {
-      saveClubId_("");          // link ogólny = reset
+      saveClubId_(urlClubId);
     }
   } catch (e) {}
 }
