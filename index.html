@@ -885,38 +885,20 @@ input[type="number"] {
   </div>
 </div>
     
-    <!-- ===== ADMIN: POPUP USUWANIA ZAWODNIKA ===== -->
-<div id="adminDeletePopup" style="display:none; position:fixed; inset:0; z-index:9999;">
-  <div style="position:absolute; inset:0; background:rgba(0,0,0,0.65);" onclick="adminCloseDeletePopup()"></div>
+<!-- =================== ADMIN: MODAL USUWANIA ZAWODNIKA (spójny z płatnościami) =================== -->
+<div id="adminDeletePopup" class="modal hidden">
+  <div class="modal-card" onclick="event.stopPropagation();">
+    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
 
-  <div class="card" style="
-      position:relative;
-      max-width:420px;
-      margin:18vh auto 0 auto;
-      padding:16px;
-      background:#111;
-      border:1px solid #333;
-      border-radius:16px;
-      box-shadow:0 12px 40px rgba(0,0,0,0.5);
-  " onclick="event.stopPropagation();">
-    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
-      Usunąć zawodnika?
-    </div>
-
-    <div id="adminDeletePopupText" style="opacity:0.9; margin-bottom:14px;">
+    <div id="adminDeletePopupText" style="opacity:0.9; line-height:1.35;">
       Czy napewno chcesz usunąć zawodnika?
     </div>
 
-    <div style="display:flex; gap:10px; justify-content:flex-end;">
-      <button class="btn" style="background:#222; border:1px solid #444;"
-              onclick="adminCloseDeletePopup()">
-        NIE
-      </button>
+    <div style="height:10px;"></div>
 
-      <button class="btn" style="background:#0f7a2a; border:1px solid #19a642; font-weight:900;"
-              onclick="adminDoDeletePlayer()">
-        TAK
-      </button>
+    <div class="modal-actions">
+      <button class="full-btn green" type="button" onclick="adminDoDeletePlayer()">TAK</button>
+      <button class="full-btn alt" type="button" onclick="adminCloseDeletePopup()">NIE</button>
     </div>
   </div>
 </div>
@@ -2510,12 +2492,12 @@ function adminOpenDeletePopup(nr, nazwisko) {
   }
 
   const pop = document.getElementById("adminDeletePopup");
-  if (pop) pop.style.display = "block";
+  if (pop) pop.classList.remove("hidden");
 }
 
 function adminCloseDeletePopup() {
   const pop = document.getElementById("adminDeletePopup");
-  if (pop) pop.style.display = "none";
+  if (pop) pop.classList.add("hidden");
   window.__adminDeleteNr = "";
   window.__adminDeleteNazw = "";
 }
