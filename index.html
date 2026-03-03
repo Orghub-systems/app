@@ -2622,34 +2622,6 @@ async function adminDoDeletePlayer() {
     alert("❌ Błąd połączenia: " + (e?.message || e));
   }
 }
-
-  function adminConfirmDeletePlayer(nr, nazwisko) {
-  const ok = confirm(`Czy na pewno usunąć zawodnika #${nr} — ${nazwisko}?\n\nOperacja nieodwracalna.`);
-  if (!ok) return;
-  adminDeletePlayer(nr);
-}
-
-async function adminDeletePlayer(nr) {
-  const numer = String(nr || "").trim();
-  if (!numer) return;
-
-  try {
-    const r = await apiClubPost({
-      action: "adminDeletePlayer",
-      numer
-    });
-
-    if (!r || !(r.success || r.ok)) {
-      alert("❌ Nie udało się usunąć: " + (r?.error || r?.message || JSON.stringify(r)));
-      return;
-    }
-
-    alert("🗑️ Zawodnik usunięty");
-    adminPokazZawodnikow(); // odśwież listę
-  } catch (e) {
-    alert("❌ Błąd połączenia: " + (e?.message || e));
-  }
-}
   
 async function adminSaveGrupy(nr, selectedSetOrArray) {
   const numer = String(nr || "").trim();
@@ -5000,14 +4972,6 @@ window.addEventListener('load', () => {
 
   // router + theme
   startApp_();
-  const btn = document.getElementById("btnEditSave");
-if (btn) {
-  btn.onclick = () => {
-    const m = document.getElementById("editEventMsg");
-    if (m) m.textContent = "✅ Klik działa (handler podpięty)";
-    trainerSaveEditEvent();
-  };
-}
 
   // splash ma być zawsze widoczny minimalnie chwilę (żeby nie "mrugał")
   if (splash) {
