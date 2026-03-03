@@ -366,7 +366,7 @@ input[type="number"] {
   <!-- Główna aplikacja -->
   <div id="app" class="hidden">
 
-    <!-- LANDING ORGHUB -->
+    <!-- 1. LANDING ORGHUB -->
     <div id="orgHubLandingView" class="container hidden">
 <h1 style="margin-bottom:6px;color:#000;">Witamy w aplikacji</h1>
 <div style="font-size:28px;font-weight:800;letter-spacing:2px;margin-bottom:18px;color:#000;">
@@ -376,7 +376,7 @@ input[type="number"] {
       <button class="full-btn" onclick="goToConfig()">Skonfiguruj klub</button>
     </div>
 
-    <!-- KONFIGURACJA KLUBU -->
+    <!-- 2. KONFIGURACJA KLUBU -->
     <div id="clubConfigView" class="container hidden">
       <h1>Konfiguracja klubu</h1>
 
@@ -426,7 +426,7 @@ input[type="number"] {
       </div>
     </div>
 
-      <!-- PANEL 2 - UZUPEŁNIENIE DANYCH KLUBU -->
+      <!-- 3. PANEL 2 - UZUPEŁNIENIE DANYCH KLUBU -->
 <div id="clubSetupView" class="container hidden">
   <h1>Uzupełnij dane klubu</h1>
   <div class="card" style="max-width:320px; margin:12px auto; padding:16px;">
@@ -460,8 +460,296 @@ input[type="number"] {
         onclick="openAdminPassPopup()">
   Utwórz hasło administratora
 </button>
+  
+    <!-- 4. LOGOWANIE -->
+    <div id="loginView" class="container hidden">
+<img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
 
-<!-- POPUP: HASŁO ADMINA -->
+<div style="width:220px; margin:0 auto 40px auto; text-align:center;">
+  <div id="clubIdBadge" style="font-size:32px; font-weight:900; letter-spacing:3px; line-height:1.1;"></div>
+</div>
+
+<h1 style="margin:0 0 40px 0;">Logowanie</h1>
+
+
+      <div class="login-box">
+        <input id="numer" type="text" placeholder="Numer / Inicjały">
+        <input id="haslo" type="password" placeholder="Hasło">
+        <button class="full-btn" onclick="zaloguj()">Zaloguj</button>
+        <button class="full-btn alt" onclick="pokazRejestracjaSelect()">Rejestracja</button>
+      </div>
+      <p id="komunikat"></p>
+    </div>
+
+    <!-- 5. WYBÓR TYP REJESTRACJI -->
+    <div id="registerSelectView" class="container hidden">
+      <h1>Rejestracja</h1>
+      <button class="full-btn" onclick="pokazRejestracjaZawodnik()">Zawodnik</button>
+      <button class="full-btn" onclick="pokazRejestracjaTrener()">Trener</button>
+      <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+    </div>
+
+    <!-- 6. REJESTRACJA ZAWODNIKA -->
+    <div id="registerZawodnikView" class="container hidden">
+      <h1>Rejestracja zawodnika</h1>
+      <div class="login-box">
+        <input id="regNumer" type="number" placeholder="Numer zawodnika">
+        <input id="regNazwisko" type="text" placeholder="Imię i nazwisko">
+        <input id="regHaslo" type="password" placeholder="Ustaw hasło">
+        <button class="full-btn" onclick="wyslijRejestracje()">Zarejestruj</button>
+      </div>
+      <p id="regMsg"></p>
+      <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+    </div>
+
+    <!-- 7. REJESTRACJA TRENERA -->
+    <div id="rejestracjaTrenerView" class="container hidden">
+      <h1>Rejestracja trenera</h1>
+      <div class="login-box">
+        <input id="regNazwiskoTrener" type="text" placeholder="Imię i nazwisko">
+        <input id="regHasloTrener" type="password" placeholder="Ustaw hasło">
+        <button class="full-btn" onclick="wyslijRejestracjeTrener()">Zarejestruj</button>
+        <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+      </div>
+      <p id="regMsgTrener"></p>
+    </div>
+
+<!-- 8. DODAJ WYDARZENIE (TRENER) -->
+<div id="trainerDodajWydarzenieView" class="container hidden">
+  <h1>Dodaj wydarzenie</h1>
+
+  <div class="login-box">
+    <input id="eventData" type="text" placeholder="RRRR-MM-DD" autocomplete="off">
+    <input id="eventStart" type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
+    <input id="eventEnd"   type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
+    <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
+
+    <!-- TRENERZY (kaskadowo, max 4) -->
+    <select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
+      <option value="">— wybierz trenera —</option>
+    </select>
+
+    <div id="trener2Wrap" class="hidden">
+      <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
+        <option value="">— kolejny trener —</option>
+      </select>
+    </div>
+
+    <div id="trener3Wrap" class="hidden">
+      <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
+        <option value="">— kolejny trener —</option>
+      </select>
+    </div>
+
+    <div id="trener4Wrap" class="hidden">
+      <select id="eventTrener4" class="select-like-input">
+        <option value="">— kolejny trener —</option>
+      </select>
+    </div>
+  </div><!-- ✅ domknięcie login-box -->
+
+<!-- GRUPY: przycisk --> 
+<button class="full-btn alt" id="btnPickGroups" onclick="openGroupsPopup()">Wybierz grupy</button>
+<div id="groupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
+  
+    <!-- 9. PŁATNOŚCI -->
+    <div id="platnosciView" class="container hidden">
+      <h1>Płatności</h1>
+      <div id="listaPlatnosci">Ładowanie...</div>
+    </div>
+
+    <!-- 10. WYDARZENIA (ZAWODNIK) -->
+    <div id="homeView" class="container hidden">
+      <h1 id="tytulTreningow">TWOJE WYDARZENIA</h1>
+      <div id="listaTreningow">Ładowanie...</div>
+      <button onclick="pokazStatystyki()" style="margin-top:20px;">📈 Pokaż statystyki</button>
+    <button class="full-btn alt" onclick="powrotDoPlatnosci()" style="margin-top:10px;">   ⬅ Powrót do płatności
+</button>
+
+    </div>
+
+    <!-- 11. STATYSTYKI -->
+    <div id="statsView" class="container hidden">
+      <h1>Statystyki</h1>
+      <div id="listaStatystyk">Ładowanie...</div>
+      <button onclick="powrotDoTreningow()" style="margin-top:20px;">⬅ Powrót</button>
+    </div>
+
+    <!-- 12. PANEL TRENERA -->
+    <div id="trainerPanelView" class="container hidden">
+      <h1>Panel trenera</h1>
+      <button class="full-btn" onclick="trainerPokazZawodnicy()">👥 Zawodnicy</button>
+      <button class="full-btn" onclick="trainerPokazWydarzenia()">🏒 Wydarzenia</button>
+      <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
+    </div>
+
+    <!-- 13. PANEL ADMINISTRATORA -->
+<div id="adminPanelView" class="container hidden">
+  <h1>Panel administratora</h1>
+
+  <button class="full-btn" onclick="adminPokazZawodnikow()">👥 Zawodnicy</button>
+  <button class="full-btn" onclick="goToView('adminRaportyView')">📊 Raporty</button>
+  <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
+</div>
+
+      <!-- 14. ADMIN: RAPORTY (MENU) -->
+<div id="adminRaportyView" class="container hidden">
+  <h1>Raporty</h1>
+
+  <button class="full-btn" onclick="adminRaportyOpenWydarzenia()">📅 Wydarzenia</button>
+  <button class="full-btn" onclick="adminRaportyOpenTrenerzy()">🏒 Trenerzy</button>
+  <button class="full-btn" onclick="adminRaportyOpenRezerwacja()">🏟️ Rezerwacja obiektu</button>
+
+  <button class="full-btn alt" onclick="goToView('adminPanelView')">⬅ Powrót</button>
+</div>
+
+    <!-- 15. ADMIN: RAPORT WYDARZEŃ -->
+<div id="adminRaportWydarzeniaView" class="container hidden">
+  <h1>Raport wydarzeń</h1>
+
+  <div id="adminRaportWydarzeniaBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
+  </div>
+
+  <div id="adminRaportWydarzeniaSummary" style="margin-top:12px; opacity:.9;"></div>
+
+  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
+</div>
+
+    <!-- 16. ADMIN: RAPORT TRENERZY -->
+<div id="adminRaportTrenerzyView" class="container hidden">
+  <h1>Raport trenerzy</h1>
+
+  <div id="adminRaportTrenerzyBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
+  </div>
+
+  <div id="adminRaportTrenerzySummary" style="margin-top:12px; opacity:.9;"></div>
+
+  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
+</div>
+
+<!-- 17. ADMIN: RAPORT REZERWACJA -->
+<div id="adminRaportRezerwacjaView" class="container hidden">
+  <h1>Raport rezerwacja obiektu</h1>
+
+  <div id="adminRaportRezerwacjaBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
+  </div>
+
+  <div id="adminRaportRezerwacjaSummary" style="margin-top:12px; opacity:.9;"></div>
+
+  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
+</div>
+
+<!-- 18. LISTA ZAWODNIKÓW (ADMIN) -->
+<div id="adminZawodnicyView" class="container hidden">
+  <h1>Lista zawodników</h1>
+  <div id="adminListaZawodnikow">Ładowanie...</div>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+</div>
+
+   <!-- 19. KARTA ZAWODNIKA (ADMIN) -->
+<div id="adminZawodnikView" class="container hidden">
+  <h1 id="adminZawodnikTitle">Zawodnik</h1>
+
+  <button class="full-btn" onclick="adminOpenGroups()">Grupy</button>
+ <button class="full-btn" onclick="adminOpenStats();">Statystyki</button>
+  <button class="full-btn" onclick="adminOpenPayments()">Płatności</button>
+
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="adminZawodnikMsg" style="margin-top:10px;"></p>
+</div>
+    
+<!-- 20. ADMIN: GRUPY (EKRAN) -->
+<div id="adminGrupyView" class="container hidden">
+  <h1 id="adminGrupyTitle">Grupy</h1>
+
+  <!-- KAFEL 1: G1–G5 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6mm;
+      text-align:center;
+    ">
+      <label><input type="checkbox" class="adminGrupaChk" value="G1"> G1</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G2"> G2</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G3"> G3</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G4"> G4</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G5"> G5</label>
+    </div>
+  </div>
+
+  <!-- KAFEL 2: G6–G10 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:6mm;
+      text-align:center;
+    ">
+      <label><input type="checkbox" class="adminGrupaChk" value="G6"> G6</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G7"> G7</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G8"> G8</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G9"> G9</label>
+      <label><input type="checkbox" class="adminGrupaChk" value="G10"> G10</label>
+    </div>
+  </div>
+
+  <button class="full-btn" onclick="adminSaveGrupyLocal()">Zapisz</button>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="adminGrupyMsg" style="margin-top:10px;"></p>
+</div>
+
+    <!-- 21. ADMIN: STATYSTYKI (EKRAN) -->
+    
+    <div id="adminStatsView" class="container hidden">
+  <h1 id="adminStatsTitle">Statystyki</h1>
+
+  <div id="adminStatsBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
+  </div>
+
+  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
+
+  <p id="adminStatsMsg" style="margin-top:10px;"></p>
+</div>
+    
+    <!-- 22. ADMIN: PŁATNOŚCI ZAWODNIKA -->
+
+    <div id="adminPaymentsView" class="container hidden">
+  <h1 id="adminPaymentsTitle">Płatności</h1>
+
+  <div id="adminPaymentsBody">
+    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
+  </div>
+
+  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
+
+  <p id="adminPaymentsMsg" style="margin-top:10px;"></p>
+</div>
+
+    <!-- 23. LISTA ZAWODNIKÓW (TRENER) -->
+    <div id="trainerZawodnicyView" class="container hidden">
+      <h1>Lista zawodników</h1>
+      <div id="trainerListaZawodnikow">Ładowanie...</div>
+      <button class="full-btn alt" onclick="trainerPowrot()">⬅ Powrót</button>
+    </div>
+
+    <!-- 24. WYDARZENIA (TRENER) -->
+    <div id="trainerWydarzeniaView" class="container hidden">
+      <h1>Wydarzenia</h1>
+      <div id="trainerListaWydarzen">Ładowanie...</div>
+      <button class="full-btn" style="margin-top:20px;" onclick="pokazDodajWydarzenie()">➕ Dodaj wydarzenie</button>
+      <button class="full-btn alt" onclick="trainerPowrot()">⬅ Powrót</button>
+    </div>
+
+    </div><!-- /app -->
+
+<!-- 101. POPUP: HASŁO ADMINA -->
 <div id="adminPassPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
   display:flex; justify-content:center; align-items:center;
@@ -500,8 +788,8 @@ input[type="number"] {
     <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
     <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
   </div>
-  
-  <!-- POPUP PŁATNOŚCI -->
+    
+  <!-- 102. POPUP PŁATNOŚCI -->
 <div id="paymentsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
   display:flex; justify-content:center; align-items:center;
@@ -550,98 +838,8 @@ input[type="number"] {
 </div>
 
   </div> <!-- /clubSetupView -->
-
-    <!-- LOGOWANIE -->
-    <div id="loginView" class="container hidden">
-<img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
-
-<div style="width:220px; margin:0 auto 40px auto; text-align:center;">
-  <div id="clubIdBadge" style="font-size:32px; font-weight:900; letter-spacing:3px; line-height:1.1;"></div>
-</div>
-
-<h1 style="margin:0 0 40px 0;">Logowanie</h1>
-
-
-      <div class="login-box">
-        <input id="numer" type="text" placeholder="Numer / Inicjały">
-        <input id="haslo" type="password" placeholder="Hasło">
-        <button class="full-btn" onclick="zaloguj()">Zaloguj</button>
-        <button class="full-btn alt" onclick="pokazRejestracjaSelect()">Rejestracja</button>
-      </div>
-      <p id="komunikat"></p>
-    </div>
-
-    <!-- WYBÓR TYP REJESTRACJI -->
-    <div id="registerSelectView" class="container hidden">
-      <h1>Rejestracja</h1>
-      <button class="full-btn" onclick="pokazRejestracjaZawodnik()">Zawodnik</button>
-      <button class="full-btn" onclick="pokazRejestracjaTrener()">Trener</button>
-      <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-    </div>
-
-    <!-- REJESTRACJA ZAWODNIKA -->
-    <div id="registerZawodnikView" class="container hidden">
-      <h1>Rejestracja zawodnika</h1>
-      <div class="login-box">
-        <input id="regNumer" type="number" placeholder="Numer zawodnika">
-        <input id="regNazwisko" type="text" placeholder="Imię i nazwisko">
-        <input id="regHaslo" type="password" placeholder="Ustaw hasło">
-        <button class="full-btn" onclick="wyslijRejestracje()">Zarejestruj</button>
-      </div>
-      <p id="regMsg"></p>
-      <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-    </div>
-
-    <!-- REJESTRACJA TRENERA -->
-    <div id="rejestracjaTrenerView" class="container hidden">
-      <h1>Rejestracja trenera</h1>
-      <div class="login-box">
-        <input id="regNazwiskoTrener" type="text" placeholder="Imię i nazwisko">
-        <input id="regHasloTrener" type="password" placeholder="Ustaw hasło">
-        <button class="full-btn" onclick="wyslijRejestracjeTrener()">Zarejestruj</button>
-        <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-      </div>
-      <p id="regMsgTrener"></p>
-    </div>
-
-<!-- DODAJ WYDARZENIE (TRENER) -->
-<div id="trainerDodajWydarzenieView" class="container hidden">
-  <h1>Dodaj wydarzenie</h1>
-
-  <div class="login-box">
-    <input id="eventData" type="text" placeholder="RRRR-MM-DD" autocomplete="off">
-    <input id="eventStart" type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
-    <input id="eventEnd"   type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
-    <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
-
-    <!-- TRENERZY (kaskadowo, max 4) -->
-    <select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
-      <option value="">— wybierz trenera —</option>
-    </select>
-
-    <div id="trener2Wrap" class="hidden">
-      <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
-        <option value="">— kolejny trener —</option>
-      </select>
-    </div>
-
-    <div id="trener3Wrap" class="hidden">
-      <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
-        <option value="">— kolejny trener —</option>
-      </select>
-    </div>
-
-    <div id="trener4Wrap" class="hidden">
-      <select id="eventTrener4" class="select-like-input">
-        <option value="">— kolejny trener —</option>
-      </select>
-    </div>
-  </div><!-- ✅ domknięcie login-box -->
-
-<!-- GRUPY: przycisk + popup -->
-<button class="full-btn alt" id="btnPickGroups" onclick="openGroupsPopup()">Wybierz grupy</button>
-<div id="groupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
-
+  
+<!-- 103. GRUPY: popup -->
 <div id="groupsPopup" class="hidden" style="
   position:fixed; inset:0; background:rgba(0,0,0,0.7);
   display:flex; justify-content:center; align-items:center;
@@ -678,118 +876,7 @@ input[type="number"] {
 
   <p id="eventMsg" style="margin-top:10px;"></p>
 </div>
-
-
-    <!-- PŁATNOŚCI -->
-    <div id="platnosciView" class="container hidden">
-      <h1>Płatności</h1>
-      <div id="listaPlatnosci">Ładowanie...</div>
-    </div>
-
-    <!-- WYDARZENIA (ZAWODNIK) -->
-    <div id="homeView" class="container hidden">
-      <h1 id="tytulTreningow">TWOJE WYDARZENIA</h1>
-      <div id="listaTreningow">Ładowanie...</div>
-      <button onclick="pokazStatystyki()" style="margin-top:20px;">📈 Pokaż statystyki</button>
-    <button class="full-btn alt" onclick="powrotDoPlatnosci()" style="margin-top:10px;">   ⬅ Powrót do płatności
-</button>
-
-    </div>
-
-    <!-- STATYSTYKI -->
-    <div id="statsView" class="container hidden">
-      <h1>Statystyki</h1>
-      <div id="listaStatystyk">Ładowanie...</div>
-      <button onclick="powrotDoTreningow()" style="margin-top:20px;">⬅ Powrót</button>
-    </div>
-
-    <!-- PANEL TRENERA -->
-    <div id="trainerPanelView" class="container hidden">
-      <h1>Panel trenera</h1>
-      <button class="full-btn" onclick="trainerPokazZawodnicy()">👥 Zawodnicy</button>
-      <button class="full-btn" onclick="trainerPokazWydarzenia()">🏒 Wydarzenia</button>
-      <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
-    </div>
-
-    <!-- PANEL ADMINISTRATORA -->
-<div id="adminPanelView" class="container hidden">
-  <h1>Panel administratora</h1>
-
-  <button class="full-btn" onclick="adminPokazZawodnikow()">👥 Zawodnicy</button>
-  <button class="full-btn" onclick="goToView('adminRaportyView')">📊 Raporty</button>
-  <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
-</div>
-
-      <!-- ADMIN: RAPORTY (MENU) -->
-<div id="adminRaportyView" class="container hidden">
-  <h1>Raporty</h1>
-
-  <button class="full-btn" onclick="adminRaportyOpenWydarzenia()">📅 Wydarzenia</button>
-  <button class="full-btn" onclick="adminRaportyOpenTrenerzy()">🏒 Trenerzy</button>
-  <button class="full-btn" onclick="adminRaportyOpenRezerwacja()">🏟️ Rezerwacja obiektu</button>
-
-  <button class="full-btn alt" onclick="goToView('adminPanelView')">⬅ Powrót</button>
-</div>
-
-    <!-- ADMIN: RAPORT WYDARZEŃ -->
-<div id="adminRaportWydarzeniaView" class="container hidden">
-  <h1>Raport wydarzeń</h1>
-
-  <div id="adminRaportWydarzeniaBody">
-    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
-  </div>
-
-  <div id="adminRaportWydarzeniaSummary" style="margin-top:12px; opacity:.9;"></div>
-
-  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
-</div>
-
-    <!-- ADMIN: RAPORT TRENERZY -->
-<div id="adminRaportTrenerzyView" class="container hidden">
-  <h1>Raport trenerzy</h1>
-
-  <div id="adminRaportTrenerzyBody">
-    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
-  </div>
-
-  <div id="adminRaportTrenerzySummary" style="margin-top:12px; opacity:.9;"></div>
-
-  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
-</div>
-
-<!-- ADMIN: RAPORT REZERWACJA -->
-<div id="adminRaportRezerwacjaView" class="container hidden">
-  <h1>Raport rezerwacja obiektu</h1>
-
-  <div id="adminRaportRezerwacjaBody">
-    <div class="card" style="background:#222;">⏳ Ładowanie…</div>
-  </div>
-
-  <div id="adminRaportRezerwacjaSummary" style="margin-top:12px; opacity:.9;"></div>
-
-  <button class="full-btn alt" onclick="goToView('adminRaportyView')">⬅ Powrót</button>
-</div>
-
-<!-- LISTA ZAWODNIKÓW (ADMIN) -->
-<div id="adminZawodnicyView" class="container hidden">
-  <h1>Lista zawodników</h1>
-  <div id="adminListaZawodnikow">Ładowanie...</div>
-  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-</div>
-
-   <!-- KARTA ZAWODNIKA (ADMIN) -->
-<div id="adminZawodnikView" class="container hidden">
-  <h1 id="adminZawodnikTitle">Zawodnik</h1>
-
-  <button class="full-btn" onclick="adminOpenGroups()">Grupy</button>
- <button class="full-btn" onclick="adminOpenStats();">Statystyki</button>
-  <button class="full-btn" onclick="adminOpenPayments()">Płatności</button>
-
-  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-
-  <p id="adminZawodnikMsg" style="margin-top:10px;"></p>
-</div>
-
+    
     <!-- ===== ADMIN: POPUP USUWANIA ZAWODNIKA ===== -->
 <div id="adminDeletePopup" style="display:none; position:fixed; inset:0; z-index:9999;">
   <div style="position:absolute; inset:0; background:rgba(0,0,0,0.65);" onclick="adminCloseDeletePopup()"></div>
@@ -825,78 +912,8 @@ input[type="number"] {
     </div>
   </div>
 </div>
-    
-<!-- ADMIN: GRUPY (EKRAN) -->
-<div id="adminGrupyView" class="container hidden">
-  <h1 id="adminGrupyTitle">Grupy</h1>
-
-  <!-- KAFEL 1: G1–G5 -->
-  <div class="card" style="margin-bottom:12px;">
-    <div style="
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap:6mm;
-      text-align:center;
-    ">
-      <label><input type="checkbox" class="adminGrupaChk" value="G1"> G1</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G2"> G2</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G3"> G3</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G4"> G4</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G5"> G5</label>
-    </div>
-  </div>
-
-  <!-- KAFEL 2: G6–G10 -->
-  <div class="card" style="margin-bottom:12px;">
-    <div style="
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap:6mm;
-      text-align:center;
-    ">
-      <label><input type="checkbox" class="adminGrupaChk" value="G6"> G6</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G7"> G7</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G8"> G8</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G9"> G9</label>
-      <label><input type="checkbox" class="adminGrupaChk" value="G10"> G10</label>
-    </div>
-  </div>
-
-  <button class="full-btn" onclick="adminSaveGrupyLocal()">Zapisz</button>
-  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-
-  <p id="adminGrupyMsg" style="margin-top:10px;"></p>
-</div>
-
-    <!-- ADMIN: STATYSTYKI (EKRAN) -->
-    
-    <div id="adminStatsView" class="container hidden">
-  <h1 id="adminStatsTitle">Statystyki</h1>
-
-  <div id="adminStatsBody">
-    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
-  </div>
-
-  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
-
-  <p id="adminStatsMsg" style="margin-top:10px;"></p>
-</div>
-    
-    <!-- ADMIN: PŁATNOŚCI ZAWODNIKA -->
-
-    <div id="adminPaymentsView" class="container hidden">
-  <h1 id="adminPaymentsTitle">Płatności</h1>
-
-  <div id="adminPaymentsBody">
-    <div class="card" style="background:#222;">⏳ Ładowanie...</div>
-  </div>
-
-  <button class="full-btn alt" onclick="goToView('adminZawodnikView')">⬅ Powrót</button>
-
-  <p id="adminPaymentsMsg" style="margin-top:10px;"></p>
-</div>
-
-<!-- =================== ADMIN: MODAL SPOSÓB ROZLICZANIA =================== -->
+  
+<!-- ADMIN: MODAL SPOSÓB ROZLICZANIA  -->
 <div id="adminRozliczModal" class="modal hidden">
   <div class="modal-card">
     <h2 style="margin:0 0 8px 0;">Sposób rozliczania</h2>
@@ -911,22 +928,7 @@ input[type="number"] {
     </div>
   </div>
 </div>
-    
-    <!-- LISTA ZAWODNIKÓW (TRENER) -->
-    <div id="trainerZawodnicyView" class="container hidden">
-      <h1>Lista zawodników</h1>
-      <div id="trainerListaZawodnikow">Ładowanie...</div>
-      <button class="full-btn alt" onclick="trainerPowrot()">⬅ Powrót</button>
-    </div>
-
-    <!-- WYDARZENIA (TRENER) -->
-    <div id="trainerWydarzeniaView" class="container hidden">
-      <h1>Wydarzenia</h1>
-      <div id="trainerListaWydarzen">Ładowanie...</div>
-      <button class="full-btn" style="margin-top:20px;" onclick="pokazDodajWydarzenie()">➕ Dodaj wydarzenie</button>
-      <button class="full-btn alt" onclick="trainerPowrot()">⬅ Powrót</button>
-    </div>
-
+  
     <!-- Popup potwierdzenia usunięcia -->
     <div id="trainerDeletePopup">
       <div class="popup-card">
@@ -1199,7 +1201,7 @@ input[type="number"] {
   </div>
 </div>
   
-  </div><!-- /app -->
+  
 
 <script>
   
