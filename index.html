@@ -3001,52 +3001,6 @@ async function adminOpenPayments() {
     if (body) body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
   }
 }
-
-function renderPaymentsSection_(title, arr) {
-  if (!arr || arr.length === 0) {
-    return `<div class="card" style="background:#111; margin-top:10px;"><b>${title}</b><br><span style="opacity:.8;">Brak danych</span></div>`;
-  }
-
-  return `
-    <div class="card" style="background:#111; margin-top:10px; text-align:left;">
-      <b>${title}</b>
-    </div>
-    ${arr.map(renderPaymentTile_).join("")}
-  `;
-}
-
-function renderPaymentTile_(p) {
-  const paid = !!p.zaplacono;
-  const kw = Number(p.kwota || 0);
-
-  const bg = paid ? "#123a1a" : "#3a1414";
-  const badge = paid
-    ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
-    : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
-
-  const safeLabel = String(p.label || p.nazwa || "").replace(/'/g, "\\'");
-
-  // ✅ przekazujemy kolumnę, a nie nr zawodnika
-  const btn = (!paid)
-    ? `<button class="full-btn" style="margin-top:10px;" onclick="adminConfirmPayment(${Number(p.col)}, '${safeLabel}')">Zarejestruj płatność</button>`
-    : "";
-
-  return `
-    <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
-      <div style="display:flex; justify-content:space-between; gap:10px;">
-        <div>
-          <div style="opacity:.9; font-size:14px;">${p.typ === "skladka" ? "Składka" : "Zajęcia dodatkowe"}</div>
-          <div style="font-size:18px; font-weight:800;">${p.label || ""}</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:18px; font-weight:800;">${kw} zł</div>
-          <div style="margin-top:2px;">${badge}</div>
-        </div>
-      </div>
-      ${btn}
-    </div>
-  `;
-}
   
 // =================== ADMIN: KLIK "Zarejestruj płatność" ===================
 function renderAdminPayments_(res) {
