@@ -1140,8 +1140,21 @@ function odtworzIntroSound() {
 }
 
 /* =================== 10 KONFIG / GLOBALNE =================== */
-const APP_BUILD = window.APP_BUILD;
-const CORE_URL = "https://still-shape-2aa3.orghubsystems.workers.dev";
+  
+function showModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove("hidden");
+}
+
+function hideModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add("hidden");
+}
+  
+  const APP_BUILD = window.APP_BUILD;
+  const CORE_URL = "https://still-shape-2aa3.orghubsystems.workers.dev";
 
 // ===== DEBUG: pokaż błąd JS na ekranie (żeby nie stało "w ciszy") =====
 window.addEventListener("error", (ev) => {
@@ -2491,8 +2504,7 @@ function adminOpenDeletePopup(nr, nazwisko) {
     // txt.textContent = `Czy napewno chcesz usunąć zawodnika #${numer} — ${window.__adminDeleteNazw || "—"} ?`;
   }
 
-  const pop = document.getElementById("adminDeletePopup");
-  if (pop) pop.classList.remove("hidden");
+    showModal("adminDeletePopup");
 }
 
 function adminCloseDeletePopup() {
@@ -3059,12 +3071,7 @@ function adminConfirmPayment(colNum, label) {
   yes.onclick = adminDoConfirmPayment;
   no.onclick  = adminCancelConfirmPayment;
 
-  // 🔥 HARD SHOW (router / widoki nie mają prawa tego ukryć)
-  modal.classList.remove("hidden");
-  modal.style.display = "flex";
-  modal.style.position = "fixed";
-  modal.style.inset = "0";
-  modal.style.zIndex = "99999";
+showModal("adminPayConfirmModal");
 }
 
 async function adminDoConfirmPayment() {
