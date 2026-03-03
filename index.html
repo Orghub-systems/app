@@ -3008,14 +3008,19 @@ function renderAdminPayments_(res) {
   `;
 
   // ✅ stabilny handler (bez inline onclick i bez ryzyka apostrofów)
-  body.querySelectorAll("button.adminPayBtn").forEach(btn => {
-    btn.addEventListener("click", (ev) => {
-      const b = ev.currentTarget;
-      const col = Number(b?.dataset?.col);
-      const label = decodeURIComponent(String(b?.dataset?.label || ""));
-      adminConfirmPayment(col, label);
-    });
-  });
+body.querySelectorAll("button.adminPayBtn").forEach(btn => {
+  btn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+
+    const b = ev.currentTarget;
+    const col = Number(b?.dataset?.col);
+    const label = decodeURIComponent(String(b?.dataset?.label || ""));
+
+    requestAnimationFrame(() => adminConfirmPayment(col, label));
+  }, { capture: true });
+});
 
   if (msg) msg.textContent = "";
 }
