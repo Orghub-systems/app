@@ -460,8 +460,17 @@ input[type="number"] {
         onclick="openAdminPassPopup()">
   Utwórz hasło administratora
 </button>
-    </div> <!-- /card w clubSetupView -->
-</div> <!-- /clubSetupView -->
+    
+    <button class="full-btn" id="btnSetupSubmit" disabled
+        style="margin-top:12px; width:100%;"
+        onclick="submitSetupAndActivateClub()">Wyślij i aktywuj klub</button>
+
+    <button class="full-btn alt" onclick="goBackFromSetup()" 
+            style="margin-top:12px; width:100%;">⬅ Powrót</button>
+
+    <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
+    <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
+  </div>
     
     <!-- 4. LOGOWANIE -->
     <div id="loginView" class="container hidden">
@@ -799,17 +808,6 @@ input[type="number"] {
     <p id="adminPassMsg" style="margin-top:12px; min-height:1.2em;"></p>
   </div>
 </div>
-    
-    <button class="full-btn" id="btnSetupSubmit" disabled
-        style="margin-top:12px; width:100%;"
-        onclick="submitSetupAndActivateClub()">Wyślij i aktywuj klub</button>
-
-    <button class="full-btn alt" onclick="goBackFromSetup()" 
-            style="margin-top:12px; width:100%;">⬅ Powrót</button>
-
-    <p id="setupMsg" style="margin-top:16px; min-height:3em;"></p>
-    <div id="setupErrorBox" class="hidden" style="margin-top:10px; padding:8px; border:1px solid #933; border-radius:6px; background:#2b1111; color:#ffb3b3; font-size:0.9rem; text-align:left;"></div>
-  </div>
     
   <!-- 102. POPUP PŁATNOŚCI -->
 <div id="paymentsPopup" class="hidden" style="
