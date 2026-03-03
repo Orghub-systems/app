@@ -2518,27 +2518,37 @@ async function adminDoDeletePlayer() {
   const numer = String(window.__adminDeleteNr || "").trim();
   if (!numer) { adminCloseDeletePopup(); return; }
 
-  // zamykamy od razu, żeby UI było szybkie
-  adminCloseDeletePopup();
+  const btn = document.querySelector("#adminDeletePopup .full-btn.green");
+  if (btn) {
+    btn.textContent = "Usuwam zawodnika…";
+    btn.disabled = true;
+    btn.classList.add("loading");
+  }
 
   try {
-    const r = await apiClubPost({
-      action: "adminDeletePlayer",
-      numer
-    });
+    const r = await apiClubPost({ action: "adminDeletePlayer", numer });
 
     if (!r || !(r.success || r.ok)) {
       alert("❌ Nie udało się usunąć: " + (r?.error || r?.message || JSON.stringify(r)));
       return;
     }
 
-    adminPokazZawodnikow(); // odśwież listę
+    adminCloseDeletePopup();
+    adminPokazZawodnikow();
 
   } catch (e) {
     alert("❌ Błąd połączenia: " + (e?.message || e));
+
+  } finally {
+    // KROK 3B — RESET (zawsze)
+    if (btn) {
+      btn.textContent = "TAK";
+      btn.disabled = false;
+      btn.classList.remove("loading");
+    }
   }
 }
-  
+
   async function adminSetAccessFromList(nr, isOn) {
   const numer = String(nr || "").trim();
   if (!numer) return;
