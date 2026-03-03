@@ -922,7 +922,23 @@ input[type="number"] {
     </div>
   </div>
 </div>
-    
+  
+<!-- ADMIN: MODAL SPOSÓB ROZLICZANIA  -->
+<div id="adminRozliczModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px 0;">Sposób rozliczania</h2>
+
+    <p id="adminRozliczMsg" style="margin:0 0 10px 0; opacity:0.9;"></p>
+
+    <div class="modal-actions" style="flex-direction:column; gap:8px;">
+      <button class="full-btn" onclick="adminSetRozlicz('S')">Składka członkowska</button>
+      <button class="full-btn" onclick="adminSetRozlicz('O')">Uczestnik okazjonalny</button>
+      <button class="full-btn" onclick="adminSetRozlicz('B')">Uczestnik bezpłatny</button>
+      <button class="full-btn alt" onclick="adminCloseRozliczPopup()">Anuluj</button>
+    </div>
+  </div>
+</div>
+  
     <!-- Popup potwierdzenia usunięcia -->
     <div id="trainerDeletePopup">
       <div class="popup-card">
@@ -1110,19 +1126,20 @@ input[type="number"] {
   </div>
 </div>
 
-<!-- ADMIN: MODAL SPOSÓB ROZLICZANIA  -->
-<div id="adminRozliczModal" class="modal hidden">
-  <div class="modal-card">
-    <h2 style="margin:0 0 8px 0;">Sposób rozliczania</h2>
+<!-- =================== ADMIN: POPUP SPOSÓB ROZLICZANIA ZAWODNIKA =================== -->
+  
+<div id="adminRozliczModal" class="hidden">
+  <div class="modal-backdrop" onclick="adminCloseRozliczPopup()"></div>
 
-    <p id="adminRozliczMsg" style="margin:0 0 10px 0; opacity:0.9;"></p>
+  <div class="modal-card" onclick="event.stopPropagation();">
+    <div class="modal-title">Sposób rozliczania</div>
+    <div id="adminRozliczMsg" class="modal-msg"></div>
 
-    <div class="modal-actions" style="flex-direction:column; gap:8px;">
-      <button class="full-btn" onclick="adminSetRozlicz('S')">Składka członkowska</button>
-      <button class="full-btn" onclick="adminSetRozlicz('O')">Uczestnik okazjonalny</button>
-      <button class="full-btn" onclick="adminSetRozlicz('B')">Uczestnik bezpłatny</button>
-      <button class="full-btn alt" onclick="adminCloseRozliczPopup()">Anuluj</button>
-    </div>
+    <button class="full-btn" onclick="adminSetRozlicz('S')">Składka członkowska</button>
+    <button class="full-btn" onclick="adminSetRozlicz('O')">Uczestnik okazjonalny</button>
+    <button class="full-btn" onclick="adminSetRozlicz('B')">Uczestnik bezpłatny</button>
+
+    <button class="full-btn" style="margin-top:10px; opacity:.8;" onclick="adminCloseRozliczPopup()">Anuluj</button>
   </div>
 </div>
 
