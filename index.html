@@ -922,7 +922,23 @@ input[type="number"] {
     </div>
   </div>
 </div>
-    
+  
+<!-- ADMIN: MODAL SPOSÓB ROZLICZANIA  -->
+<div id="adminRozliczModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px 0;">Sposób rozliczania</h2>
+
+    <p id="adminRozliczMsg" style="margin:0 0 10px 0; opacity:0.9;"></p>
+
+    <div class="modal-actions" style="flex-direction:column; gap:8px;">
+      <button class="full-btn" onclick="adminSetRozlicz('S')">Składka członkowska</button>
+      <button class="full-btn" onclick="adminSetRozlicz('O')">Uczestnik okazjonalny</button>
+      <button class="full-btn" onclick="adminSetRozlicz('B')">Uczestnik bezpłatny</button>
+      <button class="full-btn alt" onclick="adminCloseRozliczPopup()">Anuluj</button>
+    </div>
+  </div>
+</div>
+  
     <!-- Popup potwierdzenia usunięcia -->
     <div id="trainerDeletePopup">
       <div class="popup-card">
