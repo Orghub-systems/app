@@ -1209,9 +1209,7 @@ input[type="number"] {
       <button class="full-btn" style="flex:1;" type="button" onclick="adminClosePaymentsPopup()">Zamknij</button>
     </div>
   </div>
-</div>
-  
-  
+
 
 <script>
   
@@ -3104,10 +3102,12 @@ function renderPaymentTile_(p) {
 // =================== ADMIN: CONFIRM PŁATNOŚCI (używamy WYŁĄCZNIE #adminPayConfirmModal) ===================
 window.__adminPendingPayCol = null;
 window.__adminPendingPayLabel = "";
+  
 function adminConfirmPayment(colNum, label) {
   const nr  = String(window.__adminSelectedNr || "").trim();
   const col = Number(colNum);
 
+  
   if (!nr) { alert("❌ Brak wybranego zawodnika."); return; }
   if (!Number.isFinite(col) || col < 1) { alert("❌ Brak poprawnej kolumny płatności."); return; }
 
