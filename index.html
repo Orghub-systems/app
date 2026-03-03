@@ -1130,6 +1130,26 @@ input[type="number"] {
     <button class="full-btn" style="margin-top:10px; opacity:.8;" onclick="adminCloseRozliczPopup()">Anuluj</button>
   </div>
 </div>
+
+    <!-- =================== ADMIN: MODAL POTWIERDZENIA PŁATNOŚCI =================== -->
+<div id="adminPayConfirmModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
+
+    <div id="adminPayConfirmText" style="opacity:0.9; line-height:1.35;">
+      Potwierdzam zapłatę
+    </div>
+
+    <div style="height:10px;"></div>
+
+    <div class="modal-actions">
+      <button class="full-btn green" id="adminPayConfirmYesBtn">TAK</button>
+      <button class="full-btn alt" id="adminPayConfirmNoBtn">NIE</button>
+    </div>
+
+    <p id="adminPayConfirmMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
   
 <!-- =================== ADMIN: POPUP PŁATNOŚCI =================== -->
 <div id="adminConfirmPayPopup" class="modal hidden">
@@ -1179,25 +1199,7 @@ input[type="number"] {
   </div>
 </div>
 
-  <!-- =================== ADMIN: MODAL POTWIERDZENIA PŁATNOŚCI =================== -->
-<div id="adminPayConfirmModal" class="modal hidden">
-  <div class="modal-card">
-    <h2 style="margin:0 0 8px 0;">Potwierdzenie</h2>
 
-    <div id="adminPayConfirmText" style="opacity:0.9; line-height:1.35;">
-      Potwierdzam zapłatę
-    </div>
-
-    <div style="height:10px;"></div>
-
-    <div class="modal-actions">
-      <button class="full-btn green" id="adminPayConfirmYesBtn">TAK</button>
-      <button class="full-btn alt" id="adminPayConfirmNoBtn">NIE</button>
-    </div>
-
-    <p id="adminPayConfirmMsg" style="margin-top:10px;"></p>
-  </div>
-</div>
   
   </div><!-- /app -->
 
