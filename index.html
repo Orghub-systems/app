@@ -3092,7 +3092,6 @@ function renderPaymentTile_(p) {
 // =================== ADMIN: CONFIRM PŁATNOŚCI (używamy WYŁĄCZNIE #adminPayConfirmModal) ===================
 window.__adminPendingPayCol = null;
 window.__adminPendingPayLabel = "";
-
 function adminConfirmPayment(colNum, label) {
   const nr  = String(window.__adminSelectedNr || "").trim();
   const col = Number(colNum);
@@ -3120,11 +3119,16 @@ function adminConfirmPayment(colNum, label) {
 
   if (msg) msg.textContent = "";
 
-  // podpinamy akcje bez dublowania (nadpisujemy onclick)
+  // akcje
   yes.onclick = adminDoConfirmPayment;
   no.onclick  = adminCancelConfirmPayment;
 
+  // 🔥 HARD SHOW (router / widoki nie mają prawa tego ukryć)
   modal.classList.remove("hidden");
+  modal.style.display = "flex";
+  modal.style.position = "fixed";
+  modal.style.inset = "0";
+  modal.style.zIndex = "99999";
 }
 
 async function adminDoConfirmPayment() {
@@ -3166,7 +3170,9 @@ async function adminDoConfirmPayment() {
 
 function adminCancelConfirmPayment() {
   const modal = document.getElementById("adminPayConfirmModal");
-  if (modal) modal.classList.add("hidden");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modal.style.display = "none";
 }
 
   // =================== 67 ADMIN: RAPORTY ===================
