@@ -551,6 +551,26 @@ input[type="number"] {
 <!-- GRUPY: przycisk --> 
 <button class="full-btn alt" id="btnPickGroups" onclick="openGroupsPopup()">Wybierz grupy</button>
 <div id="groupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
+
+  <div style="margin-top:10px; display:flex; justify-content:center;">
+  <label style="display:flex; align-items:center; gap:10px;">
+    <input id="eventStat" type="checkbox" style="transform:scale(1.35);">
+    <span>Liczyć do statystyk</span>
+  </label>
+</div>
+
+<div style="margin-top:10px; display:flex; justify-content:center;">
+  <label style="display:flex; align-items:center; gap:10px;">
+    <input id="eventRez" type="checkbox" style="transform:scale(1.35);">
+    <span>Rezerwacja obiektu</span>
+  </label>
+</div>
+
+  <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
+  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
+
+  <p id="eventMsg" style="margin-top:10px;"></p>
+</div>
   
     <!-- 9. PŁATNOŚCI -->
     <div id="platnosciView" class="container hidden">
@@ -855,26 +875,6 @@ input[type="number"] {
       <button class="full-btn" style="flex:1;" onclick="applyGroupsPopup()">Zapisz</button>
     </div>
   </div>
-</div>
-
-<div style="margin-top:10px; display:flex; justify-content:center;">
-  <label style="display:flex; align-items:center; gap:10px;">
-    <input id="eventStat" type="checkbox" style="transform:scale(1.35);">
-    <span>Liczyć do statystyk</span>
-  </label>
-</div>
-
-<div style="margin-top:10px; display:flex; justify-content:center;">
-  <label style="display:flex; align-items:center; gap:10px;">
-    <input id="eventRez" type="checkbox" style="transform:scale(1.35);">
-    <span>Rezerwacja obiektu</span>
-  </label>
-</div>
-
-  <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
-  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-
-  <p id="eventMsg" style="margin-top:10px;"></p>
 </div>
     
     <!-- ===== ADMIN: POPUP USUWANIA ZAWODNIKA ===== -->
