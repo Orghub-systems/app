@@ -115,3 +115,62 @@ self.addEventListener("fetch", (e) => {
     })
   );
 });
+
+
+/******************** PUSH: odbiór i kliknięcie ********************/
+
+self.addEventListener("push", (event) => {
+  // payload: { title, body, icon, badge, url, tag, data }
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    payload = { body: event.data ? String(event.data.text()) : "" };
+  }
+
+  const title = payload.title || "OrgHub";
+  const body  = payload.body  || "Masz nowe powiadomienie";
+
+  // domyślne otwarcie apki
+  const url = payload.url || (self.location.origin + "/app/");
+
+  const options = {
+    body,
+    // możesz nadpisać ikoną klubową w payloadzie, ale fallback zostawiamy bezpieczny
+    icon: payload.icon || (self.location.origin + "/app/icon-192.png"),
+    badge: payload.badge || (self.location.origin + "/app/icon-192.png"),
+    tag: payload.tag || "orghub",
+    data: {
+      url,
+      ...(payload.data || {})
+    },
+    renotify: true
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = (event.notification && event.notification.data && event.notification.data.url)
+    ? String(event.notification.data.url)
+    : (self.location.origin + "/app/");
+
+  event.waitUntil((async () => {
+    // jeśli już jest otwarta karta z apką, to ją aktywuj
+    const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
+
+    for (const c of allClients) {
+      if (c.url && c.url.startsWith(self.location.origin + "/app/")) {
+        await c.focus();
+        // opcjonalnie możesz też przekazać message do klienta:
+        // c.postMessage({ type:"PUSH_CLICK", url });
+        return;
+      }
+    }
+
+    // inaczej otwórz nową kartę / okno
+    await clients.openWindow(url);
+  })());
+});
