@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V8';
+  window.APP_BUILD = 'BETA APP V6';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -654,6 +654,7 @@ input[type="number"] {
     
 <!-- II USTAWIENIA -->
 <div id="playerSettingsView" class="container hidden">
+  <img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
 
   <div style="width:220px; margin:0 auto 25px auto; text-align:center;">
     <div id="clubIdBadge_settings" style="font-size:32px; font-weight:900; letter-spacing:3px; line-height:1.1;"></div>
@@ -663,7 +664,7 @@ input[type="number"] {
 
   <div class="login-box">
     <button id="btnEnablePush" class="full-btn">🔔 Włącz powiadomienia</button>
-    <button class="full-btn alt" onclick="goToView('playerMenuView')">⬅ Powrót do menu </button>
+    <button class="full-btn alt" onclick="goToView('playerMenuView')">⬅️ Wróć</button>
   </div>
 
   <p id="pushStatus" style="margin-top:15px;"></p>
@@ -3416,7 +3417,7 @@ function renderPlatnosci(lista) {
   if (!lista?.length) {
     div.innerHTML =
       "<p>Brak zaległości ✅</p>" +
-      
+      "<button class='full-btn' onclick='pokazTreningi()'>Dalej ➡</button>";
     return;
   }
 
