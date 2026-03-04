@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V5';
+  window.APP_BUILD = 'BETA APP V6';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -3397,6 +3397,21 @@ async function wyslijRejestracjeTrener() {
 
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
+
+async function pokazPlatnosci() {
+  goToView("platnosciView");
+
+  const div = document.getElementById("listaPlatnosci");
+  if (div) div.innerHTML = "<p>⏳ Ładowanie...</p>";
+
+  try {
+    const lista = await apiClubGet("platnosci", { numer: numerZalogowanego });
+    renderPlatnosci(lista);
+  } catch (e) {
+    console.error("pokazPlatnosci error", e);
+    if (div) div.innerHTML = `<p>❌ Błąd pobierania płatności: ${String(e?.message || e)}</p>`;
+  }
+}
   
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
