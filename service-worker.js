@@ -1,3 +1,10 @@
+<!-- ORGHUB PWA
+     WERSJA KTÓRA DZIAŁA
+     DATA: 2026-03-04
+     BUILD: PWA-INSTALL-OK
+-->
+
+
 /* service-worker.js — PWA dynamic manifest via SW (same-origin) */
 
 const CORE = "https://still-shape-2aa3.orghubsystems.workers.dev";
