@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V11';
+  window.APP_BUILD = 'BETA APP V12';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1250,6 +1250,82 @@ let currentView = "loginView";
 window.__adminPendingPayCol = null;
 window.__adminPendingPayLabel = "";
 
+/******************** PUSH: SUBSCRIBE (FRONTEND) ********************/
+
+// ✅ TU WSTAWIMY PUBLIK VAPID W KROKU 2
+// Na razie placeholder, żeby kod się nie wysypał:
+const VAPID_PUBLIC_KEY = "PASTE_VAPID_PUBLIC_KEY_HERE";
+
+function urlBase64ToUint8Array_(base64String) {
+  // standardowy helper do VAPID
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const out = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) out[i] = rawData.charCodeAt(i);
+  return out;
+}
+
+async function enablePushFromButton_() {
+  // wymagamy loginu – bo subskrypcję chcemy przypisać do numeru
+  if (!numerZalogowanego) {
+    alert("Najpierw zaloguj się jako zawodnik.");
+    return;
+  }
+
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+    alert("Ta przeglądarka nie obsługuje powiadomień push.");
+    return;
+  }
+
+  // 1) permission
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") {
+    alert("Brak zgody na powiadomienia.");
+    return;
+  }
+
+  // 2) SW ready
+  const reg = await navigator.serviceWorker.ready;
+
+  // 3) subscribe (lub odczytaj istniejące)
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.includes("PASTE_VAPID")) {
+      alert("Brak VAPID_PUBLIC_KEY. Zrobimy to w Kroku 2.");
+      return;
+    }
+
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array_(VAPID_PUBLIC_KEY)
+    });
+  }
+
+  // ✅ Na tym etapie tylko pokaż w konsoli – backend dojdzie w Kroku 3+
+  console.log("✅ PUSH subscription:", sub);
+  alert("✅ Powiadomienia włączone (subskrypcja utworzona).");
+
+  // opcjonalnie: zapisz lokalnie, żeby nie ginęło po refreshu (do debug)
+  try {
+    localStorage.setItem("push_sub_" + String(clubId || ""), JSON.stringify(sub));
+  } catch (e) {}
+}
+
+// podłączenie przycisku (bez inline onclick)
+(function bindPushButton_(){
+  try {
+    const btn = document.getElementById("btnEnablePush");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      btn.classList.add("loading");
+      enablePushFromButton_().finally(() => btn.classList.remove("loading"));
+    });
+  } catch (e) {
+    console.error("bindPushButton error", e);
+  }
+})();
+  
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
 const LS_KEY_CLUBID = "orghub_clubId";
