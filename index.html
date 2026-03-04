@@ -610,7 +610,7 @@ input[type="number"] {
 
   <p id="eventMsg" style="margin-top:10px;"></p>
 </div>
-  
+
     <!-- 9. PŁATNOŚCI -->
     <div id="platnosciView" class="container hidden">
       <h1>Płatności</h1>
@@ -634,6 +634,44 @@ input[type="number"] {
       <button onclick="powrotDoTreningow()" style="margin-top:20px;">⬅ Powrót</button>
     </div>
 
+<!-- I MENU ZAWODNIKA -->
+<div id="playerMenuView" class="container hidden">
+  <img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
+
+  <div style="width:220px; margin:0 auto 25px auto; text-align:center;">
+    <div id="clubIdBadge_menu" style="font-size:32px; font-weight:900; letter-spacing:3px; line-height:1.1;"></div>
+  </div>
+
+  <h1 style="margin:0 0 25px 0;">Panel zawodnika</h1>
+
+  <div class="login-box">
+    <button class="full-btn" onclick="playerGoPlatnosci()">💳 Płatności</button>
+    <button class="full-btn" onclick="playerGoWydarzenia()">📅 Wydarzenia</button>
+    <button class="full-btn" onclick="playerGoStatystyki()">📊 Statystyki</button>
+    <button class="full-btn alt" onclick="goToView('playerSettingsView')">⚙️ Ustawienia</button>
+  </div>
+
+  <p style="opacity:.8; margin-top:18px;">Zalogowany numer: <b id="playerNumerLabel"></b></p>
+</div>
+
+<!-- II USTAWIENIA -->
+<div id="playerSettingsView" class="container hidden">
+  <img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
+
+  <div style="width:220px; margin:0 auto 25px auto; text-align:center;">
+    <div id="clubIdBadge_settings" style="font-size:32px; font-weight:900; letter-spacing:3px; line-height:1.1;"></div>
+  </div>
+
+  <h1 style="margin:0 0 25px 0;">Ustawienia</h1>
+
+  <div class="login-box">
+    <button id="btnEnablePush" class="full-btn">🔔 Włącz powiadomienia</button>
+    <button class="full-btn alt" onclick="goToView('playerMenuView')">⬅️ Wróć</button>
+  </div>
+
+  <p id="pushStatus" style="margin-top:15px;"></p>
+</div>
+    
     <!-- 12. PANEL TRENERA -->
     <div id="trainerPanelView" class="container hidden">
       <h1>Panel trenera</h1>
@@ -3185,19 +3223,26 @@ async function zaloguj() {
   const haslo = document.getElementById("haslo").value.trim();
   const komunikat = document.getElementById("komunikat");
 
-  if (!clubId) { komunikat.innerText = "Najpierw skonfiguruj klub."; goToView("orgHubLandingView"); return; }
-  if (!login || !haslo) { komunikat.innerText = "Podaj login i hasło."; return; }
+  if (!clubId) {
+    komunikat.innerText = "Najpierw skonfiguruj klub.";
+    goToView("orgHubLandingView");
+    return;
+  }
+  if (!login || !haslo) {
+    komunikat.innerText = "Podaj login i hasło.";
+    return;
+  }
 
   komunikat.innerText = "Trwa logowanie...";
 
   try {
     const data = await apiClubPost({ mode: "login", numer: login, haslo });
-    
-if (!data.success) {
-  const err = data?.error || data?.message || "Błąd logowania";
-  komunikat.innerText = "❌ " + err;
-  return;
-}
+
+    if (!data.success) {
+      const err = data?.error || data?.message || "Błąd logowania";
+      komunikat.innerText = "❌ " + err;
+      return;
+    }
 
     komunikat.innerText = "✅ Zalogowano";
 
@@ -3205,14 +3250,15 @@ if (!data.success) {
       numerZalogowanego = data.login;
       grupaZalogowanego = data.grupa || "";
 
-      const platnosci = await apiClubGet("platnosci", { numer: numerZalogowanego });
-      if (Array.isArray(platnosci) && platnosci.length > 0) {
-        goToView("platnosciView");
-        renderPlatnosci(platnosci);
-        return;
+      // (opcjonalnie) preload płatności do cache — menu sobie to potem wykorzysta
+      try {
+        window.__platnosciCache = await apiClubGet("platnosci", { numer: numerZalogowanego });
+      } catch (e) {
+        window.__platnosciCache = null;
       }
 
-      await pokazTreningi();
+      // ✅ NOWA LOGIKA: po loginie zawsze menu
+      goToView("playerMenuView");
       return;
     }
 
@@ -3223,9 +3269,9 @@ if (!data.success) {
     }
 
     if (data.role === "admin") {
-  goToView("adminPanelView");
-  return;
-}
+      goToView("adminPanelView");
+      return;
+    }
 
   } catch (e) {
     komunikat.innerText = "Błąd połączenia: " + (e?.message || e);
