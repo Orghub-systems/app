@@ -7,24 +7,63 @@
   <link id="pwaManifestLink" rel="manifest">
 
 <script>
-(function () {
+(async function () {
   try {
     const params = new URLSearchParams(location.search);
     const clubId = (params.get("clubId") || "").trim();
     if (!clubId) return;
 
-    const coreUrl = "https://still-shape-2aa3.orghubsystems.workers.dev";
+    const core = "https://still-shape-2aa3.orghubsystems.workers.dev";
 
-    const manifestUrl =
-      coreUrl + "?asset=manifest&clubId=" + encodeURIComponent(clubId);
+    // 1) pobierz info PWA z backendu (musisz mieć doGet action=pwaInfo)
+    const infoUrl = core + "?action=pwaInfo&clubId=" + encodeURIComponent(clubId);
+    const res = await fetch(infoUrl, { cache: "no-store" });
+    const info = await res.json();
+
+    // NA RAZIE bierzemy dataUrl, jak backend już zwraca (Krok 1A).
+    // Jeśli jeszcze nie zwraca — będą puste i wtedy manifest będzie bez ikon (ale wykryty).
+    const icon192 = (info && info.icon192DataUrl) ? String(info.icon192DataUrl) : "";
+    const icon512 = (info && info.icon512DataUrl) ? String(info.icon512DataUrl) : "";
+
+    // 2) zbuduj manifest lokalnie (same-origin dzięki Blob)
+    const manifest = {
+      id: "/?clubId=" + clubId,  // ✅ klucz: osobna aplikacja per klub
+      name: "OrgHub — " + clubId,
+      short_name: clubId.toUpperCase(),
+      start_url: "./?clubId=" + encodeURIComponent(clubId) + "&source=pwa",
+      scope: "./",
+      display: "standalone",
+      display_override: ["standalone", "minimal-ui"],
+      orientation: "portrait",
+      background_color: "#0B1E3F",
+      theme_color: "#F47B20",
+      lang: "pl",
+      dir: "ltr",
+      icons: [
+        ...(icon192 ? [{
+          src: icon192,
+          sizes: "192x192",
+          type: "image/png",
+          purpose: "any maskable"
+        }] : []),
+        ...(icon512 ? [{
+          src: icon512,
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "any maskable"
+        }] : [])
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+    const blobUrl = URL.createObjectURL(blob);
 
     const link = document.getElementById("pwaManifestLink");
-    if (link) link.href = manifestUrl;
+    if (link) link.href = blobUrl;
 
-    console.log("📦 PWA manifest:", manifestUrl);
-
+    console.log("📦 PWA manifest BLOB:", manifest);
   } catch (e) {
-    console.error("Manifest error", e);
+    console.error("❌ PWA manifest error", e);
   }
 })();
 </script>
