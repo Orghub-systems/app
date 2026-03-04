@@ -38,12 +38,18 @@ async function buildManifestForClub_(clubId) {
       const infoUrl = CORE + "?action=pwaInfo&clubId=" + encodeURIComponent(clean);
       const res = await fetch(infoUrl, { cache: "no-store" });
       const info = await res.json();
-
-      if (info && info.icon192DataUrl && String(info.icon192DataUrl).startsWith("data:image/")) {
-        icon192 = String(info.icon192DataUrl);
-      }
-      if (info && info.icon512DataUrl && String(info.icon512DataUrl).startsWith("data:image/")) {
-        icon512 = String(info.icon512DataUrl);
+      
+      if (info) {
+        const d192 = info.icon192DataUrl ? String(info.icon192DataUrl) : "";
+        const d512 = info.icon512DataUrl ? String(info.icon512DataUrl) : "";
+        const u192 = info.icon192Url ? String(info.icon192Url) : "";
+        const u512 = info.icon512Url ? String(info.icon512Url) : "";
+      
+        if (d192.startsWith("data:image/")) icon192 = d192;
+        else if (u192) icon192 = u192;
+      
+        if (d512.startsWith("data:image/")) icon512 = d512;
+        else if (u512) icon512 = u512;
       }
     } catch (e) {
       // zostaje fallback
