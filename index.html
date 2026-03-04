@@ -4,7 +4,37 @@
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#000000">
-  <link id="appManifestLink" rel="manifest" href="manifest.json">
+  <link id="pwaManifestLink" rel="manifest" href="manifest.json">
+
+<script>
+  (function setManifestHrefPerClub() {
+    try {
+      const params = new URLSearchParams(location.search);
+      const clubId = (params.get("clubId") || "").trim();
+
+      // jeśli nie ma clubId, zostaw manifest ogólny
+      if (!clubId) return;
+
+      // CORE_URL masz już w apce jako stała (u Ciebie: https://still-shape-2aa3.orghubsystems.workers.dev)
+      // ale manifest MUSI iść bezpośrednio do GAS (żeby uniknąć cache/proxy problemów).
+      // Jeśli Twój CORE_URL wskazuje na Worker który forwarduje do GAS i nie psuje nagłówków,
+      // też może być, ale najpewniej: użyj bezpośredniego URL-a do web app GAS.
+      //
+      // Najprościej: wstaw tu stałą ORG_HUB_CORE_GAS_URL z Twojego frontu (KROK 5 zrobimy elegancko).
+      //
+      // Na teraz: jeśli już masz zmienną CORE_URL i ona działa do GET, użyj jej.
+      const core = (window.CORE_URL || "").trim();
+      if (!core) return;
+
+      const manifestUrl = core + "?asset=manifest&clubId=" + encodeURIComponent(clubId);
+
+      const link = document.getElementById("pwaManifestLink");
+      if (link) link.setAttribute("href", manifestUrl);
+    } catch (e) {
+      // nic
+    }
+  })();
+</script>
   
     <!-- flatpickr (kalendarz) -->
     <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/flatpickr.min.css">
