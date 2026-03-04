@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V9';
+  window.APP_BUILD = 'BETA APP V10';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1373,10 +1373,11 @@ function goToView(viewId, options = {}) {
 
   currentView = viewId;
 
-  // ✅ odśwież numer na ekranie menu (TYLKO TU, bo viewId istnieje tylko tu)
+  // ✅ UI menu + prefetch w tle
   if (viewId === "playerMenuView") {
     const lbl = document.getElementById("playerNumerLabel");
     if (lbl) lbl.textContent = String(numerZalogowanego || "");
+    startPrefetchForPlayer_(); // <-- start równoległego pobierania
   }
 
   const state = { view: viewId };
@@ -3284,6 +3285,28 @@ async function zaloguj() {
   }
 }
 
+/******************** PREFETCH (MENU) ********************/
+
+function startPrefetchForPlayer_() {
+  // cache na promisy + timestamp, żeby nie walić API co sekundę
+  window.__prefetch = window.__prefetch || { t: 0, platnosciP: null, treningiP: null, statystykiP: null };
+
+  // warunki minimalne
+  if (!numerZalogowanego) return;
+  if (!clubId) return;
+
+  const now = Date.now();
+  // jeśli odpalone w ostatnich 30s, nie odpalaj ponownie
+  if (window.__prefetch.t && (now - window.__prefetch.t) < 30000) return;
+
+  window.__prefetch.t = now;
+
+  // odpal równolegle — bez await
+  window.__prefetch.platnosciP = apiClubGet("platnosci", { numer: numerZalogowanego });
+  window.__prefetch.treningiP  = apiClubGet("treningi",  { grupa: grupaZalogowanego, numer: numerZalogowanego });
+  window.__prefetch.statystykiP= apiClubGet("statystyki",{ numer: numerZalogowanego });
+}
+  
 /* =================== 75 REJESTRACJA =================== */
 async function wyslijRejestracje() {
   const numer = document.getElementById("regNumer").value.trim();
@@ -3397,12 +3420,12 @@ async function wyslijRejestracjeTrener() {
 
 async function pokazPlatnosci() {
   goToView("platnosciView");
-
   const div = document.getElementById("listaPlatnosci");
-  if (div) div.innerHTML = "<p>⏳ Ładowanie...</p>";
+  if (div) div.innerHTML = "<p>⏳ Ładowanie płatności...</p>";
 
   try {
-    const lista = await apiClubGet("platnosci", { numer: numerZalogowanego });
+    const p = window.__prefetch?.platnosciP;
+    const lista = await (p || apiClubGet("platnosci", { numer: numerZalogowanego }));
     renderPlatnosci(lista);
   } catch (e) {
     console.error("pokazPlatnosci error", e);
@@ -3524,8 +3547,17 @@ return `
 
 async function pokazTreningi() {
   goToView("homeView");
-  const lista = await apiClubGet("treningi", { grupa: grupaZalogowanego, numer: numerZalogowanego });
-  renderTreningi(lista);
+  const div = document.getElementById("listaTreningow");
+  if (div) div.innerHTML = "<p>⏳ Ładowanie wydarzeń...</p>";
+
+  try {
+    const p = window.__prefetch?.treningiP;
+    const lista = await (p || apiClubGet("treningi", { grupa: grupaZalogowanego, numer: numerZalogowanego }));
+    renderTreningi(lista);
+  } catch (e) {
+    console.error("pokazTreningi error", e);
+    if (div) div.innerHTML = `<p>❌ Błąd ładowania wydarzeń: ${String(e?.message || e)}</p>`;
+  }
 }
 
 function powrotDoPlatnosci() {
@@ -3650,18 +3682,20 @@ async function odswiezListeZapisanych(id) {
 }
 
 async function pokazStatystyki() {
+  goToView("statsView");
+  const div = document.getElementById("listaStatystyk");
+  if (div) div.innerHTML = "<p>⏳ Ładowanie statystyk...</p>";
+
   try {
-    goToView("statsView");
-
-    // WAŻNE: apiClubGet już powinno dokleić clubId i ogarnąć SCRIPT_URL wewnętrznie
-    const lista = await apiClubGet("statystyki", { numer: numerZalogowanego });
-
+    const p = window.__prefetch?.statystykiP;
+    const lista = await (p || apiClubGet("statystyki", { numer: numerZalogowanego }));
     renderStatystyki(lista);
   } catch (e) {
-    const div = document.getElementById("listaStatystyk");
-    if (div) div.innerHTML = `<p>Błąd ładowania statystyk: ${String(e)}</p>`;
+    console.error("pokazStatystyki error", e);
+    if (div) div.innerHTML = `<p>❌ Błąd ładowania statystyk: ${String(e?.message || e)}</p>`;
   }
 }
+  
 function renderStatystyki(lista) {
   // ✅ Kontener zależny od widoku (admin ma swój)
   const isAdminStats = (currentView === "adminStatsView");
