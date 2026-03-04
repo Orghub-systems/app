@@ -615,23 +615,21 @@ input[type="number"] {
     <div id="platnosciView" class="container hidden">
       <h1>Płatności</h1>
       <div id="listaPlatnosci">Ładowanie...</div>
+      <button class="full-btn alt" onclick="goToView('playerMenuView')" style="margin-top:10px;"> ⬅ Powrót do menu </button>
     </div>
 
     <!-- 10. WYDARZENIA (ZAWODNIK) -->
     <div id="homeView" class="container hidden">
       <h1 id="tytulTreningow">TWOJE WYDARZENIA</h1>
       <div id="listaTreningow">Ładowanie...</div>
-      
-    <button class="full-btn alt" onclick="powrotDoPlatnosci()" style="margin-top:10px;">   ⬅ Powrót do płatności
-</button>
-
+      <button class="full-btn alt" onclick="goToView('playerMenuView')" style="margin-top:10px;"> ⬅ Powrót do menu </button>
     </div>
 
     <!-- 11. STATYSTYKI -->
     <div id="statsView" class="container hidden">
       <h1>Statystyki</h1>
       <div id="listaStatystyk">Ładowanie...</div>
-      <button onclick="powrotDoTreningow()" style="margin-top:20px;">⬅ Powrót</button>
+      <button class="full-btn alt" onclick="goToView('playerMenuView')" style="margin-top:10px;"> ⬅ Powrót do menu </button>
     </div>
 
 <!-- I MENU ZAWODNIKA -->
