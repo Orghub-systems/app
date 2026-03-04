@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V6';
+  window.APP_BUILD = 'BETA APP V9';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -664,7 +664,7 @@ input[type="number"] {
 
   <div class="login-box">
     <button id="btnEnablePush" class="full-btn">🔔 Włącz powiadomienia</button>
-    <button class="full-btn alt" onclick="goToView('playerMenuView')">⬅️ Wróć</button>
+    <button class="full-btn alt" onclick="goToView('playerMenuView')"> ⬅ Powrót do menu </button>
   </div>
 
   <p id="pushStatus" style="margin-top:15px;"></p>
@@ -3416,8 +3416,7 @@ function renderPlatnosci(lista) {
 
   if (!lista?.length) {
     div.innerHTML =
-      "<p>Brak zaległości ✅</p>" +
-      "<button class='full-btn' onclick='pokazTreningi()'>Dalej ➡</button>";
+      "<p>Brak zaległości ✅</p>";
     return;
   }
 
