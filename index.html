@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V10';
+  window.APP_BUILD = 'BETA APP V11';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -3462,10 +3462,8 @@ return `
     <div>${p.kwota} zł</div>
   </div>
 `;
-
-      }
-    }).join('') +
-    `<button class="full-btn" onclick="pokazTreningi()" style="margin-top:20px;">Dalej ➡</button>`;
+}
+    }).join('') ;
 }
 
   function parsePlatnoscMeta_(nazwa){
