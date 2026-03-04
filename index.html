@@ -644,15 +644,16 @@ input[type="number"] {
   <h1 style="margin:0 0 25px 0;">Panel zawodnika</h1>
 
   <div class="login-box">
-<button class="full-btn" onclick="pokazPlatnosci()">💳 Płatności</button>
-<button class="full-btn" onclick="pokazTreningi()">📅 Wydarzenia</button>
-<button class="full-btn" onclick="pokazStatystyki()">📊 Statystyki</button>
-<button class="full-btn alt" onclick="goToView('playerSettingsView')">⚙️ Ustawienia</button>
+    <button class="full-btn" onclick="playerGoPlatnosci()">💳 Płatności</button>
+    <button class="full-btn" onclick="playerGoWydarzenia()">📅 Wydarzenia</button>
+    <button class="full-btn" onclick="playerGoStatystyki()">📊 Statystyki</button>
+    <button class="full-btn alt" onclick="goToView('playerSettingsView')">⚙️ Ustawienia</button>
+  </div>
 
-<div style="margin-top:20px;font-size:14px;opacity:0.8;">
-  Zalogowany numer: <span id="playerNumerLabel"></span>
+  <p style="opacity:.8; margin-top:18px;">Zalogowany numer: <b id="playerNumerLabel"></b></p>
 </div>
 
+    
 <!-- II USTAWIENIA -->
 <div id="playerSettingsView" class="container hidden">
   <img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
@@ -1377,11 +1378,6 @@ function goToView(viewId, options = {}) {
     if (replace) history.replaceState(state, "", "");
     else history.pushState(state, "", "");
   } catch (e) {}
-}
-
-  if (viewId === "playerMenuView") {
-  const lbl = document.getElementById("playerNumerLabel");
-  if (lbl) lbl.textContent = String(numerZalogowanego || "");
 }
 
 function showViewFromHistory(viewId) {
@@ -3388,6 +3384,8 @@ async function wyslijRejestracjeTrener() {
     msg.innerText = "❌ " + (e?.message || e);
   }
 }
+
+
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
   
