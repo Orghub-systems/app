@@ -80,7 +80,7 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
   // ✅ 1) Dynamiczny manifest z tej samej domeny
-  if (url.origin === self.location.origin && url.pathname === "/app/manifest.webmanifest") {
+ if (url.origin === self.location.origin && url.pathname.endsWith("/manifest.webmanifest")) {
     const clubId = url.searchParams.get("clubId") || "";
     e.respondWith((async () => {
       const manifest = await buildManifestForClub_(clubId);
