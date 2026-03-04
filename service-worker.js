@@ -51,7 +51,7 @@ async function buildManifestForClub_(clubId) {
   }
 
   return {
-    id: "/?clubId=" + clean,
+    id: "/app/?clubId=" + clean,
     name: clean ? ("OrgHub — " + clean) : "OrgHub Systems",
     short_name: clean ? clean.toUpperCase() : "OrgHub",
 
