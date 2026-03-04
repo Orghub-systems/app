@@ -15,23 +15,23 @@
 
     const core = "https://still-shape-2aa3.orghubsystems.workers.dev";
 
-    // 1) pobierz info PWA z backendu (musisz mieć doGet action=pwaInfo)
     const infoUrl = core + "?action=pwaInfo&clubId=" + encodeURIComponent(clubId);
     const res = await fetch(infoUrl, { cache: "no-store" });
     const info = await res.json();
 
-    // NA RAZIE bierzemy dataUrl, jak backend już zwraca (Krok 1A).
-    // Jeśli jeszcze nie zwraca — będą puste i wtedy manifest będzie bez ikon (ale wykryty).
     const icon192 = (info && info.icon192DataUrl) ? String(info.icon192DataUrl) : "";
     const icon512 = (info && info.icon512DataUrl) ? String(info.icon512DataUrl) : "";
 
-    // 2) zbuduj manifest lokalnie (same-origin dzięki Blob)
+    const base = location.origin + location.pathname;
+
     const manifest = {
-      id: "/?clubId=" + clubId,  // ✅ klucz: osobna aplikacja per klub
+      id: "/?clubId=" + clubId,
       name: "OrgHub — " + clubId,
       short_name: clubId.toUpperCase(),
-      start_url: "./?clubId=" + encodeURIComponent(clubId) + "&source=pwa",
-      scope: "./",
+
+      start_url: base + "?clubId=" + encodeURIComponent(clubId) + "&source=pwa",
+      scope: base,
+
       display: "standalone",
       display_override: ["standalone", "minimal-ui"],
       orientation: "portrait",
