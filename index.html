@@ -59,12 +59,15 @@
     const blobUrl = URL.createObjectURL(blob);
 
     const link = document.getElementById("pwaManifestLink");
-    if (link) link.href = blobUrl;
+    if (link) {
+      link.href = blobUrl;
+      document.head.appendChild(link); // wymusza ponowne wykrycie manifestu
+    }
 
-    console.log("📦 PWA manifest BLOB:", manifest);
-  } catch (e) {
-    console.error("❌ PWA manifest error", e);
-  }
+      console.log("📦 PWA manifest BLOB:", manifest);
+    } catch (e) {
+      console.error("❌ PWA manifest error", e);
+    }
 })();
 </script>
   
