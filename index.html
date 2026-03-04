@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V1';
+  window.APP_BUILD = 'BETA APP V2';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1370,9 +1370,18 @@ function goToView(viewId, options = {}) {
   const { replace = false } = options;
   ukryjWszystkie();
   hideBusy();
+
   const el = document.getElementById(viewId);
   if (el) el.classList.remove("hidden");
+
   currentView = viewId;
+
+  // ✅ odśwież numer na ekranie menu (TYLKO TU, bo viewId istnieje tylko tu)
+  if (viewId === "playerMenuView") {
+    const lbl = document.getElementById("playerNumerLabel");
+    if (lbl) lbl.textContent = String(numerZalogowanego || "");
+  }
+
   const state = { view: viewId };
   try {
     if (replace) history.replaceState(state, "", "");
