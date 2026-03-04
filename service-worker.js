@@ -26,87 +26,55 @@ self.addEventListener("activate", (e) => {
 
 // Helper: zbuduj manifest JSON (ikony jako data URL, żeby nie było 403 z Drive)
 async function buildManifestForClub_(clubId) {
-  const base = "https://orghub-systems.github.io/app/"; // scope/start_url (same-origin)
+  const base = self.location.origin + "/app/"; // https://.../app/
   const clean = String(clubId || "").trim();
 
-  // fallback ikony lokalne, gdyby backend nie odpowiedział
+  // ✅ TWARDY FALLBACK (zawsze instalowalne ikony z GitHub Pages)
   let icon192 = base + "icon-192.png";
   let icon512 = base + "icon-512.png";
 
+  // ✅ jeśli backend zwróci dataUrl, użyj (bez Drive 403)
   if (clean) {
     try {
       const infoUrl = CORE + "?action=pwaInfo&clubId=" + encodeURIComponent(clean);
       const res = await fetch(infoUrl, { cache: "no-store" });
       const info = await res.json();
 
-      // Preferujemy dataUrl (żeby ominąć Drive 403)
-      if (info && info.icon192DataUrl) icon192 = String(info.icon192DataUrl);
-      if (info && info.icon512DataUrl) icon512 = String(info.icon512DataUrl);
+      if (info && info.icon192DataUrl && String(info.icon192DataUrl).startsWith("data:image/")) {
+        icon192 = String(info.icon192DataUrl);
+      }
+      if (info && info.icon512DataUrl && String(info.icon512DataUrl).startsWith("data:image/")) {
+        icon512 = String(info.icon512DataUrl);
+      }
     } catch (e) {
-      // fallback zostaje
+      // zostaje fallback
     }
   }
 
   return {
-    id: "/?clubId=" + clean, // osobna instalacja per klub
+    // ✅ osobna instalacja per klub
+    id: "/?clubId=" + clean,
+
     name: clean ? ("OrgHub — " + clean) : "OrgHub Systems",
     short_name: clean ? clean.toUpperCase() : "OrgHub",
-    start_url: clean ? (base + "?clubId=" + encodeURIComponent(clean) + "&source=pwa") : base,
+
+    // ✅ pełne, poprawne URL-e (Chrome nie marudzi)
+    start_url: clean
+      ? (base + "?clubId=" + encodeURIComponent(clean) + "&source=pwa")
+      : base,
     scope: base,
+
     display: "standalone",
     orientation: "portrait",
     background_color: "#0B1E3F",
     theme_color: "#F47B20",
     lang: "pl",
     dir: "ltr",
+
+    // ✅ KLUCZ: purpose = "any" (żeby Installability zniknęło)
     icons: [
-      {
-        src: icon192,
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any"
-      },
-      {
-        src: icon512,
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any"
-      }
+      { src: icon192, sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" }
     ]
   };
 }
-
-self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
-
-  // ✅ 1) Dynamiczny manifest z tej samej domeny
- if (url.origin === self.location.origin && url.pathname.endsWith("/manifest.webmanifest")) {
-    const clubId = url.searchParams.get("clubId") || "";
-    e.respondWith((async () => {
-      const manifest = await buildManifestForClub_(clubId);
-      return new Response(JSON.stringify(manifest), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/manifest+json; charset=utf-8",
-          "Cache-Control": "no-store"
-        }
-      });
-    })());
-    return;
-  }
-
-  // ✅ 2) Basic offline: cache-first dla statyków, network dla reszty
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((resp) => {
-        // nie cache’uj cross-origin / API
-        if (url.origin === self.location.origin && resp && resp.status === 200) {
-          const copy = resp.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy)).catch(() => {});
-        }
-        return resp;
-      }).catch(() => cached);
-    })
-  );
-});
