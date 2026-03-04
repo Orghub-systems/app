@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V3';
+  window.APP_BUILD = 'BETA APP V4';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -621,9 +621,10 @@ input[type="number"] {
     <div id="homeView" class="container hidden">
       <h1 id="tytulTreningow">TWOJE WYDARZENIA</h1>
       <div id="listaTreningow">Ładowanie...</div>
-      <button onclick="pokazStatystyki()" style="margin-top:20px;">📈 Pokaż statystyki</button>
-    <button class="full-btn alt" onclick="powrotDoPlatnosci()" style="margin-top:10px;">   ⬅ Powrót do płatności
-</button>
+      
+    <button class="full-btn alt" onclick="goToView('playerMenuView')" style="margin-top:10px;">
+    ⬅ Powrót do menu
+    </button>
 
     </div>
 
@@ -631,8 +632,10 @@ input[type="number"] {
     <div id="statsView" class="container hidden">
       <h1>Statystyki</h1>
       <div id="listaStatystyk">Ładowanie...</div>
-      <button onclick="powrotDoTreningow()" style="margin-top:20px;">⬅ Powrót</button>
-    </div>
+      
+    <button class="full-btn alt" onclick="goToView('playerMenuView')" style="margin-top:10px;">
+    ⬅ Powrót do menu
+    </button>
 
 <!-- I MENU ZAWODNIKA -->
 <div id="playerMenuView" class="container hidden">
@@ -3393,8 +3396,6 @@ async function wyslijRejestracjeTrener() {
     msg.innerText = "❌ " + (e?.message || e);
   }
 }
-
-
 
 /* =================== 80 ZAWODNIK: TRENINGI / ZAPISY =================== */
   
