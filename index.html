@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V2';
+  window.APP_BUILD = 'BETA APP V3';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -644,9 +644,9 @@ input[type="number"] {
   <h1 style="margin:0 0 25px 0;">Panel zawodnika</h1>
 
   <div class="login-box">
-    <button class="full-btn" onclick="playerGoPlatnosci()">💳 Płatności</button>
-    <button class="full-btn" onclick="playerGoWydarzenia()">📅 Wydarzenia</button>
-    <button class="full-btn" onclick="playerGoStatystyki()">📊 Statystyki</button>
+    <button class="full-btn" onclick="pokazPlatnosci()">💳 Płatności</button>
+    <button class="full-btn" onclick="pokazTreningi()">📅 Wydarzenia</button>
+    <button class="full-btn" onclick="pokazStatystyki()">📊 Statystyki</button>
     <button class="full-btn alt" onclick="goToView('playerSettingsView')">⚙️ Ustawienia</button>
   </div>
 
