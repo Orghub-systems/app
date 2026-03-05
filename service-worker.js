@@ -164,8 +164,7 @@ self.addEventListener("notificationclick", (event) => {
     for (const c of allClients) {
       if (c.url && c.url.startsWith(self.location.origin + "/app/")) {
         await c.focus();
-        // opcjonalnie możesz też przekazać message do klienta:
-        // c.postMessage({ type:"PUSH_CLICK", url });
+        await c.navigate(url); // ✅ DODAJ TO
         return;
       }
     }
