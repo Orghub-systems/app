@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V15';
+  window.APP_BUILD = 'BETA APP V16';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1399,7 +1399,12 @@ async function enablePushFlow_() {
     window.clubId = cid;
     try { localStorage.setItem("clubId", cid); } catch(e) {}
     
-    if (!window.numerZalogowanego) {
+    const numer =
+      (typeof numerZalogowanego !== "undefined" && String(numerZalogowanego).trim()) ||
+      (window.numerZalogowanego && String(window.numerZalogowanego).trim()) ||
+      "";
+    
+    if (!numer) {
       alert("Zaloguj się jako zawodnik (brak numeru).");
       return;
     }
