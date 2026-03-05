@@ -1325,6 +1325,107 @@ async function enablePushFromButton_() {
     console.error("bindPushButton error", e);
   }
 })();
+
+  /******************** PUSH: ETAP 2 ********************/
+  
+const PUSH_WORKER_URL = "https://broken-wind-9e0b.orghubsystems.workers.dev";
+let __pushBtnBound = false;
+
+function hookPushButton_() {
+  const btn = document.getElementById("btnEnablePush");
+  if (!btn) return;
+
+  // nie binduj 100 razy
+  if (btn.dataset.bound === "1") return;
+  btn.dataset.bound = "1";
+
+  btn.addEventListener("click", enablePushFlow_);
+}
+
+async function enablePushFlow_() {
+  const btn = document.getElementById("btnEnablePush");
+  if (btn) btn.disabled = true;
+
+  try {
+    if (!("serviceWorker" in navigator)) {
+      alert("Brak Service Worker w tej przeglądarce.");
+      return;
+    }
+    if (!("PushManager" in window)) {
+      alert("Brak Push w tej przeglądarce.");
+      return;
+    }
+
+    // 1) uprawnienie
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") {
+      alert("Powiadomienia: brak zgody.");
+      return;
+    }
+
+    // 2) pobierz VAPID public z Workera
+    const vapidRes = await fetch(PUSH_WORKER_URL + "/push/vapidPublic", { cache: "no-store" });
+    const vapidJson = await vapidRes.json();
+    const publicKey = String(vapidJson?.publicKey || "").trim();
+
+    if (!publicKey) {
+      alert("Brak VAPID_PUBLIC_KEY po stronie Workera. Ustaw w Cloudflare → Variables.");
+      return;
+    }
+
+    // 3) rejestracja SW gotowa?
+    const reg = await navigator.serviceWorker.ready;
+
+    // 4) subskrypcja
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array_(publicKey),
+    });
+
+    // 5) zapisz po stronie Workera (KV)
+    if (!window.clubId) {
+      alert("Brak clubId w URL.");
+      return;
+    }
+    if (!window.numerZalogowanego) {
+      alert("Zaloguj się jako zawodnik (brak numeru).");
+      return;
+    }
+
+    const payload = {
+      clubId: String(window.clubId),
+      numer: String(window.numerZalogowanego),
+      subscription: sub.toJSON(),
+    };
+
+    const saveRes = await fetch(PUSH_WORKER_URL + "/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const saveJson = await saveRes.json().catch(() => ({}));
+    if (!saveRes.ok || saveJson?.success === false) {
+      throw new Error(saveJson?.error || "Błąd zapisu subskrypcji");
+    }
+
+    alert("✅ Powiadomienia włączone (subskrypcja zapisana).");
+
+  } catch (e) {
+    alert("❌ Push error: " + (e?.message || e));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function urlBase64ToUint8Array_(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
   
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
@@ -1461,6 +1562,7 @@ function goToView(viewId, options = {}) {
     if (replace) history.replaceState(state, "", "");
     else history.pushState(state, "", "");
   } catch (e) {}
+  hookPushButton_();
 }
 
 function showViewFromHistory(viewId) {
