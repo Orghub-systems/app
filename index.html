@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V13';
+  window.APP_BUILD = 'BETA APP V14';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1559,8 +1559,9 @@ function goToView(viewId, options = {}) {
 
   const state = { view: viewId };
   try {
-    if (replace) history.replaceState(state, "", "");
-    else history.pushState(state, "", "");
+    const urlKeep = location.pathname + location.search; // ✅ zostawia ?clubId=...
+    if (replace) history.replaceState(state, "", urlKeep);
+    else history.pushState(state, "", urlKeep);
   } catch (e) {}
   hookPushButton_();
 }
