@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V14';
+  window.APP_BUILD = 'BETA APP V15';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1383,10 +1383,22 @@ async function enablePushFlow_() {
     });
 
     // 5) zapisz po stronie Workera (KV)
-    if (!window.clubId) {
-      alert("Brak clubId w URL.");
+    const cid =
+      (window.clubId && String(window.clubId).trim()) ||
+      (typeof clubId !== "undefined" && String(clubId).trim()) ||
+      (new URLSearchParams(location.search).get("clubId") || "").trim() ||
+      (localStorage.getItem("clubId") || "").trim();
+    
+    if (!cid) {
+      console.warn("Brak clubId (URL/pamięć).");
+      // UWAGA: żadnych alertów — push ma nie wywalać apki
       return;
     }
+    
+    // utrwalamy, żeby reszta kodu nie miała pustki
+    window.clubId = cid;
+    try { localStorage.setItem("clubId", cid); } catch(e) {}
+    
     if (!window.numerZalogowanego) {
       alert("Zaloguj się jako zawodnik (brak numeru).");
       return;
