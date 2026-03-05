@@ -120,34 +120,41 @@ self.addEventListener("fetch", (e) => {
 /******************** PUSH: odbiór i kliknięcie ********************/
 
 self.addEventListener("push", (event) => {
-  // payload: { title, body, icon, badge, url, tag, data }
-  let payload = {};
-  try {
-    payload = event.data ? event.data.json() : {};
-  } catch (e) {
-    payload = { body: event.data ? String(event.data.text()) : "" };
-  }
+  event.waitUntil((async () => {
+    // payload: { title, body, icon, badge, url, tag, data }
+    let payload = null;
 
-  const title = payload.title || "OrgHub";
-  const body  = payload.body  || "Masz nowe powiadomienie";
+    try {
+      payload = event.data ? await event.data.json() : null;
+    } catch (e) {
+      try {
+        payload = { body: event.data ? await event.data.text() : "" };
+      } catch (e2) {
+        payload = null;
+      }
+    }
 
-  // domyślne otwarcie apki
-  const url = payload.url || (self.location.origin + "/app/");
+    const title = (payload && payload.title) ? String(payload.title) : "OrgHub";
+    const body  = (payload && payload.body)  ? String(payload.body)  : "Push dotarł (brak/nieczytelny payload)";
 
-  const options = {
-    body,
-    // możesz nadpisać ikoną klubową w payloadzie, ale fallback zostawiamy bezpieczny
-    icon: payload.icon || (self.location.origin + "/app/icon-192.png"),
-    badge: payload.badge || (self.location.origin + "/app/icon-192.png"),
-    tag: payload.tag || "orghub",
-    data: {
-      url,
-      ...(payload.data || {})
-    },
-    renotify: true
-  };
+    const url = (payload && payload.url)
+      ? String(payload.url)
+      : (self.location.origin + "/app/");
 
-  event.waitUntil(self.registration.showNotification(title, options));
+    const options = {
+      body,
+      icon: (payload && payload.icon) ? String(payload.icon) : (self.location.origin + "/app/icon-192.png"),
+      badge: (payload && payload.badge) ? String(payload.badge) : (self.location.origin + "/app/icon-192.png"),
+      tag: (payload && payload.tag) ? String(payload.tag) : "orghub",
+      data: {
+        url,
+        ...((payload && payload.data) ? payload.data : {})
+      },
+      renotify: true
+    };
+
+    await self.registration.showNotification(title, options);
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {
