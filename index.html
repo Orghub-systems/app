@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V17';
+  window.APP_BUILD = 'BETA APP V18';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1347,71 +1347,58 @@ async function enablePushFlow_() {
   if (btn) btn.disabled = true;
 
   try {
-    if (!("serviceWorker" in navigator)) {
-      alert("Brak Service Worker w tej przeglądarce.");
-      return;
-    }
-    if (!("PushManager" in window)) {
-      alert("Brak Push w tej przeglądarce.");
-      return;
-    }
+    if (!("serviceWorker" in navigator)) { alert("Brak Service Worker."); return; }
+    if (!("PushManager" in window)) { alert("Brak PushManager."); return; }
 
-    // 1) uprawnienie
+    // 1) zgoda
     const perm = await Notification.requestPermission();
-    if (perm !== "granted") {
-      alert("Powiadomienia: brak zgody.");
-      return;
-    }
+    if (perm !== "granted") { alert("Powiadomienia: brak zgody."); return; }
 
-    // 2) pobierz VAPID public z Workera
+    // 2) VAPID public z Workera
     const vapidRes = await fetch(PUSH_WORKER_URL + "/push/vapidPublic", { cache: "no-store" });
-    const vapidJson = await vapidRes.json();
+    const vapidJson = await vapidRes.json().catch(() => ({}));
     const publicKey = String(vapidJson?.publicKey || "").trim();
+    if (!publicKey) { alert("Brak VAPID_PUBLIC_KEY po stronie Workera."); return; }
 
-    if (!publicKey) {
-      alert("Brak VAPID_PUBLIC_KEY po stronie Workera. Ustaw w Cloudflare → Variables.");
-      return;
-    }
-
-    // 3) rejestracja SW gotowa?
+    // 3) SW ready
     const reg = await navigator.serviceWorker.ready;
 
-    // 4) subskrypcja
+    // ✅ 3A) usuń starą subskrypcję (naprawia „different applicationServerKey”)
+    const oldSub = await reg.pushManager.getSubscription();
+    if (oldSub) {
+      try { await oldSub.unsubscribe(); } catch (e) {}
+    }
+
+    // 4) nowa subskrypcja
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array_(publicKey),
     });
 
-    // 5) zapisz po stronie Workera (KV)
+    // 5) clubId pewny
     const cid =
-      (window.clubId && String(window.clubId).trim()) ||
-      (typeof clubId !== "undefined" && String(clubId).trim()) ||
       (new URLSearchParams(location.search).get("clubId") || "").trim() ||
+      (typeof clubId !== "undefined" && String(clubId).trim()) ||
+      (window.clubId && String(window.clubId).trim()) ||
       (localStorage.getItem("clubId") || "").trim();
-    
-    if (!cid) {
-      console.warn("Brak clubId (URL/pamięć).");
-      // UWAGA: żadnych alertów — push ma nie wywalać apki
-      return;
-    }
-    
-    // utrwalamy, żeby reszta kodu nie miała pustki
+
+    if (!cid) { alert("Brak clubId (URL/pamięć)."); return; }
     window.clubId = cid;
     try { localStorage.setItem("clubId", cid); } catch(e) {}
-    
+
+    // 6) numer pewny (po loginie MUSI być ustawione)
     const numer =
       (typeof numerZalogowanego !== "undefined" && String(numerZalogowanego).trim()) ||
       (window.numerZalogowanego && String(window.numerZalogowanego).trim()) ||
       "";
-    
-    if (!numer) {
-      alert("Zaloguj się jako zawodnik (brak numeru).");
-      return;
-    }
-    
+
+    if (!numer) { alert("Brak numeru zawodnika (zaloguj się ponownie)."); return; }
+    window.numerZalogowanego = numer; // ✅ utrwalenie
+
+    // 7) zapis do KV
     const payload = {
-      clubId: String(window.clubId),
-      numer,
+      clubId: String(cid),
+      numer: String(numer),
       subscription: sub.toJSON(),
     };
 
@@ -1423,10 +1410,11 @@ async function enablePushFlow_() {
 
     const saveJson = await saveRes.json().catch(() => ({}));
     if (!saveRes.ok || saveJson?.success === false) {
-      throw new Error(saveJson?.error || "Błąd zapisu subskrypcji");
+      throw new Error(saveJson?.error || ("HTTP " + saveRes.status));
     }
 
     alert("✅ Powiadomienia włączone (subskrypcja zapisana).");
+    console.log("✅ PUSH subscription:", sub);
 
   } catch (e) {
     alert("❌ Push error: " + (e?.message || e));
