@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V21';
+  window.APP_BUILD = 'BETA APP V22';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1378,17 +1378,15 @@ async function enablePushFlow_() {
     // 3) SW ready
     const reg = await navigator.serviceWorker.ready;
 
-    // ✅ 3A) usuń starą subskrypcję (naprawia „different applicationServerKey”)
-    const oldSub = await reg.pushManager.getSubscription();
-    if (oldSub) {
-      try { await oldSub.unsubscribe(); } catch (e) {}
+    // 4) istniejąca subskrypcja albo nowa
+    let sub = await reg.pushManager.getSubscription();
+    
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array_(publicKey),
+      });
     }
-
-    // 4) nowa subskrypcja
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array_(publicKey),
-    });
 
     // 5) clubId pewny
     const cid =
