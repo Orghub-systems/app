@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V25';
+  window.APP_BUILD = 'BETA APP V26';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -3667,60 +3667,99 @@ async function pokazPlatnosci() {
   try {
     const p = window.__prefetch?.platnosciP;
     const lista = await (p || apiClubGet("platnosci", { numer: numerZalogowanego }));
-
-    // TEST: pokaż surowe dane na ekranie zamiast normalnego renderu
-    if (div) {
-      div.innerHTML = `
-        <div class="card" style="background:#111; text-align:left; white-space:pre-wrap; overflow:auto; font-size:12px;">
-${escapeHtml_(JSON.stringify(lista, null, 2))}
-        </div>
-      `;
-    }
-
+    renderPlatnosci(lista);
   } catch (e) {
     console.error("pokazPlatnosci error", e);
     if (div) div.innerHTML = `<p>❌ Błąd pobierania płatności: ${String(e?.message || e)}</p>`;
   }
 }
-
-function escapeHtml_(txt) {
-  return String(txt ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
   
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
+  if (!div) return;
 
-  if (!lista?.length) {
-    div.innerHTML =
-      "<p>Brak zaległości ✅</p>";
+  if (!Array.isArray(lista) || lista.length === 0) {
+    div.innerHTML = `<div class="card" style="background:#123a1a;">Brak płatności do wyświetlenia ✅</div>`;
     return;
   }
 
-  div.innerHTML =
-    "<h3>PŁATNOŚCI</h3>" +
-    lista.map(p => {
-      // red = zaległość
-      // green = opłacone / w terminie
-      if (p.status === "green") {
-        return `
-          <div class="card status-green">
-            <div style="font-weight:700;">${p.nazwa}</div>
-            <div>${p.kwota} zł</div>
+  const miesiace = [
+    "styczeń","luty","marzec","kwiecień","maj","czerwiec",
+    "lipiec","sierpień","wrzesień","październik","listopad","grudzień"
+  ];
+
+  function escapeHtml_(txt) {
+    return String(txt ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function parsePaymentOrder_(name) {
+    const txt = String(name || "").trim();
+    const lower = txt.toLowerCase();
+
+    const yearMatch = lower.match(/20\d{2}/);
+    const year = yearMatch ? Number(yearMatch[0]) : 9999;
+
+    const monthIdx = miesiace.findIndex(m => lower.includes(m));
+    const safeMonthIdx = monthIdx >= 0 ? monthIdx : 99;
+
+    const typeOrder = lower.startsWith("składka") ? 0 : 1;
+
+    return {
+      year,
+      monthIdx: safeMonthIdx,
+      typeOrder
+    };
+  }
+
+  const sorted = [...lista].sort((a, b) => {
+    const pa = parsePaymentOrder_(a?.nazwa);
+    const pb = parsePaymentOrder_(b?.nazwa);
+
+    if (pa.year !== pb.year) return pa.year - pb.year;
+    if (pa.monthIdx !== pb.monthIdx) return pa.monthIdx - pb.monthIdx;
+    if (pa.typeOrder !== pb.typeOrder) return pa.typeOrder - pb.typeOrder;
+
+    return String(a?.nazwa || "").localeCompare(String(b?.nazwa || ""), "pl");
+  });
+
+  div.innerHTML = sorted.map(p => {
+    const isPaid =
+      p?.status === "oplacone" ||
+      p?.status === "opłacone" ||
+      p?.status === "green" ||
+      p?.status === "zaplacone" ||
+      p?.status === "zapłacone";
+
+    const bg = isPaid ? "#123a1a" : "#3a1414";
+    const badge = isPaid
+      ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
+      : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
+
+    const nazwa = escapeHtml_(p?.nazwa || "");
+    const kwota = Number(p?.kwota || 0);
+
+    const typLabel = String(p?.nazwa || "").toLowerCase().startsWith("składka")
+      ? "Składka"
+      : "Zajęcia dodatkowe";
+
+    return `
+      <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; gap:10px;">
+          <div>
+            <div style="opacity:.9; font-size:14px;">${typLabel}</div>
+            <div style="font-size:18px; font-weight:800;">${nazwa}</div>
           </div>
-        `;
-      } else {
-        // dokładnie styl aplikacji jak przycisk "Zapisz się"
-return `
-  <div class="card status-red">
-    <div style="font-weight:700;">${p.nazwa}</div>
-    <div>${p.kwota} zł</div>
-  </div>
-`;
-}
-    }).join('') ;
+          <div style="text-align:right;">
+            <div style="font-size:18px; font-weight:800;">${kwota} zł</div>
+            <div style="margin-top:2px;">${badge}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
   function parsePlatnoscMeta_(nazwa){
