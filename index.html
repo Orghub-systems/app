@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V18';
+  window.APP_BUILD = 'BETA APP V19';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1266,6 +1266,84 @@ function hookPushButton_() {
   btn.addEventListener("click", enablePushFlow_);
 }
 
+async function getPushState_() {
+  try {
+    if (!("serviceWorker" in navigator)) {
+      return { active: false, reason: "no-sw" };
+    }
+
+    if (!("PushManager" in window)) {
+      return { active: false, reason: "no-pushmanager" };
+    }
+
+    if (!("Notification" in window)) {
+      return { active: false, reason: "no-notification" };
+    }
+
+    if (Notification.permission !== "granted") {
+      return { active: false, reason: "permission-not-granted" };
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+
+    if (!sub) {
+      return { active: false, reason: "no-subscription" };
+    }
+
+    return { active: true, reason: "ok", subscription: sub };
+  } catch (e) {
+    return { active: false, reason: "error", error: String(e?.message || e) };
+  }
+}
+
+async function refreshPushButtonState_() {
+  const btn = document.getElementById("btnEnablePush");
+  const status = document.getElementById("pushStatus");
+  if (!btn) return;
+
+  const state = await getPushState_();
+
+  // wyczyść stare klasy/kolory inline
+  btn.style.background = "";
+  btn.style.borderColor = "";
+  btn.style.color = "";
+  btn.disabled = false;
+
+  if (state.active) {
+    btn.textContent = "🟢 Powiadomienia aktywne";
+    btn.style.background = "#0f7a2a";
+    btn.style.borderColor = "#19a642";
+    btn.style.color = "#ffffff";
+
+    if (status) {
+      status.textContent = "Powiadomienia są aktywne na tym urządzeniu.";
+    }
+    return;
+  }
+
+  btn.textContent = "🔔 Włącz powiadomienia";
+  btn.style.background = "#8b0000";
+  btn.style.borderColor = "#ff2b2b";
+  btn.style.color = "#ffffff";
+
+  if (!status) return;
+
+  if (state.reason === "permission-not-granted") {
+    status.textContent = "Powiadomienia są wyłączone. Kliknij przycisk, aby je włączyć.";
+  } else if (state.reason === "no-subscription") {
+    status.textContent = "Brak aktywnej subskrypcji push. Kliknij przycisk, aby aktywować powiadomienia.";
+  } else if (state.reason === "no-sw") {
+    status.textContent = "Ta przeglądarka nie obsługuje Service Workera.";
+  } else if (state.reason === "no-pushmanager") {
+    status.textContent = "Ta przeglądarka nie obsługuje powiadomień push.";
+  } else if (state.reason === "no-notification") {
+    status.textContent = "Ta przeglądarka nie obsługuje powiadomień.";
+  } else {
+    status.textContent = "Powiadomienia nie są aktywne.";
+  }
+}
+  
 async function enablePushFlow_() {
   const btn = document.getElementById("btnEnablePush");
   if (btn) btn.disabled = true;
@@ -1337,8 +1415,9 @@ async function enablePushFlow_() {
       throw new Error(saveJson?.error || ("HTTP " + saveRes.status));
     }
 
+        console.log("✅ PUSH subscription:", sub);
+    await refreshPushButtonState_();
     alert("✅ Powiadomienia włączone (subskrypcja zapisana).");
-    console.log("✅ PUSH subscription:", sub);
 
   } catch (e) {
     alert("❌ Push error: " + (e?.message || e));
