@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V22';
+  window.APP_BUILD = 'BETA APP V23';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1414,20 +1414,39 @@ async function enablePushFlow_() {
       subscription: sub.toJSON(),
     };
 
-    const saveRes = await fetch(PUSH_WORKER_URL + "/push/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+const saveRes = await fetch(PUSH_WORKER_URL + "/push/subscribe", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
 
-    const saveJson = await saveRes.json().catch(() => ({}));
-    if (!saveRes.ok || saveJson?.success === false) {
-      throw new Error(saveJson?.error || ("HTTP " + saveRes.status));
-    }
+const saveJson = await saveRes.json().catch(() => ({}));
+if (!saveRes.ok || saveJson?.success === false) {
+  throw new Error(saveJson?.error || ("HTTP " + saveRes.status));
+}
 
-        console.log("✅ PUSH subscription:", sub);
-    await refreshPushButtonState_();
-    alert("✅ Powiadomienia włączone (subskrypcja zapisana).");
+// zapisz meta dla service workera: clubId + numer
+try {
+  const cache = await caches.open("orghub-push-meta");
+  await cache.put(
+    "/app/push-meta.json",
+    new Response(
+      JSON.stringify({
+        clubId: String(cid),
+        numer: String(numer)
+      }),
+      {
+        headers: { "Content-Type": "application/json" }
+      }
+    )
+  );
+} catch (e) {
+  console.warn("push-meta cache save error", e);
+}
+
+console.log("✅ PUSH subscription:", sub);
+await refreshPushButtonState_();
+alert("✅ Powiadomienia włączone (subskrypcja zapisana).");
 
   } catch (e) {
     alert("❌ Push error: " + (e?.message || e));
