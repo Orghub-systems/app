@@ -3668,9 +3668,15 @@ async function pokazPlatnosci() {
     const p = window.__prefetch?.platnosciP;
     const lista = await (p || apiClubGet("platnosci", { numer: numerZalogowanego }));
 
-    console.log("PLATNOSCI_PLAYER_RAW_JSON", JSON.stringify(lista, null, 2));
-    
-    renderPlatnosci(lista);
+    // TEST: pokaż surowe dane na ekranie zamiast normalnego renderu
+    if (div) {
+      div.innerHTML = `
+        <div class="card" style="background:#111; text-align:left; white-space:pre-wrap; overflow:auto; font-size:12px;">
+${escapeHtml_(JSON.stringify(lista, null, 2))}
+        </div>
+      `;
+    }
+
   } catch (e) {
     console.error("pokazPlatnosci error", e);
     if (div) div.innerHTML = `<p>❌ Błąd pobierania płatności: ${String(e?.message || e)}</p>`;
