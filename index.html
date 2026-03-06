@@ -337,9 +337,8 @@ input[type="number"] {
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js', { scope: '/app/' })
-      .then(async (r) => {
+      .then((r) => {
         console.log("✅ SW zarejestrowany:", r);
-        try { await r.update(); } catch (e) {}
       })
       .catch(e => console.error("❌ Błąd SW:", e));
   }
