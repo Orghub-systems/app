@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V24';
+  window.APP_BUILD = 'BETA APP V25';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -589,7 +589,6 @@ input[type="number"] {
       <button class="full-btn alt" id="btnPickGroups" type="button" onclick="openGroupsPopup()">
         Wybierz grupy
       </button>
-      <div id="groupsSummary" style="margin-top:6px; opacity:.85; font-size:13px;">—</div>
 
       <!-- CHECKBOXY jak w edycji -->
       <label class="full-btn alt" for="eventRez">
@@ -4374,13 +4373,13 @@ function applyGroupsPopup() {
 }
 
 function updateGroupsSummary_() {
-  const el = document.getElementById("groupsSummary");
-  if (!el) return;
+  const btn = document.getElementById("btnPickGroups");
+  if (!btn) return;
 
   const arr = Array.from(selectedGroups);
   arr.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
 
-  el.textContent = arr.length ? `✅ Wybrane: ${arr.join(", ")}` : "—";
+  btn.textContent = arr.length ? arr.join(", ") : "Wybierz grupy";
 }
 
 function resetGroups_() {
