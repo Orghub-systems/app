@@ -3668,7 +3668,7 @@ async function pokazPlatnosci() {
     const p = window.__prefetch?.platnosciP;
     const lista = await (p || apiClubGet("platnosci", { numer: numerZalogowanego }));
 
-    console.log("PLATNOSCI_PLAYER_RAW", lista);
+    console.log("PLATNOSCI_PLAYER_RAW_JSON", JSON.stringify(lista, null, 2));
     
     renderPlatnosci(lista);
   } catch (e) {
