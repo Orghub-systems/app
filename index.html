@@ -327,29 +327,21 @@ input[type="number"] {
   </style>
   
 <script>
-  
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V20';
+  window.APP_BUILD = 'BETA APP V21';
 
-    const poprzednia = localStorage.getItem('wersjaApki');
+  const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
     localStorage.setItem('wersjaApki', window.APP_BUILD);
+  }
 
-    // ✅ twarde odświeżenie PWA cache przy zmianie wersji
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations()
-        .then(regs => Promise.all(regs.map(r => r.unregister())))
-        .finally(() => location.reload());
-    } else {
-      location.reload();
-    }
-  } else {
-    // normalna rejestracja SW
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js', { scope: '/app/' })
-        .then(r => console.log("✅ SW zarejestrowany:", r))
-        .catch(e => console.error("❌ Błąd SW:", e));
-    }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js', { scope: '/app/' })
+      .then(async (r) => {
+        console.log("✅ SW zarejestrowany:", r);
+        try { await r.update(); } catch (e) {}
+      })
+      .catch(e => console.error("❌ Błąd SW:", e));
   }
 </script>
 
