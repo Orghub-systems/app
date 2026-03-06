@@ -3682,6 +3682,13 @@ ${escapeHtml_(JSON.stringify(lista, null, 2))}
     if (div) div.innerHTML = `<p>❌ Błąd pobierania płatności: ${String(e?.message || e)}</p>`;
   }
 }
+
+function escapeHtml_(txt) {
+  return String(txt ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
   
 function renderPlatnosci(lista) {
   const div = document.getElementById("listaPlatnosci");
