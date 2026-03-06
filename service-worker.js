@@ -1,6 +1,7 @@
 /* service-worker.js — PWA dynamic manifest via SW (same-origin) */
 
 const CORE = "https://still-shape-2aa3.orghubsystems.workers.dev";
+const PUSH_CORE = "https://broken-wind-9e0b.orghubsystems.workers.dev";
 
 const CACHE_NAME = "orghub-static-v2";
 const STATIC_ASSETS = [
@@ -118,26 +119,48 @@ self.addEventListener("fetch", (e) => {
 
 
 /******************** PUSH: odbiór i kliknięcie ********************/
-
 self.addEventListener("push", (event) => {
   event.waitUntil((async () => {
-    // payload: { title, body, icon, badge, url, tag, data }
     let payload = null;
 
+    // 1) jeśli payload jednak jest — spróbuj go odczytać
     try {
       payload = event.data ? await event.data.json() : null;
     } catch (e) {
+      payload = null;
+    }
+
+    // 2) jeśli payloadu brak, pobierz wiadomość z Workera
+    if (!payload) {
       try {
-        payload = { body: event.data ? await event.data.text() : "" };
-      } catch (e2) {
+        const metaResp = await caches.open("orghub-push-meta").then(cache => cache.match("/app/push-meta.json"));
+        const meta = metaResp ? await metaResp.json() : null;
+
+        const clubId = meta && meta.clubId ? String(meta.clubId).trim() : "";
+        const numer  = meta && meta.numer  ? String(meta.numer).trim()  : "";
+
+        if (clubId && numer) {
+          const pullUrl =
+            PUSH_CORE + "/push/pull"
+            + "?clubId=" + encodeURIComponent(clubId)
+            + "&numer=" + encodeURIComponent(numer);
+
+          const pullResp = await fetch(pullUrl, { cache: "no-store" });
+          const pullJson = await pullResp.json().catch(() => null);
+
+          if (pullJson && pullJson.success && pullJson.found && pullJson.message) {
+            payload = pullJson.message;
+          }
+        }
+      } catch (e) {
         payload = null;
       }
     }
 
+    // 3) fallback
     const title = (payload && payload.title) ? String(payload.title) : "OrgHub";
     const body  = (payload && payload.body)  ? String(payload.body)  : "Push dotarł (brak/nieczytelny payload)";
-
-    const url = (payload && payload.url)
+    const url   = (payload && payload.url)
       ? String(payload.url)
       : (self.location.origin + "/app/");
 
