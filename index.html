@@ -550,8 +550,8 @@ input[type="number"] {
 
   <div class="login-box">
     <input id="eventData" type="text" placeholder="RRRR-MM-DD" autocomplete="off">
-    <input id="eventStart" type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
-    <input id="eventEnd"   type="text" data-clocklet="format:HH:mm" placeholder="HH:MM" autocomplete="off">
+    <input id="eventStart" type="time" step="60" autocomplete="off">
+    <input id="eventEnd" type="time" step="60" autocomplete="off">
     <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
 
     <!-- TRENERZY (kaskadowo, max 4) -->
@@ -4425,22 +4425,12 @@ const r = await apiClubPost({
 }
 
 function initEventPickers_() {
-  // ===== KALENDARZ (flatpickr) =====
   const elDate = document.getElementById("eventData");
   if (elDate && window.flatpickr && !elDate._flatpickr) {
     flatpickr(elDate, {
       dateFormat: "Y-m-d",
       allowInput: true
     });
-  }
-
-  // ===== ZEGARY (Clocklet – okrągłe) =====
-  const startEl = document.getElementById("eventStart");
-  const endEl   = document.getElementById("eventEnd");
-
-  if (window.clocklet) {
-    if (startEl) clocklet(startEl);
-    if (endEl)   clocklet(endEl);
   }
 }
   
