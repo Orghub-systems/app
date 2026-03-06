@@ -1484,6 +1484,17 @@ function urlBase64ToUint8Array_(base64String) {
   for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
   return outputArray;
 }
+
+  function playerPayNow(nazwa, kwota) {
+  const label = decodeURIComponent(nazwa || "");
+  
+  alert(
+    "Płatność AutoPay\n\n" +
+    label + "\n" +
+    kwota + " zł\n\n" +
+    "Tutaj w kolejnym kroku będzie przekierowanie do AutoPay."
+  );
+}
   
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
@@ -3738,6 +3749,14 @@ function renderPlatnosci(lista) {
       ? `<span style="color:#7CFF7C; font-weight:700;">ZAPŁACONE</span>`
       : `<span style="color:#FF7C7C; font-weight:700;">NIEZAPŁACONE</span>`;
 
+    const payBtn = !isPaid
+  ? `<button class="full-btn playerPayBtn"
+        style="margin-top:10px;"
+        onclick="playerPayNow('${encodeURIComponent(p?.nazwa || "")}', ${Number(p?.kwota || 0)})">
+        Zapłać teraz
+     </button>`
+  : "";
+
     const nazwa = escapeHtml_(p?.nazwa || "");
     const kwota = Number(p?.kwota || 0);
 
@@ -3745,7 +3764,7 @@ function renderPlatnosci(lista) {
       ? "Składka"
       : "Zajęcia dodatkowe";
 
-    return `
+       return `
       <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
         <div style="display:flex; justify-content:space-between; gap:10px;">
           <div>
@@ -3757,6 +3776,8 @@ function renderPlatnosci(lista) {
             <div style="margin-top:2px;">${badge}</div>
           </div>
         </div>
+    
+        ${payBtn}
       </div>
     `;
   }).join("");
