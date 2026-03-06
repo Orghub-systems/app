@@ -329,7 +329,7 @@ input[type="number"] {
 <script>
   
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V19';
+  window.APP_BUILD = 'BETA APP V20';
 
     const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1280,6 +1280,10 @@ async function getPushState_() {
       return { active: false, reason: "no-notification" };
     }
 
+    if (Notification.permission === "denied") {
+      return { active: false, reason: "permission-denied" };
+    }
+
     if (Notification.permission !== "granted") {
       return { active: false, reason: "permission-not-granted" };
     }
@@ -1322,6 +1326,18 @@ async function refreshPushButtonState_() {
     return;
   }
 
+  if (state.reason === "permission-denied") {
+    btn.textContent = "⛔ Powiadomienia zablokowane";
+    btn.style.background = "#5a0000";
+    btn.style.borderColor = "#a30000";
+    btn.style.color = "#ffffff";
+
+    if (status) {
+      status.textContent = "Powiadomienia są zablokowane w przeglądarce. Odblokuj je w ustawieniach strony.";
+    }
+    return;
+  }
+
   btn.textContent = "🔔 Włącz powiadomienia";
   btn.style.background = "#8b0000";
   btn.style.borderColor = "#ff2b2b";
@@ -1351,6 +1367,11 @@ async function enablePushFlow_() {
   try {
     if (!("serviceWorker" in navigator)) { alert("Brak Service Worker."); return; }
     if (!("PushManager" in window)) { alert("Brak PushManager."); return; }
+
+    if ("Notification" in window && Notification.permission === "denied") {
+    alert("Powiadomienia są zablokowane w przeglądarce. Odblokuj je w ustawieniach strony, a potem spróbuj ponownie.");
+    return;
+  }
 
     // 1) zgoda
     const perm = await Notification.requestPermission();
