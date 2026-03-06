@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V23';
+  window.APP_BUILD = 'BETA APP V24';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -548,58 +548,80 @@ input[type="number"] {
 <div id="trainerDodajWydarzenieView" class="container hidden">
   <h1>Dodaj wydarzenie</h1>
 
-  <div class="login-box">
-    <input id="eventData" type="text" placeholder="RRRR-MM-DD" autocomplete="off">
-    <input id="eventStart" type="time" step="60" autocomplete="off">
-    <input id="eventEnd" type="time" step="60" autocomplete="off">
-    <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
+  <div class="popup-card" style="max-width:360px;width:100%; text-align:left; margin:0 auto;">
+    <div class="login-box" style="margin-top:10px;">
 
-    <!-- TRENERZY (kaskadowo, max 4) -->
-    <select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
-      <option value="">— wybierz trenera —</option>
-    </select>
+      <input id="eventData" type="text" placeholder="RRRR-MM-DD" autocomplete="off">
+      <input id="eventStart" type="time" step="60" autocomplete="off">
+      <input id="eventEnd" type="time" step="60" autocomplete="off">
+      <input id="eventRodzaj" type="text" placeholder="Rodzaj wydarzenia">
 
-    <div id="trener2Wrap" class="hidden">
-      <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
-        <option value="">— kolejny trener —</option>
-      </select>
+      <!-- TRENERZY (zostawiamy obecną logikę, tylko wygląd bardziej jak w edycji) -->
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Trener 1</div>
+        <select id="eventTrener1" class="select-like-input" onchange="onTrenerPick(1)">
+          <option value="">— wybierz trenera —</option>
+        </select>
+      </div>
+
+      <div id="trener2Wrap" class="hidden">
+        <div style="font-weight:800; margin-bottom:6px;">Trener 2</div>
+        <select id="eventTrener2" class="select-like-input" onchange="onTrenerPick(2)">
+          <option value="">— kolejny trener —</option>
+        </select>
+      </div>
+
+      <div id="trener3Wrap" class="hidden">
+        <div style="font-weight:800; margin-bottom:6px;">Trener 3</div>
+        <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
+          <option value="">— kolejny trener —</option>
+        </select>
+      </div>
+
+      <div id="trener4Wrap" class="hidden">
+        <div style="font-weight:800; margin-bottom:6px;">Trener 4</div>
+        <select id="eventTrener4" class="select-like-input">
+          <option value="">— kolejny trener —</option>
+        </select>
+      </div>
+
+      <!-- GRUPY -->
+      <button class="full-btn alt" id="btnPickGroups" type="button" onclick="openGroupsPopup()">
+        Wybierz grupy
+      </button>
+      <div id="groupsSummary" style="margin-top:6px; opacity:.85; font-size:13px;">—</div>
+
+      <!-- CHECKBOXY jak w edycji -->
+      <label class="full-btn alt" for="eventRez">
+        <span style="display:flex; align-items:center; gap:12px; width:100%; justify-content:flex-start;">
+          <span style="flex:0 0 auto;">
+            <input id="eventRez" type="checkbox" style="transform:scale(1.35); margin:0;">
+          </span>
+          <span style="flex:1 1 auto; text-align:left; white-space:nowrap;">
+            Rezerwacja obiektu
+          </span>
+        </span>
+      </label>
+
+      <label class="full-btn alt" for="eventStat">
+        <span style="display:flex; align-items:center; gap:12px; width:100%; justify-content:flex-start;">
+          <span style="flex:0 0 auto;">
+            <input id="eventStat" type="checkbox" style="transform:scale(1.35); margin:0;">
+          </span>
+          <span style="flex:1 1 auto; text-align:left; white-space:nowrap;">
+            Liczyć do statystyk
+          </span>
+        </span>
+      </label>
+
+      <div style="margin-top:10px;">
+        <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
+        <button class="full-btn alt" onclick="appBack()">Anuluj</button>
+      </div>
+
+      <p id="eventMsg" style="margin-top:10px;"></p>
     </div>
-
-    <div id="trener3Wrap" class="hidden">
-      <select id="eventTrener3" class="select-like-input" onchange="onTrenerPick(3)">
-        <option value="">— kolejny trener —</option>
-      </select>
-    </div>
-
-    <div id="trener4Wrap" class="hidden">
-      <select id="eventTrener4" class="select-like-input">
-        <option value="">— kolejny trener —</option>
-      </select>
-    </div>
-  </div><!-- ✅ domknięcie login-box -->
-
-<!-- GRUPY: przycisk --> 
-<button class="full-btn alt" id="btnPickGroups" onclick="openGroupsPopup()">Wybierz grupy</button>
-<div id="groupsSummary" style="margin-top:6px;opacity:0.85;font-size:13px;">—</div>
-
-  <div style="margin-top:10px; display:flex; justify-content:center;">
-  <label style="display:flex; align-items:center; gap:10px;">
-    <input id="eventStat" type="checkbox" style="transform:scale(1.35);">
-    <span>Liczyć do statystyk</span>
-  </label>
-</div>
-
-<div style="margin-top:10px; display:flex; justify-content:center;">
-  <label style="display:flex; align-items:center; gap:10px;">
-    <input id="eventRez" type="checkbox" style="transform:scale(1.35);">
-    <span>Rezerwacja obiektu</span>
-  </label>
-</div>
-
-  <button class="full-btn" onclick="wyslijNoweWydarzenie()">💾 Dodaj wydarzenie</button>
-  <button class="full-btn alt" onclick="appBack()">⬅ Powrót</button>
-
-  <p id="eventMsg" style="margin-top:10px;"></p>
+  </div>
 </div>
 
     <!-- 9. PŁATNOŚCI -->
