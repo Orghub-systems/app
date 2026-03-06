@@ -1572,6 +1572,10 @@ function goToView(viewId, options = {}) {
     else history.pushState(state, "", urlKeep);
   } catch (e) {}
   hookPushButton_();
+
+  if (viewId === "playerSettingsView") {
+    refreshPushButtonState_();
+  }
 }
 
 function showViewFromHistory(viewId) {
