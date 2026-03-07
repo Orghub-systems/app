@@ -1240,7 +1240,7 @@ input[type="number"] {
 </div>
 
 <!-- Popup danych klubu do odbioru wpłat -->
-<div id="bankDataPopup" class="hidden" style="
+<div id="bankDataPopup" style="
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.7);
@@ -4037,12 +4037,14 @@ function openBankDataPopup() {
   if (accountInput) accountInput.value = String(setupDraft?.bankAccount || "");
   if (msg) msg.textContent = "";
 
-  pop.classList.remove("hidden");
+  pop.style.display = "flex";
 }
 
 function closeBankDataPopup() {
   const pop = document.getElementById("bankDataPopup");
-  if (pop) pop.classList.add("hidden");
+  if (!pop) return;
+
+  pop.style.display = "none";
 }
 
 function saveBankDataPopup() {
