@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V31';
+  window.APP_BUILD = 'BETA APP V32';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -2517,17 +2517,14 @@ function applyPaymentsPopup() {
   const btnPay = document.getElementById("btnSetupPayments");
   if (btnPay) btnPay.textContent = "Płatności ✅";
 
-  const btnSubmit = document.getElementById("btnSetupSubmit");
-  if (btnSubmit) btnSubmit.disabled = false;
-
     const noLimit = !!document.getElementById("noLimitCheckbox")?.checked;
   const limitInp = document.getElementById("membershipLimitInput");
   const limitRaw = String(limitInp?.value || "").trim();
 
-  if (noLimit) {
+    if (noLimit) {
     setupDraft.membershipLimit = "NO_LIMIT";
   } else if (limitRaw === "") {
-    setupDraft.membershipLimit = ""; // brak ustawienia (albo wymusimy później)
+    setupDraft.membershipLimit = ""; 
   } else {
     const lim = Number(limitRaw.replace(",", "."));
     if (!Number.isFinite(lim) || lim < 0) {
@@ -2538,9 +2535,8 @@ function applyPaymentsPopup() {
     setupDraft.membershipLimit = lim;
   }
 
+  refreshSetupSubmitState_();
   closePaymentsPopup();
-  const smsg = document.getElementById("setupMsg");
-  if (smsg) smsg.textContent = "✅ Płatności zapisane. Możesz kliknąć „Wyślij i aktywuj klub”.";
 }
   
 /* =================== 62 PANEL 2: SEZON -> AKTYWACJA PŁATNOŚCI =================== */
@@ -2639,10 +2635,12 @@ function updateSetupPaymentsState_() {
   if (btnSubmit) btnSubmit.disabled = true;
 
   if (msg) {
-    if (!okBoth) msg.textContent = "Ustaw początek i koniec sezonu, żeby odblokować płatności.";
-    else if (!okOrder) msg.textContent = "❌ Koniec sezonu nie może być przed początkiem.";
-    else msg.textContent = "";
-  }
+  if (!okBoth) msg.textContent = "Ustaw początek i koniec sezonu, żeby odblokować płatności.";
+  else if (!okOrder) msg.textContent = "❌ Koniec sezonu nie może być przed początkiem.";
+  else msg.textContent = "";
+}
+
+refreshSetupSubmitState_();
 }
 
   /* helper: ujednolicenie klucza miesiąca (string) */
@@ -2712,11 +2710,62 @@ async function saveAdminPass() {
 
     if (btn) btn.textContent = "Hasło administratora ✅";
     if (msg) msg.textContent = "✅ Hasło zapisane w panelu administracyjnym.";
-
+    
+    refreshSetupSubmitState_();
+    
     setTimeout(() => closeAdminPassPopup(), 500);
 
   } catch (e) {
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
+  }
+}
+
+function refreshSetupSubmitState_() {
+  const btnSubmit = document.getElementById("btnSetupSubmit");
+  const msg = document.getElementById("setupMsg");
+  if (!btnSubmit) return;
+
+  const s = String(setupDraft?.sezonStart || "").trim();
+  const e = String(setupDraft?.sezonEnd || "").trim();
+
+  const datesOk = !!s && !!e && s <= e;
+
+  const months = Array.isArray(setupDraft?.months) ? setupDraft.months : [];
+  const fees = setupDraft?.fees || {};
+  const singleTrainingPrice = String(setupDraft?.singleTrainingPrice ?? "").trim();
+
+  let paymentsOk = false;
+  if (datesOk && months.length > 0) {
+    paymentsOk = months.every((m) => {
+      const k = monthKey_(m);
+      const v = fees[k];
+      return v !== undefined && v !== null && String(v).trim() !== "";
+    }) && singleTrainingPrice !== "";
+  }
+
+  const adminPass = String(setupDraft?.adminPass || "").trim();
+  const adminOk = adminPass.length >= 6;
+
+  const bankReceiver = String(setupDraft?.bankReceiver || "").trim();
+  const bankAccount = String(setupDraft?.bankAccount || "").replace(/\s+/g, "");
+  const bankOk = !!bankReceiver && /^\d{26}$/.test(bankAccount);
+
+  const allOk = datesOk && paymentsOk && adminOk && bankOk;
+
+  btnSubmit.disabled = !allOk;
+
+  if (!allOk && msg) {
+    if (!datesOk) {
+      msg.textContent = "Uzupełnij poprawnie daty sezonu.";
+    } else if (!paymentsOk) {
+      msg.textContent = "Uzupełnij ustawienia płatności.";
+    } else if (!adminOk) {
+      msg.textContent = "Utwórz hasło administratora.";
+    } else if (!bankOk) {
+      msg.textContent = "Uzupełnij dane klubu do odbioru wpłat.";
+    }
+  } else if (allOk && msg) {
+    msg.textContent = "";
   }
 }
   
@@ -4074,9 +4123,10 @@ function saveBankDataPopup() {
     label.textContent = `✅ Odbiorca: ${receiver}`;
   }
 
-  if (msg) msg.textContent = "✅ Zapisano dane do odbioru wpłat.";
+if (msg) msg.textContent = "✅ Zapisano dane do odbioru wpłat.";
 
-  closeBankDataPopup();
+refreshSetupSubmitState_();
+closeBankDataPopup();
 }
 
 window.openBankDataPopup = openBankDataPopup;
