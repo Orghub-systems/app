@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V29';
+  window.APP_BUILD = 'BETA APP V30';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -478,6 +478,15 @@ input[type="number"] {
         onclick="openAdminPassPopup()">
   Utwórz hasło administratora
 </button>
+
+    <!-- Ustwienia wpłat -->
+    <button class="full-btn alt" id="btnSetupBankData" disabled
+        style="margin-top:12px; width:100%;"
+        onclick="openBankDataPopup()">
+  Dane klubu do odbioru wpłat
+</button>
+    
+<div id="setupBankDataLabel" style="margin-top:6px; opacity:0.9; min-height:1.2em;"></div>
     
     <button class="full-btn" id="btnSetupSubmit" disabled
         style="margin-top:12px; width:100%;"
@@ -1226,6 +1235,43 @@ input[type="number"] {
     </div>
 
     <p id="playerPaymentPopupMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
+
+<!-- Popup danych klubu do odbioru wpłat -->
+<div id="bankDataPopup" class="hidden" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3005;
+  padding: 18px;
+">
+  <div class="card" style="max-width:360px; width:100%; text-align:left;">
+    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
+      Dane klubu do odbioru wpłat
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Odbiorca</div>
+        <input id="bankReceiverInput" type="text" placeholder="Np. Klub Sportowy Warriors Sosnowiec">
+      </div>
+
+      <div>
+        <div style="font-weight:800; margin-bottom:6px;">Numer konta</div>
+        <input id="bankAccountInput" type="text" placeholder="26 cyfr lub z odstępami">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="full-btn alt" style="flex:1;" type="button" onclick="closeBankDataPopup()">Anuluj</button>
+      <button class="full-btn" style="flex:1;" type="button" onclick="saveBankDataPopup()">Zapisz</button>
+    </div>
+
+    <div id="bankDataPopupMsg" style="margin-top:10px; opacity:.9;"></div>
   </div>
 </div>
   
@@ -3979,6 +4025,62 @@ function renderPlatnosci(lista) {
     .replace(/^Zajęcia dodatkowe\s*/i, "Zajęcia ");
 }
 
+function openBankDataPopup() {
+  const pop = document.getElementById("bankDataPopup");
+  if (!pop) return;
+
+  const receiverInput = document.getElementById("bankReceiverInput");
+  const accountInput = document.getElementById("bankAccountInput");
+  const msg = document.getElementById("bankDataPopupMsg");
+
+  if (receiverInput) receiverInput.value = String(setupDraft?.bankReceiver || "");
+  if (accountInput) accountInput.value = String(setupDraft?.bankAccount || "");
+  if (msg) msg.textContent = "";
+
+  pop.classList.remove("hidden");
+}
+
+function closeBankDataPopup() {
+  const pop = document.getElementById("bankDataPopup");
+  if (pop) pop.classList.add("hidden");
+}
+
+/* ===================== PRZELEWY ======================-- */
+  
+function saveBankDataPopup() {
+  const receiverInput = document.getElementById("bankReceiverInput");
+  const accountInput = document.getElementById("bankAccountInput");
+  const msg = document.getElementById("bankDataPopupMsg");
+  const label = document.getElementById("setupBankDataLabel");
+
+  const receiver = String(receiverInput?.value || "").trim();
+  const accountRaw = String(accountInput?.value || "").trim();
+  const accountDigits = accountRaw.replace(/\s+/g, "");
+
+  if (!receiver) {
+    if (msg) msg.textContent = "❌ Podaj odbiorcę.";
+    return;
+  }
+
+  if (!/^\d{26}$/.test(accountDigits)) {
+    if (msg) msg.textContent = "❌ Numer konta musi mieć dokładnie 26 cyfr.";
+    return;
+  }
+
+  setupDraft.bankReceiver = receiver;
+  setupDraft.bankAccount = accountDigits;
+
+  if (label) {
+    label.textContent = `✅ Odbiorca: ${receiver}`;
+  }
+
+  if (msg) msg.textContent = "✅ Zapisano dane do odbioru wpłat.";
+
+  closeBankDataPopup();
+}
+
+/* ===================== TRENINGI ======================-- */
+  
 async function pokazTreningi() {
   goToView("homeView");
   const div = document.getElementById("listaTreningow");
