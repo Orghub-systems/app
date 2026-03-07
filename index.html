@@ -1192,6 +1192,43 @@ input[type="number"] {
   </div>
 </div>
 
+  <!-- ====================== Popup przelewu zawodnika ============================ -->
+<div id="playerPaymentPopup" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 2200;
+  display: none;
+">
+  <div class="popup-card" style="max-width:360px;width:100%; text-align:left;">
+    <p style="margin:0 0 10px 0;"><b>Zapłać teraz</b></p>
+
+    <div class="card" style="background:#111; text-align:left;">
+      <div style="opacity:.9; font-size:14px;">Płatność</div>
+      <div id="playerPaymentPopupName" style="font-size:18px; font-weight:800; margin-top:4px;">—</div>
+
+      <div style="margin-top:12px; opacity:.9; font-size:14px;">Kwota</div>
+      <div id="playerPaymentPopupAmount" style="font-size:18px; font-weight:800; margin-top:4px;">—</div>
+
+      <div style="margin-top:12px; opacity:.9; font-size:14px;">Numer konta</div>
+      <div id="playerPaymentPopupAccount" style="font-size:16px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
+
+      <div style="margin-top:12px; opacity:.9; font-size:14px;">Tytuł przelewu</div>
+      <div id="playerPaymentPopupTitle" style="font-size:16px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <button class="full-btn" id="playerPaymentCopyTitleBtn" type="button">Kopiuj tytuł</button>
+      <button class="full-btn alt" id="playerPaymentCopyAllBtn" type="button">Kopiuj dane przelewu</button>
+      <button class="full-btn alt" type="button" onclick="closePlayerPaymentPopup()">Anuluj</button>
+    </div>
+
+    <p id="playerPaymentPopupMsg" style="margin-top:10px;"></p>
+  </div>
+</div>
+  
 <script>
 
   
