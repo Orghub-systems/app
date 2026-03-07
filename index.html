@@ -1244,35 +1244,29 @@ input[type="number"] {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.7);
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   z-index: 3005;
   padding: 18px;
 ">
-  <div class="card" style="max-width:360px; width:100%; text-align:left;">
-    <div style="font-weight:900; font-size:16px; margin-bottom:10px;">
-      Dane klubu do odbioru wpłat
+  <div class="popup-card" style="max-width:360px;width:100%; text-align:center;">
+    <p style="margin:0 0 14px 0;"><b>Dane klubu do odbioru wpłat</b></p>
+
+    <div class="login-box" style="margin-top:10px;">
+      <div style="margin-bottom:10px; text-align:center; font-weight:700;">Odbiorca</div>
+      <input id="bankReceiverInput" type="text" placeholder="Np. Klub Sportowy Warriors Sosnowiec">
+
+      <div style="margin:14px 0 10px 0; text-align:center; font-weight:700;">Numer konta</div>
+      <input id="bankAccountInput" type="text" placeholder="26 cyfr lub z odstępami">
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      <div>
-        <div style="font-weight:800; margin-bottom:6px;">Odbiorca</div>
-        <input id="bankReceiverInput" type="text" placeholder="Np. Klub Sportowy Warriors Sosnowiec">
-      </div>
-
-      <div>
-        <div style="font-weight:800; margin-bottom:6px;">Numer konta</div>
-        <input id="bankAccountInput" type="text" placeholder="26 cyfr lub z odstępami">
-      </div>
+    <div style="margin-top:12px;">
+      <button class="full-btn" type="button" onclick="saveBankDataPopup()">Zapisz</button>
+      <button class="full-btn alt" style="margin-top:8px;" type="button" onclick="closeBankDataPopup()">Anuluj</button>
     </div>
 
-    <div style="display:flex; gap:8px; margin-top:14px;">
-      <button class="full-btn alt" style="flex:1;" type="button" onclick="closeBankDataPopup()">Anuluj</button>
-      <button class="full-btn" style="flex:1;" type="button" onclick="saveBankDataPopup()">Zapisz</button>
-    </div>
-
-    <div id="bankDataPopupMsg" style="margin-top:10px; opacity:.9;"></div>
+    <p id="bankDataPopupMsg" style="margin-top:10px; min-height:1.2em;"></p>
   </div>
 </div>
   
