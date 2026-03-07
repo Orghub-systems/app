@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V27';
+  window.APP_BUILD = 'BETA APP V28';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1533,6 +1533,8 @@ function urlBase64ToUint8Array_(base64String) {
   );
 }
 
+/* =================== Generator do przelewów =================== */
+  
 function generateTransferCode(nazwaPlatnosci) {
 
   const klub = "WRS";
@@ -1562,6 +1564,53 @@ function generateTransferCode(nazwaPlatnosci) {
 
   return `${klub}|${numer}|${typ}|${rrrrmm}`;
 }  
+
+function playerPayNow(nazwa, kwota) {
+
+  const popup = document.getElementById("playerPaymentPopup");
+  if (!popup) return;
+
+  const titleCode = generateTransferCode(nazwa);
+
+  const nameEl = document.getElementById("playerPaymentPopupName");
+  const amountEl = document.getElementById("playerPaymentPopupAmount");
+  const accountEl = document.getElementById("playerPaymentPopupAccount");
+  const titleEl = document.getElementById("playerPaymentPopupTitle");
+
+  if (nameEl) nameEl.textContent = nazwa;
+  if (amountEl) amountEl.textContent = kwota + " zł";
+
+  // tymczasowy numer konta
+  const konto = "00 0000 0000 0000 0000 0000 0000";
+  if (accountEl) accountEl.textContent = konto;
+
+  if (titleEl) titleEl.textContent = titleCode;
+
+  popup.style.display = "flex";
+
+  const copyTitleBtn = document.getElementById("playerPaymentCopyTitleBtn");
+  if (copyTitleBtn) {
+    copyTitleBtn.onclick = () => {
+      navigator.clipboard.writeText(titleCode);
+    };
+  }
+
+  const copyAllBtn = document.getElementById("playerPaymentCopyAllBtn");
+  if (copyAllBtn) {
+    copyAllBtn.onclick = () => {
+      const txt =
+`${konto}
+${kwota} zł
+${titleCode}`;
+      navigator.clipboard.writeText(txt);
+    };
+  }
+}
+
+function closePlayerPaymentPopup(){
+  const popup = document.getElementById("playerPaymentPopup");
+  if (popup) popup.style.display = "none";
+}
   
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
