@@ -2639,6 +2639,9 @@ function updateSetupPaymentsState_() {
    const btnAdmin = document.getElementById("btnSetupAdminPass");
   if (btnAdmin) btnAdmin.disabled = !enablePayments; 
 
+  const btnBank = document.getElementById("btnSetupBankData");
+  if (btnBank) btnBank.disabled = !enablePayments;
+
   if (btnSubmit) btnSubmit.disabled = true;
 
   if (msg) {
