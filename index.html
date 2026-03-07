@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V32';
+  window.APP_BUILD = 'BETA APP V33';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -2852,6 +2852,19 @@ function refreshSetupSubmitState_() {
       return;
     }
 
+    const bankReceiver = String(setupDraft?.bankReceiver || "").trim();
+    const bankAccount = String(setupDraft?.bankAccount || "").replace(/\s+/g, "");
+    
+    if (!bankReceiver) {
+      if (msg) msg.textContent = "❌ Uzupełnij odbiorcę wpłat.";
+      return;
+    }
+    
+    if (!/^\d{26}$/.test(bankAccount)) {
+      if (msg) msg.textContent = "❌ Uzupełnij poprawny numer konta klubu.";
+      return;
+    }
+
     if (btn) { btn.disabled = true; btn.classList.add("loading"); }
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
@@ -2877,6 +2890,9 @@ console.log("[DIAG] activateClub payload preview", {
   membershipLimit
 });
 
+const bankReceiver = String(setupDraft?.bankReceiver || "").trim();
+const bankAccount = String(setupDraft?.bankAccount || "").replace(/\s+/g, "");
+
 const r = await activateClub_({
   clubId,
   sezonStart,
@@ -2884,7 +2900,9 @@ const r = await activateClub_({
   months: JSON.stringify(months),
   fees: JSON.stringify(fees),
   singleTrainingPrice,
-  membershipLimit
+  membershipLimit,
+  bankReceiver,
+  bankAccount
 });
 
     if (!r || (r.success !== true && r.ok !== true)) {
