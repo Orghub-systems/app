@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V28';
+  window.APP_BUILD = 'BETA APP V29';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1522,19 +1522,64 @@ function urlBase64ToUint8Array_(base64String) {
   return outputArray;
 }
 
-  function playerPayNow(nazwa, kwota) {
-  const label = decodeURIComponent(nazwa || "");
-  
-  alert(
-    "Płatność AutoPay\n\n" +
-    label + "\n" +
-    kwota + " zł\n\n" +
-    "Tutaj w kolejnym kroku będzie przekierowanie do AutoPay."
-  );
-}
-
 /* =================== Generator do przelewów =================== */
   
+function playerPayNow(nazwa, kwota) {
+  const popup = document.getElementById("playerPaymentPopup");
+  if (!popup) return;
+
+  const decodedName = decodeURIComponent(String(nazwa || ""));
+  const safeKwota = Number(kwota || 0);
+
+  const titleCode = generateTransferCode(decodedName);
+
+  const nameEl = document.getElementById("playerPaymentPopupName");
+  const amountEl = document.getElementById("playerPaymentPopupAmount");
+  const accountEl = document.getElementById("playerPaymentPopupAccount");
+  const titleEl = document.getElementById("playerPaymentPopupTitle");
+  const msgEl = document.getElementById("playerPaymentPopupMsg");
+
+  if (nameEl) nameEl.textContent = decodedName;
+  if (amountEl) amountEl.textContent = safeKwota + " zł";
+
+  // TYMCZASOWY numer konta – później podmienimy na klubowy z danych
+  const konto = "00 0000 0000 0000 0000 0000 0000";
+  if (accountEl) accountEl.textContent = konto;
+
+  if (titleEl) titleEl.textContent = titleCode;
+  if (msgEl) msgEl.textContent = "";
+
+  popup.style.display = "flex";
+
+  const copyTitleBtn = document.getElementById("playerPaymentCopyTitleBtn");
+  if (copyTitleBtn) {
+    copyTitleBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(titleCode);
+        if (msgEl) msgEl.textContent = "✅ Skopiowano tytuł przelewu";
+      } catch (e) {
+        if (msgEl) msgEl.textContent = "❌ Nie udało się skopiować tytułu";
+      }
+    };
+  }
+
+  const copyAllBtn = document.getElementById("playerPaymentCopyAllBtn");
+  if (copyAllBtn) {
+    copyAllBtn.onclick = async () => {
+      const txt = `Numer konta: ${konto}
+Kwota: ${safeKwota} zł
+Tytuł: ${titleCode}`;
+
+      try {
+        await navigator.clipboard.writeText(txt);
+        if (msgEl) msgEl.textContent = "✅ Skopiowano dane przelewu";
+      } catch (e) {
+        if (msgEl) msgEl.textContent = "❌ Nie udało się skopiować danych";
+      }
+    };
+  }
+}
+
 function generateTransferCode(nazwaPlatnosci) {
 
   const klub = "WRS";
@@ -1564,48 +1609,6 @@ function generateTransferCode(nazwaPlatnosci) {
 
   return `${klub}|${numer}|${typ}|${rrrrmm}`;
 }  
-
-function playerPayNow(nazwa, kwota) {
-
-  const popup = document.getElementById("playerPaymentPopup");
-  if (!popup) return;
-
-  const titleCode = generateTransferCode(nazwa);
-
-  const nameEl = document.getElementById("playerPaymentPopupName");
-  const amountEl = document.getElementById("playerPaymentPopupAmount");
-  const accountEl = document.getElementById("playerPaymentPopupAccount");
-  const titleEl = document.getElementById("playerPaymentPopupTitle");
-
-  if (nameEl) nameEl.textContent = nazwa;
-  if (amountEl) amountEl.textContent = kwota + " zł";
-
-  // tymczasowy numer konta
-  const konto = "00 0000 0000 0000 0000 0000 0000";
-  if (accountEl) accountEl.textContent = konto;
-
-  if (titleEl) titleEl.textContent = titleCode;
-
-  popup.style.display = "flex";
-
-  const copyTitleBtn = document.getElementById("playerPaymentCopyTitleBtn");
-  if (copyTitleBtn) {
-    copyTitleBtn.onclick = () => {
-      navigator.clipboard.writeText(titleCode);
-    };
-  }
-
-  const copyAllBtn = document.getElementById("playerPaymentCopyAllBtn");
-  if (copyAllBtn) {
-    copyAllBtn.onclick = () => {
-      const txt =
-`${konto}
-${kwota} zł
-${titleCode}`;
-      navigator.clipboard.writeText(txt);
-    };
-  }
-}
 
 function closePlayerPaymentPopup(){
   const popup = document.getElementById("playerPaymentPopup");
