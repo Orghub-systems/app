@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V33';
+  window.APP_BUILD = 'BETA APP V32';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -2617,31 +2617,9 @@ function updateSetupPaymentsState_() {
   const okOrder = okBoth && (s <= e);
 
   const enablePayments = okOrder;
-  
   if (okOrder) {
-    const newMonths = buildSeasonMonths_(s, e);
-  
-    const oldMonths = Array.isArray(setupDraft.months) ? setupDraft.months : [];
-  
-    // sprawdź czy zmienił się zakres miesięcy
-    const changed =
-      newMonths.length !== oldMonths.length ||
-      newMonths.some((m, i) => monthKey_(m) !== monthKey_(oldMonths[i]));
-  
-    if (changed) {
-      setupDraft.months = newMonths;
-  
-      // reset płatności
-      setupDraft.fees = {};
-      setupDraft.singleTrainingPrice = "";
-  
-      const btnPay = document.getElementById("btnSetupPayments");
-      if (btnPay) btnPay.textContent = "Płatności";
-  
-      const btnSubmit = document.getElementById("btnSetupSubmit");
-      if (btnSubmit) btnSubmit.disabled = true;
-    }
-  }
+  setupDraft.months = buildSeasonMonths_(s, e);
+}
 
   if (btnPay) {
     btnPay.disabled = !enablePayments;
@@ -2852,19 +2830,6 @@ function refreshSetupSubmitState_() {
       return;
     }
 
-    const bankReceiver = String(setupDraft?.bankReceiver || "").trim();
-    const bankAccount = String(setupDraft?.bankAccount || "").replace(/\s+/g, "");
-    
-    if (!bankReceiver) {
-      if (msg) msg.textContent = "❌ Uzupełnij odbiorcę wpłat.";
-      return;
-    }
-    
-    if (!/^\d{26}$/.test(bankAccount)) {
-      if (msg) msg.textContent = "❌ Uzupełnij poprawny numer konta klubu.";
-      return;
-    }
-
     if (btn) { btn.disabled = true; btn.classList.add("loading"); }
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
@@ -2890,9 +2855,6 @@ console.log("[DIAG] activateClub payload preview", {
   membershipLimit
 });
 
-const bankReceiver = String(setupDraft?.bankReceiver || "").trim();
-const bankAccount = String(setupDraft?.bankAccount || "").replace(/\s+/g, "");
-
 const r = await activateClub_({
   clubId,
   sezonStart,
@@ -2900,9 +2862,7 @@ const r = await activateClub_({
   months: JSON.stringify(months),
   fees: JSON.stringify(fees),
   singleTrainingPrice,
-  membershipLimit,
-  bankReceiver,
-  bankAccount
+  membershipLimit
 });
 
     if (!r || (r.success !== true && r.ok !== true)) {
@@ -4158,8 +4118,6 @@ function saveBankDataPopup() {
 
   setupDraft.bankReceiver = receiver;
   setupDraft.bankAccount = accountDigits;
-  const btnBank = document.getElementById("btnSetupBankData");
-  if (btnBank) btnBank.textContent = "Dane do wpłat ✅";
 
   if (label) {
     label.textContent = `✅ Odbiorca: ${receiver}`;
