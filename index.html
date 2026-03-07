@@ -2889,7 +2889,9 @@ async function submitSetupAndActivateClub() {
       months: JSON.stringify(months),
       fees: JSON.stringify(fees),
       singleTrainingPrice,
-      membershipLimit
+      membershipLimit,
+      bankReceiver,
+      bankAccount
     });
 
     if (!r || (r.success !== true && r.ok !== true)) {
@@ -2971,6 +2973,8 @@ async function submitSetupAndActivateClub() {
     if (btn) btn.classList.remove("loading");
   }
 }
+
+window.submitSetupAndActivateClub = submitSetupAndActivateClub;
 
 window.submitSetupAndActivateClub = submitSetupAndActivateClub;
 
