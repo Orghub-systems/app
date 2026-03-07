@@ -2769,18 +2769,18 @@ function refreshSetupSubmitState_() {
   }
 }
   
- async function submitSetupAndActivateClub() {
+async function submitSetupAndActivateClub() {
   console.log('[DIAG] submitSetupAndActivateClub fired');
+
   const msg = document.getElementById("setupMsg");
   const btn = document.getElementById("btnSetupSubmit");
   const errorBox = document.getElementById("setupErrorBox");
+
   if (msg) msg.textContent = "";
-  // DIAG_START: Panel 2 error box reset
   if (errorBox) {
     errorBox.classList.add("hidden");
     errorBox.textContent = "";
   }
-  // DIAG_END
 
   try {
     if (!clubId) {
@@ -2788,7 +2788,6 @@ function refreshSetupSubmitState_() {
       return;
     }
 
-    // zakładam, że trzymasz to w setupDraft (tak jak pisałeś)
     const sezonStart = String(setupDraft?.sezonStart || "").trim();
     const sezonEnd   = String(setupDraft?.sezonEnd || "").trim();
 
@@ -2806,11 +2805,14 @@ function refreshSetupSubmitState_() {
       return;
     }
 
-    // minimalna walidacja: kwoty składek dla miesięcy
     const feeValues = Array.isArray(fees)
       ? fees
       : (fees && typeof fees === "object" ? Object.values(fees) : []);
-    const hasAnyFee = feeValues.some((v) => v !== undefined && v !== null && String(v).trim() !== "");
+
+    const hasAnyFee = feeValues.some((v) =>
+      v !== undefined && v !== null && String(v).trim() !== ""
+    );
+
     if (!hasAnyFee) {
       if (msg) msg.textContent = "❌ Brak zdefiniowanej składki.";
       return;
@@ -2820,7 +2822,9 @@ function refreshSetupSubmitState_() {
       const mKey = monthKey_(m);
       const v = fees[mKey];
       if (v === undefined || v === null || String(v).trim() === "") {
-        if (msg) msg.textContent = mKey ? `❌ Brak składki dla: ${mKey}` : "❌ Brak zdefiniowanej składki.";
+        if (msg) msg.textContent = mKey
+          ? `❌ Brak składki dla: ${mKey}`
+          : "❌ Brak zdefiniowanej składki.";
         return;
       }
     }
@@ -2830,124 +2834,144 @@ function refreshSetupSubmitState_() {
       return;
     }
 
-    if (btn) { btn.disabled = true; btn.classList.add("loading"); }
+    const adminPass = String(setupDraft?.adminPass || "").trim();
+    if (adminPass.length < 6) {
+      if (msg) msg.textContent = "❌ Ustaw hasło administratora.";
+      return;
+    }
+
+    const bankReceiver = String(setupDraft?.bankReceiver || "").trim();
+    const bankAccount = String(setupDraft?.bankAccount || "").replace(/\s+/g, "");
+
+    if (!bankReceiver) {
+      if (msg) msg.textContent = "❌ Uzupełnij odbiorcę wpłat.";
+      return;
+    }
+
+    if (!/^\d{26}$/.test(bankAccount)) {
+      if (msg) msg.textContent = "❌ Uzupełnij poprawny numer konta klubu.";
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("loading");
+    }
+
     if (msg) msg.textContent = "⏳ Zapisuję płatności i aktywuję klub…";
 
-    // CORE zapisuje to do Administracja->Kartoteka
-    
-const membershipLimit =
-  setupDraft?.membershipLimit === "NO_LIMIT"
-    ? "NO_LIMIT"
-    : (setupDraft?.membershipLimit === "" || setupDraft?.membershipLimit == null)
-      ? ""
-      : String(setupDraft.membershipLimit).trim();
+    const membershipLimit =
+      setupDraft?.membershipLimit === "NO_LIMIT"
+        ? "NO_LIMIT"
+        : (setupDraft?.membershipLimit === "" || setupDraft?.membershipLimit == null)
+          ? ""
+          : String(setupDraft.membershipLimit).trim();
 
-console.log("[DIAG] activateClub payload preview", {
-  clubId,
-  sezonStart,
-  sezonEnd,
-  monthsType: typeof months,
-  monthsIsArray: Array.isArray(months),
-  feesType: typeof fees,
-  singleTrainingPrice,
-  membershipLimit_raw: setupDraft?.membershipLimit,
-  membershipLimit_type: typeof setupDraft?.membershipLimit,
-  membershipLimit
-});
+    console.log("[DIAG] activateClub payload preview", {
+      clubId,
+      sezonStart,
+      sezonEnd,
+      monthsType: typeof months,
+      monthsIsArray: Array.isArray(months),
+      feesType: typeof fees,
+      singleTrainingPrice,
+      membershipLimit_raw: setupDraft?.membershipLimit,
+      membershipLimit_type: typeof setupDraft?.membershipLimit,
+      membershipLimit,
+      bankReceiver,
+      bankAccount
+    });
 
-const r = await activateClub_({
-  clubId,
-  sezonStart,
-  sezonEnd,
-  months: JSON.stringify(months),
-  fees: JSON.stringify(fees),
-  singleTrainingPrice,
-  membershipLimit
-});
+    const r = await activateClub_({
+      clubId,
+      sezonStart,
+      sezonEnd,
+      months: JSON.stringify(months),
+      fees: JSON.stringify(fees),
+      singleTrainingPrice,
+      membershipLimit
+    });
 
     if (!r || (r.success !== true && r.ok !== true)) {
       const shortErr = (r?.error || r?.message || "Błąd odpowiedzi backendu");
       if (msg) msg.textContent = "❌ " + (r?.error || r?.message || JSON.stringify(r));
-      // DIAG_START: Panel 2 error box backend error
+
       if (errorBox) {
         errorBox.textContent = "Błąd aktywacji klubu: " + shortErr;
         errorBox.classList.remove("hidden");
       }
-      // DIAG_END
+
       if (btn) btn.disabled = false;
       return;
     }
 
-// Link klubu po aktywacji (budujemy po clubId — backend nie musi zwracać linku)
-const link = (r && (r.clubLink || r.link))
-  ? (r.clubLink || r.link)
-  : ("https://orghub-systems.github.io/app/?clubId=" + encodeURIComponent(String(clubId || "").trim()));
+    const link = (r && (r.clubLink || r.link))
+      ? (r.clubLink || r.link)
+      : ("https://orghub-systems.github.io/app/?clubId=" + encodeURIComponent(String(clubId || "").trim()));
 
-if (msg) msg.textContent = "✅ Gotowe. Klub aktywowany. Link poniżej.";
+    if (msg) msg.textContent = "✅ Gotowe. Klub aktywowany. Link poniżej.";
 
-// dynamiczny box (nie wymaga zmian w HTML)
-let box = document.getElementById("clubLinkBox");
-if (!box) {
-  box = document.createElement("div");
-  box.id = "clubLinkBox";
-  box.style.marginTop = "12px";
+    let box = document.getElementById("clubLinkBox");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "clubLinkBox";
+      box.style.marginTop = "12px";
 
-  box.innerHTML = `
-    <div style="font-weight:700; margin-bottom:6px;">Link Twojego klubu:</div>
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <input id="clubLinkInput" type="text" readonly style="flex:1; min-width:260px;" />
-      <button id="btnCopyClubLink" type="button">Skopiuj link Twojego klubu</button>
-    </div>
-    <div id="clubLinkCopyMsg" style="margin-top:6px; opacity:.9;"></div>
-  `;
+      box.innerHTML = `
+        <div style="font-weight:700; margin-bottom:6px;">Link Twojego klubu:</div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input id="clubLinkInput" type="text" readonly style="flex:1; min-width:260px;" />
+          <button id="btnCopyClubLink" type="button">Skopiuj link Twojego klubu</button>
+        </div>
+        <div id="clubLinkCopyMsg" style="margin-top:6px; opacity:.9;"></div>
+      `;
 
-  // wpinamy pod setupMsg (albo na koniec panelu)
-  const anchor = document.getElementById("setupMsg");
-  if (anchor && anchor.parentNode) anchor.parentNode.appendChild(box);
-  else document.body.appendChild(box); // awaryjnie
-}
-
-const input = document.getElementById("clubLinkInput");
-const btnCopy = document.getElementById("btnCopyClubLink");
-const copyMsg = document.getElementById("clubLinkCopyMsg");
-
-if (input) input.value = link;
-if (copyMsg) copyMsg.textContent = "";
-
-if (btnCopy) {
-  btnCopy.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(link);
-      if (copyMsg) copyMsg.textContent = "✅ Skopiowano link.";
-    } catch (e) {
-      if (input) {
-        input.focus(); input.select();
-        document.execCommand("copy");
-        if (copyMsg) copyMsg.textContent = "✅ Skopiowano link (tryb zgodności).";
-      } else {
-        if (copyMsg) copyMsg.textContent = "❌ Skopiuj ręcznie z pola.";
-      }
+      const anchor = document.getElementById("setupMsg");
+      if (anchor && anchor.parentNode) anchor.parentNode.appendChild(box);
+      else document.body.appendChild(box);
     }
-  };
-}
-    
-    // opcjonalnie: przejście na ekran login / landing
-    // goToView("loginView");
+
+    const input = document.getElementById("clubLinkInput");
+    const btnCopy = document.getElementById("btnCopyClubLink");
+    const copyMsg = document.getElementById("clubLinkCopyMsg");
+
+    if (input) input.value = link;
+    if (copyMsg) copyMsg.textContent = "";
+
+    if (btnCopy) {
+      btnCopy.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(link);
+          if (copyMsg) copyMsg.textContent = "✅ Skopiowano link.";
+        } catch (e) {
+          if (input) {
+            input.focus();
+            input.select();
+            document.execCommand("copy");
+            if (copyMsg) copyMsg.textContent = "✅ Skopiowano link (tryb zgodności).";
+          } else {
+            if (copyMsg) copyMsg.textContent = "❌ Skopiuj ręcznie z pola.";
+          }
+        }
+      };
+    }
 
   } catch (e) {
     console.error(e);
+
     if (msg) msg.textContent = "❌ Błąd połączenia: " + (e?.message || e);
-    // DIAG_START: Panel 2 error box transport error
+
     if (errorBox) {
       errorBox.textContent = "Błąd połączenia z backendem: " + (e?.message || e);
       errorBox.classList.remove("hidden");
     }
-    // DIAG_END
+
     if (btn) btn.disabled = false;
   } finally {
-    if (btn) { btn.classList.remove("loading"); }
+    if (btn) btn.classList.remove("loading");
   }
 }
+
 window.submitSetupAndActivateClub = submitSetupAndActivateClub;
 
   /* =================== 65 ADMIN PANEL (frontend) =================== */
