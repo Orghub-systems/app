@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V30';
+  window.APP_BUILD = 'BETA APP V31';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1202,6 +1202,7 @@ input[type="number"] {
 </div>
 
   <!-- ====================== Popup przelewu zawodnika ============================ -->
+  
 <div id="playerPaymentPopup" style="
   position: fixed;
   inset: 0;
@@ -4025,6 +4026,8 @@ function renderPlatnosci(lista) {
     .replace(/^Zajęcia dodatkowe\s*/i, "Zajęcia ");
 }
 
+/* ===================== PRZELEWY ======================-- */
+  
 function openBankDataPopup() {
   const pop = document.getElementById("bankDataPopup");
   if (!pop) return;
@@ -4045,8 +4048,6 @@ function closeBankDataPopup() {
   if (pop) pop.classList.add("hidden");
 }
 
-/* ===================== PRZELEWY ======================-- */
-  
 function saveBankDataPopup() {
   const receiverInput = document.getElementById("bankReceiverInput");
   const accountInput = document.getElementById("bankAccountInput");
@@ -4079,6 +4080,10 @@ function saveBankDataPopup() {
   closeBankDataPopup();
 }
 
+window.openBankDataPopup = openBankDataPopup;
+window.closeBankDataPopup = closeBankDataPopup;
+window.saveBankDataPopup = saveBankDataPopup;
+  
 /* ===================== TRENINGI ======================-- */
   
 async function pokazTreningi() {
