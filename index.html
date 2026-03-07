@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V26';
+  window.APP_BUILD = 'BETA APP V27';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1495,6 +1495,36 @@ function urlBase64ToUint8Array_(base64String) {
     "Tutaj w kolejnym kroku będzie przekierowanie do AutoPay."
   );
 }
+
+function generateTransferCode(nazwaPlatnosci) {
+
+  const klub = "WRS";
+  const numer = String(numerZalogowanego).padStart(4,"0");
+
+  const txt = String(nazwaPlatnosci || "").toLowerCase();
+
+  const typ = txt.startsWith("składka") ? "S" : "Z";
+
+  const miesiace = [
+    "styczeń","luty","marzec","kwiecień","maj","czerwiec",
+    "lipiec","sierpień","wrzesień","październik","listopad","grudzień"
+  ];
+
+  const rokMatch = txt.match(/20\d{2}/);
+  const rok = rokMatch ? rokMatch[0] : "";
+
+  let miesiac = "01";
+
+  miesiace.forEach((m,i)=>{
+    if(txt.includes(m)){
+      miesiac = String(i+1).padStart(2,"0");
+    }
+  });
+
+  const rrrrmm = rok + miesiac;
+
+  return `${klub}|${numer}|${typ}|${rrrrmm}`;
+}  
   
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
 const LS_KEY_CFG = "orghub.clubConfig.v1";
