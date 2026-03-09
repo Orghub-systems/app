@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V37';
+  window.APP_BUILD = 'BETA APP V38';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1349,8 +1349,12 @@ input[type="number"] {
 
     <div style="height:1px; background:#333; margin:12px 0;"></div>
 
-    <div style="font-size:13px; opacity:.85;">Numer zawodnika</div>
-    <input id="adminSystemPrzelewManualPlayer" type="text" class="full-input" style="margin-top:6px;" placeholder="Np. 31">
+    <div style="font-size:13px; opacity:.85;">Zawodnik</div>
+    <select id="adminSystemPrzelewManualPlayerSelect" class="full-input" style="margin-top:6px;">
+      <option value="">— wybierz zawodnika —</option>
+    </select>
+
+    <div id="adminSystemPrzelewManualPlayerHint" style="margin-top:6px; font-size:12px; opacity:.75;"></div>
 
     <div style="margin-top:12px; font-size:13px; opacity:.85;">Typ płatności</div>
     <select id="adminSystemPrzelewManualKind" class="full-input" style="margin-top:6px;">
@@ -4179,42 +4183,100 @@ window.__adminSystemPrzelewManual = {
   title: "",
   suggestedPlayerNo: "",
   suggestedKind: "",
-  suggestedPeriod: ""
+  suggestedPeriod: "",
+  players: []
 };
 
-function adminOpenManualSystemPrzelew(row, title, suggestedPlayerNo, suggestedKind, suggestedPeriod) {
+async function adminOpenManualSystemPrzelew(row, title, suggestedPlayerNo, suggestedKind, suggestedPeriod) {
   window.__adminSystemPrzelewManual = {
     row: Number(row || 0),
     title: String(title || ""),
     suggestedPlayerNo: String(suggestedPlayerNo || "").trim(),
     suggestedKind: String(suggestedKind || "").trim().toUpperCase(),
-    suggestedPeriod: String(suggestedPeriod || "").trim()
+    suggestedPeriod: String(suggestedPeriod || "").trim(),
+    players: []
   };
 
   const modal = document.getElementById("adminSystemPrzelewManualModal");
   const rowEl = document.getElementById("adminSystemPrzelewManualRow");
   const titleEl = document.getElementById("adminSystemPrzelewManualTitle");
-  const playerEl = document.getElementById("adminSystemPrzelewManualPlayer");
+  const playerSelectEl = document.getElementById("adminSystemPrzelewManualPlayerSelect");
+  const playerHintEl = document.getElementById("adminSystemPrzelewManualPlayerHint");
   const kindEl = document.getElementById("adminSystemPrzelewManualKind");
   const periodEl = document.getElementById("adminSystemPrzelewManualPeriod");
   const msgEl = document.getElementById("adminSystemPrzelewManualMsg");
 
-  if (!modal || !rowEl || !titleEl || !playerEl || !kindEl || !periodEl) {
+  if (!modal || !rowEl || !titleEl || !playerSelectEl || !kindEl || !periodEl) {
     alert("❌ Brak elementów modala ręcznego przypisania przelewu.");
     return;
   }
 
   rowEl.textContent = String(window.__adminSystemPrzelewManual.row || "—");
   titleEl.textContent = window.__adminSystemPrzelewManual.title || "—";
-
-  playerEl.value = window.__adminSystemPrzelewManual.suggestedPlayerNo || "";
   kindEl.value = window.__adminSystemPrzelewManual.suggestedKind || "";
   periodEl.value = window.__adminSystemPrzelewManual.suggestedPeriod || "";
 
   if (msgEl) msgEl.textContent = "";
+  if (playerHintEl) playerHintEl.textContent = "⏳ Ładowanie listy zawodników...";
+
+  playerSelectEl.innerHTML = `<option value="">— wybierz zawodnika —</option>`;
 
   modal.classList.remove("hidden");
   modal.style.display = "flex";
+
+  try {
+    const res = await apiClubPost({
+      action: "system_przelewy_players"
+    });
+
+    if (!res || res.success === false) {
+      if (playerHintEl) playerHintEl.textContent = "❌ Nie udało się pobrać listy zawodników";
+      return;
+    }
+
+    const items = Array.isArray(res.items) ? res.items : [];
+    window.__adminSystemPrzelewManual.players = items;
+
+    playerSelectEl.innerHTML = `<option value="">— wybierz zawodnika —</option>` +
+      items.map(function(p) {
+        const numer = String(p.numer || "").trim();
+        const name = escapeHtml_(String(p.name || "").trim());
+        return `<option value="${numer}">${name}</option>`;
+      }).join("");
+
+    if (window.__adminSystemPrzelewManual.suggestedPlayerNo) {
+      playerSelectEl.value = window.__adminSystemPrzelewManual.suggestedPlayerNo;
+    }
+
+    updateAdminSystemPrzelewManualPlayerHint_();
+
+    playerSelectEl.onchange = updateAdminSystemPrzelewManualPlayerHint_;
+
+  } catch (e) {
+    if (playerHintEl) playerHintEl.textContent = "❌ Błąd: " + (e?.message || e);
+  }
+}
+
+function updateAdminSystemPrzelewManualPlayerHint_() {
+  const playerSelectEl = document.getElementById("adminSystemPrzelewManualPlayerSelect");
+  const playerHintEl = document.getElementById("adminSystemPrzelewManualPlayerHint");
+  if (!playerSelectEl || !playerHintEl) return;
+
+  const numer = String(playerSelectEl.value || "").trim();
+  if (!numer) {
+    playerHintEl.textContent = "";
+    return;
+  }
+
+  const found = (window.__adminSystemPrzelewManual.players || []).find(function(p) {
+    return String(p.numer || "").trim() === numer;
+  });
+
+  if (found) {
+    playerHintEl.textContent = "Numer systemowy: " + numer;
+  } else {
+    playerHintEl.textContent = "";
+  }
 }
 
 function adminCloseManualSystemPrzelew() {
@@ -4227,7 +4289,7 @@ function adminCloseManualSystemPrzelew() {
 
 async function adminSaveManualSystemPrzelew() {
   const row = Number(window.__adminSystemPrzelewManual?.row || 0);
-  const playerEl = document.getElementById("adminSystemPrzelewManualPlayer");
+  const playerSelectEl = document.getElementById("adminSystemPrzelewManualPlayerSelect");
   const kindEl = document.getElementById("adminSystemPrzelewManualKind");
   const periodEl = document.getElementById("adminSystemPrzelewManualPeriod");
   const msgEl = document.getElementById("adminSystemPrzelewManualMsg");
@@ -4238,12 +4300,12 @@ async function adminSaveManualSystemPrzelew() {
     return;
   }
 
-  const playerNo = String(playerEl?.value || "").trim();
+  const playerNo = String(playerSelectEl?.value || "").trim();
   const kind = String(kindEl?.value || "").trim().toUpperCase();
   const period = String(periodEl?.value || "").trim();
 
   if (!playerNo) {
-    if (msgEl) msgEl.textContent = "❌ Podaj numer zawodnika";
+    if (msgEl) msgEl.textContent = "❌ Wybierz zawodnika";
     return;
   }
   if (!["S", "Z"].includes(kind)) {
