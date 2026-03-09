@@ -4367,13 +4367,17 @@ async function adminSaveManualSystemPrzelew() {
 }
 
 async function adminSplitMixedPayment(row, playerNo) {
-
   try {
+    const numer = String(playerNo || "").trim();
+    if (!numer) {
+      alert("❌ Brak sugerowanego zawodnika do rozbicia płatności");
+      return;
+    }
 
     const res = await apiClubPost({
       action: "system_przelewy_split",
       sheet_row: row,
-      player_no: playerNo
+      player_no: numer
     });
 
     if (!res || res.success === false) {
@@ -4382,14 +4386,12 @@ async function adminSplitMixedPayment(row, playerNo) {
     }
 
     alert("✅ Płatność rozbita i zaksięgowana");
-
     await adminOpenSystemPrzelewy();
 
   } catch (e) {
     alert("❌ Błąd: " + (e?.message || e));
   }
-
-}  
+}
   
   // =================== 67 ADMIN: RAPORTY ===================
 
