@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V35';
+  window.APP_BUILD = 'BETA APP V36';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -3993,11 +3993,11 @@ function renderAdminSystemPrzelewTile_(p) {
 
   const kind   = String(p.suggested_payment_kind || p.matched_payment_kind || "").trim().toUpperCase();
   const period = String(p.suggested_period || p.matched_period || "").trim();
-
   const rowNo  = Number(p.sheet_row || 0);
 
   const suggestedNo = String(p.suggested_player_no || "").trim();
-  const suggestedName = escapeHtml_(String(p.suggested_player_name || "").trim());
+  const suggestedNameRaw = String(p.suggested_player_name || "").trim();
+  const suggestedName = escapeHtml_(suggestedNameRaw);
   const suggestedScore = Number(p.suggested_score || 0);
   const suggestedIsMixed = !!p.suggested_is_mixed;
   const suggestedParts = Array.isArray(p.suggested_parts) ? p.suggested_parts : [];
@@ -4018,8 +4018,8 @@ function renderAdminSystemPrzelewTile_(p) {
          <div style="margin-top:6px; font-size:13px; opacity:.9;">
            ${suggestedParts.map(x => {
              const k = escapeHtml_(String(x.kind || "—"));
-             const p = escapeHtml_(String(x.period || "—"));
-             return `<div>• ${k} / ${p}</div>`;
+             const pr = escapeHtml_(String(x.period || "—"));
+             return `<div>• ${k} / ${pr}</div>`;
            }).join("")}
          </div>
        </div>`
@@ -4031,13 +4031,23 @@ function renderAdminSystemPrzelewTile_(p) {
   let confirmBtn = "";
 
   if (status === "MATCH_CANDIDATE" && kind && period && !suggestedIsMixed) {
-    confirmBtn = `
-      <button class="full-btn"
-        style="margin-top:10px;"
-        onclick="adminConfirmSystemPrzelew(${rowNo}, '${kind}', '${period}')">
-        Zatwierdź płatność
-      </button>
-    `;
+    if (suggestedNo && suggestedNameRaw) {
+      confirmBtn = `
+        <button class="full-btn"
+          style="margin-top:10px; background:#0f7a2a; border-color:#19a642;"
+          onclick="adminConfirmSystemPrzelew(${rowNo}, '${suggestedNo}', '${kind}', '${period}')">
+          Zatwierdź jako #${suggestedNo} ${suggestedName}
+        </button>
+      `;
+    } else {
+      confirmBtn = `
+        <button class="full-btn"
+          style="margin-top:10px;"
+          onclick="adminConfirmSystemPrzelew(${rowNo}, '', '${kind}', '${period}')">
+          Zatwierdź płatność
+        </button>
+      `;
+    }
   }
 
   return `
@@ -4074,40 +4084,31 @@ function escapeHtml_(txt) {
     .replace(/'/g, "&#039;");
 }
 
-async function adminConfirmSystemPrzelew(row, kind, period) {
+async function adminConfirmSystemPrzelew(row, suggestedPlayerNo, kind, period) {
   try {
-    // 1) najpierw próba auto-dopasowania po nazwisku / tytule przelewu
-    const autoRes = await apiClubPost({
-      action: "system_przelewy_auto_confirm",
-      sheet_row: row,
-      payment_kind: kind,
-      period: period
-    });
+    let numer = String(suggestedPlayerNo || "").trim();
 
-    if (autoRes && autoRes.success) {
-      alert("✅ Płatność zaksięgowana automatycznie");
-      await adminOpenSystemPrzelewy();
-      return;
+    // jeśli nie ma sugestii zawodnika → fallback ręczny
+    if (!numer) {
+      numer = prompt("Podaj numer zawodnika:");
+      if (!numer) return;
+      numer = String(numer).trim();
     }
 
-    // 2) jeśli auto-match się nie udał → ręczne podanie numeru
-    const player = prompt("Nie udało się jednoznacznie dopasować zawodnika.\nPodaj numer zawodnika:");
-    if (!player) return;
-
-    const manualRes = await apiClubPost({
+    const res = await apiClubPost({
       action: "system_przelewy_confirm",
       sheet_row: row,
-      player_no: String(player).trim(),
+      player_no: numer,
       payment_kind: kind,
       period: period
     });
 
-    if (!manualRes || manualRes.success === false) {
-      alert("❌ " + (manualRes?.error || autoRes?.error || "Błąd"));
+    if (!res || res.success === false) {
+      alert("❌ " + (res?.error || "Błąd"));
       return;
     }
 
-    alert("✅ Płatność zaksięgowana ręcznie");
+    alert("✅ Płatność zaksięgowana");
     await adminOpenSystemPrzelewy();
 
   } catch (e) {
