@@ -1713,39 +1713,41 @@ function buildPlayerPaymentQrPayload({ receiver, accountRaw, amount, title }) {
 
   const konto = String(accountRaw || "")
     .replace(/\s+/g, "")
-    .slice(0,26);
+    .slice(0, 26);
 
   const odbiorca = String(receiver || "")
-    .replace(/\r?\n/g," ")
+    .replace(/\r?\n/g, " ")
     .trim()
-    .slice(0,70);
+    .slice(0, 70);
 
-  const kwota = Number(amount || 0)
-    .toFixed(2)
-    .replace(".",",");
+  const kwota = Math.round(Number(amount || 0) * 100)
+    .toString()
+    .padStart(6, "0");
 
   const tytul = String(title || "")
-    .replace(/\r?\n/g," ")
+    .replace(/\r?\n/g, " ")
     .trim()
-    .slice(0,140);
+    .slice(0, 140);
 
   /*
-  Format inspirowany QR z faktur (czytany przez wiele aplikacji bankowych)
+  Format QR faktury:
 
-  K|konto
-  N|nazwa odbiorcy
-  T|tytuł przelewu
-  A|kwota
+  |PL|NRB|KWOTA_GROSZE|ODBIORCA|TYTUŁ|||
   */
 
   const payload = [
-    `K|${konto}`,
-    `N|${odbiorca}`,
-    `T|${tytul}`,
-    `A|${kwota}`
+    "",
+    "PL",
+    konto,
+    kwota,
+    odbiorca,
+    tytul,
+    "",
+    "",
+    ""
   ];
 
-  return payload.join("\n");
+  return payload.join("|");
 }
   
 function updatePlayerPaymentQr({ receiver, accountRaw, amount, title, loading = false, error = false }) {
