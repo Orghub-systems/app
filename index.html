@@ -4037,12 +4037,12 @@ function renderAdminSystemPrzelewTile_(p) {
 
   const sender = escapeHtml_(String(p.sender_name || "—"));
   const titleRaw = String(p.raw_title || "—");
-  const title  = escapeHtml_(titleRaw);
+  const title = escapeHtml_(titleRaw);
 
-  const kind   = String(p.suggested_payment_kind || p.matched_payment_kind || "").trim().toUpperCase();
+  const kind = String(p.suggested_payment_kind || p.matched_payment_kind || "").trim().toUpperCase();
   const period = String(p.suggested_period || p.matched_period || "").trim();
 
-  const rowNo  = Number(p.sheet_row || 0);
+  const rowNo = Number(p.sheet_row || 0);
 
   const suggestedNo = String(p.suggested_player_no || "").trim();
   const suggestedNameRaw = String(p.suggested_player_name || "").trim();
@@ -4050,6 +4050,8 @@ function renderAdminSystemPrzelewTile_(p) {
   const suggestedScore = Number(p.suggested_score || 0);
   const suggestedIsMixed = !!p.suggested_is_mixed;
   const suggestedParts = Array.isArray(p.suggested_parts) ? p.suggested_parts : [];
+
+  const titleData = encodeURIComponent(titleRaw);
 
   const suggestionHtml =
     suggestedNo && suggestedName
@@ -4104,7 +4106,7 @@ function renderAdminSystemPrzelewTile_(p) {
     manualBtn = `
       <button class="full-btn alt"
         style="margin-top:10px;"
-        onclick="adminOpenManualSystemPrzelew(${rowNo}, ${JSON.stringify(titleRaw)}, '${suggestedNo}', '${kind}', '${period}')">
+        onclick="adminOpenManualSystemPrzelew(${rowNo}, decodeURIComponent('${titleData}'), '${suggestedNo}', '${kind}', '${period}')">
         Przypisz ręcznie
       </button>
     `;
