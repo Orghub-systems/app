@@ -1216,22 +1216,35 @@ input[type="number"] {
     <p style="margin:0 0 10px 0;"><b>Zapłać teraz</b></p>
 
     <div class="card" style="background:#111; text-align:left;">
+
       <div style="opacity:.9; font-size:14px;">Płatność</div>
       <div id="playerPaymentPopupName" style="font-size:18px; font-weight:800; margin-top:4px;">—</div>
 
-      <div style="margin-top:12px; opacity:.9; font-size:14px;">Kwota</div>
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+      <div style="opacity:.9; font-size:14px;">Kwota</div>
       <div id="playerPaymentPopupAmount" style="font-size:18px; font-weight:800; margin-top:4px;">—</div>
 
-      <div style="margin-top:12px; opacity:.9; font-size:14px;">Numer konta</div>
-      <div id="playerPaymentPopupAccount" style="font-size:16px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
 
-      <div style="margin-top:12px; opacity:.9; font-size:14px;">Tytuł przelewu</div>
+      <div style="opacity:.9; font-size:14px;">Odbiorca</div>
+      <div id="playerPaymentPopupReceiver" style="font-size:16px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
+      <button class="full-btn alt" id="playerPaymentCopyReceiverBtn" type="button" style="margin-top:8px;">Kopiuj odbiorcę</button>
+
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+      <div style="opacity:.9; font-size:14px;">Numer konta</div>
+      <div id="playerPaymentPopupAccount" style="font-size:16px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
+      <button class="full-btn alt" id="playerPaymentCopyAccountBtn" type="button" style="margin-top:8px;">Kopiuj numer konta</button>
+
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+      <div style="opacity:.9; font-size:14px;">Tytuł przelewu</div>
       <div id="playerPaymentPopupTitle" style="font-size:16px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
     </div>
 
     <div style="margin-top:10px;">
       <button class="full-btn" id="playerPaymentCopyTitleBtn" type="button">Kopiuj tytuł</button>
-      <button class="full-btn alt" id="playerPaymentCopyAllBtn" type="button">Kopiuj dane przelewu</button>
       <button class="full-btn alt" type="button" onclick="closePlayerPaymentPopup()">Anuluj</button>
     </div>
 
@@ -1575,6 +1588,7 @@ async function playerPayNow(nazwa, kwota) {
 
   const nameEl = document.getElementById("playerPaymentPopupName");
   const amountEl = document.getElementById("playerPaymentPopupAmount");
+  const receiverEl = document.getElementById("playerPaymentPopupReceiver");
   const accountEl = document.getElementById("playerPaymentPopupAccount");
   const titleEl = document.getElementById("playerPaymentPopupTitle");
   const msgEl = document.getElementById("playerPaymentPopupMsg");
@@ -1582,6 +1596,8 @@ async function playerPayNow(nazwa, kwota) {
   if (nameEl) nameEl.textContent = decodedName;
   if (amountEl) amountEl.textContent = safeKwota + " zł";
   if (titleEl) titleEl.textContent = titleCode;
+  if (receiverEl) receiverEl.textContent = "Ładowanie...";
+  if (accountEl) accountEl.textContent = "Ładowanie...";
   if (msgEl) msgEl.textContent = "";
 
   popup.style.display = "flex";
@@ -1590,7 +1606,8 @@ async function playerPayNow(nazwa, kwota) {
   try {
     branding = await apiClubGet("branding");
   } catch (e) {
-    if (accountEl) accountEl.textContent = "❌ Błąd pobierania danych klubu";
+    if (receiverEl) receiverEl.textContent = "❌ Błąd pobierania danych";
+    if (accountEl) accountEl.textContent = "❌ Błąd pobierania danych";
     if (msgEl) msgEl.textContent = "❌ Nie udało się pobrać danych do przelewu";
     return;
   }
@@ -1599,11 +1616,31 @@ async function playerPayNow(nazwa, kwota) {
   const kontoRaw = String(branding?.bank_account || "").replace(/\s+/g, "");
   const kontoFormatted = kontoRaw.replace(/(.{4})/g, "$1 ").trim();
 
-  if (accountEl) {
-    accountEl.textContent = odbiorca
-      ? `${odbiorca}\n${kontoFormatted || "Brak numeru konta"}`
-      : (kontoFormatted || "Brak numeru konta");
-    accountEl.style.whiteSpace = "pre-line";
+  if (receiverEl) receiverEl.textContent = odbiorca || "Brak odbiorcy";
+  if (accountEl) accountEl.textContent = kontoFormatted || "Brak numeru konta";
+
+  const copyReceiverBtn = document.getElementById("playerPaymentCopyReceiverBtn");
+  if (copyReceiverBtn) {
+    copyReceiverBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(odbiorca);
+        if (msgEl) msgEl.textContent = "✅ Skopiowano odbiorcę";
+      } catch (e) {
+        if (msgEl) msgEl.textContent = "❌ Nie udało się skopiować odbiorcy";
+      }
+    };
+  }
+
+  const copyAccountBtn = document.getElementById("playerPaymentCopyAccountBtn");
+  if (copyAccountBtn) {
+    copyAccountBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(kontoFormatted || kontoRaw);
+        if (msgEl) msgEl.textContent = "✅ Skopiowano numer konta";
+      } catch (e) {
+        if (msgEl) msgEl.textContent = "❌ Nie udało się skopiować numeru konta";
+      }
+    };
   }
 
   const copyTitleBtn = document.getElementById("playerPaymentCopyTitleBtn");
@@ -1617,23 +1654,9 @@ async function playerPayNow(nazwa, kwota) {
       }
     };
   }
-
-  const copyAllBtn = document.getElementById("playerPaymentCopyAllBtn");
-  if (copyAllBtn) {
-    copyAllBtn.onclick = async () => {
-      const txt = `${odbiorca ? "Odbiorca: " + odbiorca + "\n" : ""}Numer konta: ${kontoFormatted}
-Kwota: ${safeKwota} zł
-Tytuł: ${titleCode}`;
-
-      try {
-        await navigator.clipboard.writeText(txt);
-        if (msgEl) msgEl.textContent = "✅ Skopiowano dane przelewu";
-      } catch (e) {
-        if (msgEl) msgEl.textContent = "❌ Nie udało się skopiować danych";
-      }
-    };
-  }
 }
+
+window.playerPayNow = playerPayNow;
 
 window.playerPayNow = playerPayNow;
 
