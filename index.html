@@ -4043,11 +4043,26 @@ function escapeHtml_(txt) {
 }
 
 async function adminConfirmSystemPrzelew(row, kind, period) {
-  const player = prompt("Podaj numer zawodnika:");
-  if (!player) return;
-
   try {
-    const res = await apiClubPost({
+    // 1) najpierw próba auto-dopasowania po nazwisku / tytule przelewu
+    const autoRes = await apiClubPost({
+      action: "system_przelewy_auto_confirm",
+      sheet_row: row,
+      payment_kind: kind,
+      period: period
+    });
+
+    if (autoRes && autoRes.success) {
+      alert("✅ Płatność zaksięgowana automatycznie");
+      await adminOpenSystemPrzelewy();
+      return;
+    }
+
+    // 2) jeśli auto-match się nie udał → ręczne podanie numeru
+    const player = prompt("Nie udało się jednoznacznie dopasować zawodnika.\nPodaj numer zawodnika:");
+    if (!player) return;
+
+    const manualRes = await apiClubPost({
       action: "system_przelewy_confirm",
       sheet_row: row,
       player_no: String(player).trim(),
@@ -4055,12 +4070,12 @@ async function adminConfirmSystemPrzelew(row, kind, period) {
       period: period
     });
 
-    if (!res || res.success === false) {
-      alert("❌ " + (res?.error || "Błąd"));
+    if (!manualRes || manualRes.success === false) {
+      alert("❌ " + (manualRes?.error || autoRes?.error || "Błąd"));
       return;
     }
 
-    alert("✅ Płatność zaksięgowana");
+    alert("✅ Płatność zaksięgowana ręcznie");
     await adminOpenSystemPrzelewy();
 
   } catch (e) {
