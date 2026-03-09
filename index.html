@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V33';
+  window.APP_BUILD = 'BETA APP V34';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -704,6 +704,7 @@ input[type="number"] {
 
   <button class="full-btn" onclick="adminPokazZawodnikow()">👥 Zawodnicy</button>
   <button class="full-btn" onclick="goToView('adminRaportyView')">📊 Raporty</button>
+  <button class="full-btn" type="button" onclick="adminOpenSystemPrzelewy()"> System przelewy </button>
   <button class="full-btn alt" onclick="pokazLogowanie()">⬅ Wyloguj</button>
 </div>
 
@@ -1200,8 +1201,6 @@ input[type="number"] {
     <p id="adminPayConfirmMsg" style="margin-top:10px;"></p>
   </div>
 </div>
-
-  <!-- ====================== Popup przelewu zawodnika ============================ -->
   
 <!-- ====================== Popup przelewu zawodnika ============================ -->
 <div id="playerPaymentPopup" style="
@@ -1310,6 +1309,20 @@ input[type="number"] {
     </div>
 
     <p id="bankDataPopupMsg" style="margin-top:10px; min-height:1.2em;"></p>
+  </div>
+</div>
+
+<!-- =================== ADMIN: SYSTEM PRZELEWY =================== -->
+<div id="adminSystemPrzelewyView" class="view hidden">
+  <div class="topbar">
+    <button class="icon-btn" onclick="goBack()">←</button>
+    <div class="topbar-title">System przelewy</div>
+    <div style="width:40px;"></div>
+  </div>
+
+  <div class="page-wrap">
+    <div id="adminSystemPrzelewyMsg" style="margin-bottom:10px;"></div>
+    <div id="adminSystemPrzelewyBody"></div>
   </div>
 </div>
   
@@ -3908,6 +3921,114 @@ function adminCancelConfirmPayment() {
   modal.style.display = "none";
 }
 
+// =================== SYSTEM PRZELEWY ===================
+
+async function adminOpenSystemPrzelewy() {
+  goToView("adminSystemPrzelewyView");
+
+  const body = document.getElementById("adminSystemPrzelewyBody");
+  const msg  = document.getElementById("adminSystemPrzelewyMsg");
+
+  if (msg) msg.textContent = "";
+  if (body) body.innerHTML = "<div class='card' style='background:#222;'>⏳ Ładowanie przelewów...</div>";
+
+  try {
+    const res = await apiClubPost({
+      action: "system_przelewy_list"
+    });
+
+    renderAdminSystemPrzelewy_(res);
+  } catch (e) {
+    if (body) {
+      body.innerHTML = `<div class="card" style="background:#700;">❌ Błąd: ${e?.message || e}</div>`;
+    }
+  }
+}
+
+function renderAdminSystemPrzelewy_(res) {
+  const body = document.getElementById("adminSystemPrzelewyBody");
+  const msg  = document.getElementById("adminSystemPrzelewyMsg");
+  if (!body) return;
+
+  if (!res || res.success === false) {
+    body.innerHTML = `<div class="card" style="background:#700;">❌ ${res?.error || res?.message || "Brak danych"}</div>`;
+    return;
+  }
+
+  const items = Array.isArray(res.items) ? res.items : [];
+  if (items.length === 0) {
+    body.innerHTML = `<div class="card" style="background:#111;">Brak przelewów do obsługi</div>`;
+    return;
+  }
+
+  body.innerHTML = items.map(renderAdminSystemPrzelewTile_).join("");
+
+  if (msg) {
+    msg.textContent = `Do obsługi: ${items.length}`;
+  }
+}
+
+function renderAdminSystemPrzelewTile_(p) {
+  const status = String(p.match_status || "").trim();
+  const amount = Number(p.amount || 0);
+
+  let bg = "#111";
+  let badge = `<span style="color:#ccc;font-weight:700;">${status || "—"}</span>`;
+
+  if (status === "MATCH_CANDIDATE") {
+    bg = "#3a3111";
+    badge = `<span style="color:#ffd36b;font-weight:700;">MATCH_CANDIDATE</span>`;
+  } else if (status === "MIXED_REVIEW") {
+    bg = "#3a1d11";
+    badge = `<span style="color:#ffb36b;font-weight:700;">MIXED_REVIEW</span>`;
+  } else if (status === "UNMATCHED") {
+    bg = "#3a1414";
+    badge = `<span style="color:#ff7c7c;font-weight:700;">UNMATCHED</span>`;
+  }
+
+  const sender = escapeHtml_(String(p.sender_name || "—"));
+  const title  = escapeHtml_(String(p.raw_title || "—"));
+  const kind   = escapeHtml_(String(p.matched_payment_kind || ""));
+  const period = escapeHtml_(String(p.matched_period || ""));
+  const rowNo  = Number(p.sheet_row || 0);
+
+  return `
+    <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+        <div style="flex:1;">
+          <div style="opacity:.85; font-size:13px;">Wiersz: ${rowNo}</div>
+          <div style="font-size:18px; font-weight:800; margin-top:4px;">${amount} zł</div>
+          <div style="margin-top:6px; font-size:14px; opacity:.95;">${sender}</div>
+        </div>
+        <div style="text-align:right;">
+          ${badge}
+        </div>
+      </div>
+
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+      <div style="opacity:.8; font-size:13px;">Tytuł przelewu</div>
+      <div style="margin-top:4px; font-size:15px; font-weight:700; word-break:break-word;">${title}</div>
+
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+      <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:14px;">
+        <div><b>Typ:</b> ${kind || "—"}</div>
+        <div><b>Okres:</b> ${period || "—"}</div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml_(txt) {
+  return String(txt || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+  
   // =================== 67 ADMIN: RAPORTY ===================
 
 function adminOpenRaporty() {
