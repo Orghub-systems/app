@@ -4184,8 +4184,12 @@ async function adminIgnoreSystemPrzelew(row) {
       return;
     }
 
-    alert("✅ Przelew oznaczony jako nieważny");
-    await adminOpenSystemPrzelewy();
+    const el = document.getElementById(`systemPrzelewRow_${row}`);
+    if (el) {
+      el.remove();
+    }
+
+    adminUpdateSystemPrzelewyCount_();
 
   } catch (e) {
     alert("❌ Błąd: " + (e?.message || e));
