@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V34';
+  window.APP_BUILD = 'BETA APP V35';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -3990,13 +3990,17 @@ function renderAdminSystemPrzelewTile_(p) {
 
   const sender = escapeHtml_(String(p.sender_name || "—"));
   const title  = escapeHtml_(String(p.raw_title || "—"));
-  const kind   = String(p.matched_payment_kind || "").trim().toUpperCase();
-  const period = String(p.matched_period || "").trim();
+
+  const kind   = String(p.suggested_payment_kind || p.matched_payment_kind || "").trim().toUpperCase();
+  const period = String(p.suggested_period || p.matched_period || "").trim();
+
   const rowNo  = Number(p.sheet_row || 0);
 
   const suggestedNo = String(p.suggested_player_no || "").trim();
   const suggestedName = escapeHtml_(String(p.suggested_player_name || "").trim());
   const suggestedScore = Number(p.suggested_score || 0);
+  const suggestedIsMixed = !!p.suggested_is_mixed;
+  const suggestedParts = Array.isArray(p.suggested_parts) ? p.suggested_parts : [];
 
   const suggestionHtml =
     suggestedNo && suggestedName
@@ -4007,14 +4011,34 @@ function renderAdminSystemPrzelewTile_(p) {
          </div>`
       : "";
 
-  const confirmBtn =
-    status === "MATCH_CANDIDATE" && kind && period
-      ? `<button class="full-btn"
-          style="margin-top:10px;"
-          onclick="adminConfirmSystemPrzelew(${rowNo}, '${kind}', '${period}')">
-          Zatwierdź płatność
-        </button>`
-      : "";
+  const accountingHtml = suggestedIsMixed
+    ? `<div style="margin-top:10px; padding:8px 10px; border:1px solid #444; border-radius:10px; background:rgba(255,255,255,.04);">
+         <div style="font-size:13px; opacity:.8;">Sugestia księgowania</div>
+         <div style="margin-top:4px; font-size:15px; font-weight:700;">Płatność mieszana</div>
+         <div style="margin-top:6px; font-size:13px; opacity:.9;">
+           ${suggestedParts.map(x => {
+             const k = escapeHtml_(String(x.kind || "—"));
+             const p = escapeHtml_(String(x.period || "—"));
+             return `<div>• ${k} / ${p}</div>`;
+           }).join("")}
+         </div>
+       </div>`
+    : `<div style="margin-top:10px; padding:8px 10px; border:1px solid #444; border-radius:10px; background:rgba(255,255,255,.04);">
+         <div style="font-size:13px; opacity:.8;">Sugestia księgowania</div>
+         <div style="margin-top:4px; font-size:15px; font-weight:700;">${kind || "—"} / ${period || "—"}</div>
+       </div>`;
+
+  let confirmBtn = "";
+
+  if (status === "MATCH_CANDIDATE" && kind && period && !suggestedIsMixed) {
+    confirmBtn = `
+      <button class="full-btn"
+        style="margin-top:10px;"
+        onclick="adminConfirmSystemPrzelew(${rowNo}, '${kind}', '${period}')">
+        Zatwierdź płatność
+      </button>
+    `;
+  }
 
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
@@ -4034,14 +4058,8 @@ function renderAdminSystemPrzelewTile_(p) {
       <div style="opacity:.8; font-size:13px;">Tytuł przelewu</div>
       <div style="margin-top:4px; font-size:15px; font-weight:700; word-break:break-word;">${title}</div>
 
-      <div style="height:1px; background:#333; margin:12px 0;"></div>
-
-      <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:14px;">
-        <div><b>Typ:</b> ${kind || "—"}</div>
-        <div><b>Okres:</b> ${period || "—"}</div>
-      </div>
-
       ${suggestionHtml}
+      ${accountingHtml}
       ${confirmBtn}
     </div>
   `;
