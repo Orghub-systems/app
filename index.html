@@ -4011,11 +4011,42 @@ function renderAdminSystemPrzelewTile_(p) {
       <div style="margin-top:4px; font-size:15px; font-weight:700; word-break:break-word;">${title}</div>
 
       <div style="height:1px; background:#333; margin:12px 0;"></div>
+const confirmBtn =
+  status === "MATCH_CANDIDATE" && kind && period
+    ? `<button class="full-btn"
+        style="margin-top:10px;"
+        onclick="adminConfirmSystemPrzelew(${rowNo}, '${kind}', '${period}')">
+        Zatwierdź płatność
+      </button>`
+    : "";
 
-      <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:14px;">
-        <div><b>Typ:</b> ${kind || "—"}</div>
-        <div><b>Okres:</b> ${period || "—"}</div>
+return `
+  <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+      <div style="flex:1;">
+        <div style="opacity:.85; font-size:13px;">Wiersz: ${rowNo}</div>
+        <div style="font-size:18px; font-weight:800; margin-top:4px;">${amount} zł</div>
+        <div style="margin-top:6px; font-size:14px; opacity:.95;">${sender}</div>
       </div>
+      <div style="text-align:right;">
+        ${badge}
+      </div>
+    </div>
+
+    <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+    <div style="opacity:.8; font-size:13px;">Tytuł przelewu</div>
+    <div style="margin-top:4px; font-size:15px; font-weight:700; word-break:break-word;">${title}</div>
+
+    <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+    <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:14px;">
+      <div><b>Typ:</b> ${kind || "—"}</div>
+      <div><b>Okres:</b> ${period || "—"}</div>
+    </div>
+
+    ${confirmBtn}
+
     </div>
   `;
 }
