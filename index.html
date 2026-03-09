@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V36';
+  window.APP_BUILD = 'BETA APP V37';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1326,7 +1326,50 @@ input[type="number"] {
   </div>
 </div>
 
+<!-- =================== ADMIN: SYSTEM PRZELEWY — ręczne przypisanie =================== -->
+<div id="adminSystemPrzelewManualModal" class="hidden" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+">
+  <div class="popup-card" style="max-width:420px;width:100%; text-align:left;">
+    <p style="margin:0 0 12px 0;"><b>Ręczne przypisanie przelewu</b></p>
 
+    <div style="font-size:13px; opacity:.85;">Wiersz</div>
+    <div id="adminSystemPrzelewManualRow" style="font-size:16px; font-weight:700; margin-top:4px;">—</div>
+
+    <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+    <div style="font-size:13px; opacity:.85;">Tytuł przelewu</div>
+    <div id="adminSystemPrzelewManualTitle" style="font-size:15px; font-weight:700; margin-top:4px; word-break:break-word;">—</div>
+
+    <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+    <div style="font-size:13px; opacity:.85;">Numer zawodnika</div>
+    <input id="adminSystemPrzelewManualPlayer" type="text" class="full-input" style="margin-top:6px;" placeholder="Np. 31">
+
+    <div style="margin-top:12px; font-size:13px; opacity:.85;">Typ płatności</div>
+    <select id="adminSystemPrzelewManualKind" class="full-input" style="margin-top:6px;">
+      <option value="">— wybierz —</option>
+      <option value="S">Składka</option>
+      <option value="Z">Zajęcia dodatkowe</option>
+    </select>
+
+    <div style="margin-top:12px; font-size:13px; opacity:.85;">Okres (YYYYMM)</div>
+    <input id="adminSystemPrzelewManualPeriod" type="text" class="full-input" style="margin-top:6px;" placeholder="Np. 202602">
+
+    <p id="adminSystemPrzelewManualMsg" style="margin-top:10px; min-height:1.2em;"></p>
+
+    <div style="margin-top:12px;">
+      <button class="full-btn" id="adminSystemPrzelewManualSaveBtn" type="button" onclick="adminSaveManualSystemPrzelew()">Zatwierdź ręcznie</button>
+      <button class="full-btn alt" type="button" style="margin-top:8px;" onclick="adminCloseManualSystemPrzelew()">Anuluj</button>
+    </div>
+  </div>
+</div>
   
 <script>
 
@@ -3989,10 +4032,12 @@ function renderAdminSystemPrzelewTile_(p) {
   }
 
   const sender = escapeHtml_(String(p.sender_name || "—"));
-  const title  = escapeHtml_(String(p.raw_title || "—"));
+  const titleRaw = String(p.raw_title || "—");
+  const title  = escapeHtml_(titleRaw);
 
   const kind   = String(p.suggested_payment_kind || p.matched_payment_kind || "").trim().toUpperCase();
   const period = String(p.suggested_period || p.matched_period || "").trim();
+
   const rowNo  = Number(p.sheet_row || 0);
 
   const suggestedNo = String(p.suggested_player_no || "").trim();
@@ -4029,6 +4074,7 @@ function renderAdminSystemPrzelewTile_(p) {
        </div>`;
 
   let confirmBtn = "";
+  let manualBtn = "";
 
   if (status === "MATCH_CANDIDATE" && kind && period && !suggestedIsMixed) {
     if (suggestedNo && suggestedNameRaw) {
@@ -4048,6 +4094,16 @@ function renderAdminSystemPrzelewTile_(p) {
         </button>
       `;
     }
+  }
+
+  if (status === "UNMATCHED") {
+    manualBtn = `
+      <button class="full-btn alt"
+        style="margin-top:10px;"
+        onclick="adminOpenManualSystemPrzelew(${rowNo}, ${JSON.stringify(titleRaw)}, '${suggestedNo}', '${kind}', '${period}')">
+        Przypisz ręcznie
+      </button>
+    `;
   }
 
   return `
@@ -4071,10 +4127,11 @@ function renderAdminSystemPrzelewTile_(p) {
       ${suggestionHtml}
       ${accountingHtml}
       ${confirmBtn}
+      ${manualBtn}
     </div>
   `;
 }
-
+  
 function escapeHtml_(txt) {
   return String(txt || "")
     .replace(/&/g, "&amp;")
@@ -4113,6 +4170,123 @@ async function adminConfirmSystemPrzelew(row, suggestedPlayerNo, kind, period) {
 
   } catch (e) {
     alert("❌ Błąd: " + (e?.message || e));
+  }
+}
+  
+/* ---------------------    Ręczne księgowanie   ---------------------------*/
+window.__adminSystemPrzelewManual = {
+  row: null,
+  title: "",
+  suggestedPlayerNo: "",
+  suggestedKind: "",
+  suggestedPeriod: ""
+};
+
+function adminOpenManualSystemPrzelew(row, title, suggestedPlayerNo, suggestedKind, suggestedPeriod) {
+  window.__adminSystemPrzelewManual = {
+    row: Number(row || 0),
+    title: String(title || ""),
+    suggestedPlayerNo: String(suggestedPlayerNo || "").trim(),
+    suggestedKind: String(suggestedKind || "").trim().toUpperCase(),
+    suggestedPeriod: String(suggestedPeriod || "").trim()
+  };
+
+  const modal = document.getElementById("adminSystemPrzelewManualModal");
+  const rowEl = document.getElementById("adminSystemPrzelewManualRow");
+  const titleEl = document.getElementById("adminSystemPrzelewManualTitle");
+  const playerEl = document.getElementById("adminSystemPrzelewManualPlayer");
+  const kindEl = document.getElementById("adminSystemPrzelewManualKind");
+  const periodEl = document.getElementById("adminSystemPrzelewManualPeriod");
+  const msgEl = document.getElementById("adminSystemPrzelewManualMsg");
+
+  if (!modal || !rowEl || !titleEl || !playerEl || !kindEl || !periodEl) {
+    alert("❌ Brak elementów modala ręcznego przypisania przelewu.");
+    return;
+  }
+
+  rowEl.textContent = String(window.__adminSystemPrzelewManual.row || "—");
+  titleEl.textContent = window.__adminSystemPrzelewManual.title || "—";
+
+  playerEl.value = window.__adminSystemPrzelewManual.suggestedPlayerNo || "";
+  kindEl.value = window.__adminSystemPrzelewManual.suggestedKind || "";
+  periodEl.value = window.__adminSystemPrzelewManual.suggestedPeriod || "";
+
+  if (msgEl) msgEl.textContent = "";
+
+  modal.classList.remove("hidden");
+  modal.style.display = "flex";
+}
+
+function adminCloseManualSystemPrzelew() {
+  const modal = document.getElementById("adminSystemPrzelewManualModal");
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+  modal.style.display = "none";
+}
+
+async function adminSaveManualSystemPrzelew() {
+  const row = Number(window.__adminSystemPrzelewManual?.row || 0);
+  const playerEl = document.getElementById("adminSystemPrzelewManualPlayer");
+  const kindEl = document.getElementById("adminSystemPrzelewManualKind");
+  const periodEl = document.getElementById("adminSystemPrzelewManualPeriod");
+  const msgEl = document.getElementById("adminSystemPrzelewManualMsg");
+  const saveBtn = document.getElementById("adminSystemPrzelewManualSaveBtn");
+
+  if (!(row >= 2)) {
+    if (msgEl) msgEl.textContent = "❌ Błędny wiersz przelewu";
+    return;
+  }
+
+  const playerNo = String(playerEl?.value || "").trim();
+  const kind = String(kindEl?.value || "").trim().toUpperCase();
+  const period = String(periodEl?.value || "").trim();
+
+  if (!playerNo) {
+    if (msgEl) msgEl.textContent = "❌ Podaj numer zawodnika";
+    return;
+  }
+  if (!["S", "Z"].includes(kind)) {
+    if (msgEl) msgEl.textContent = "❌ Wybierz typ płatności";
+    return;
+  }
+  if (!/^\d{6}$/.test(period)) {
+    if (msgEl) msgEl.textContent = "❌ Okres musi mieć format YYYYMM";
+    return;
+  }
+
+  try {
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = "0.65";
+      saveBtn.textContent = "⏳ Zapisuję…";
+    }
+    if (msgEl) msgEl.textContent = "";
+
+    const res = await apiClubPost({
+      action: "system_przelewy_confirm",
+      sheet_row: row,
+      player_no: playerNo,
+      payment_kind: kind,
+      period: period
+    });
+
+    if (!res || res.success === false) {
+      if (msgEl) msgEl.textContent = "❌ " + (res?.error || "Błąd");
+      return;
+    }
+
+    adminCloseManualSystemPrzelew();
+    await adminOpenSystemPrzelewy();
+
+  } catch (e) {
+    if (msgEl) msgEl.textContent = "❌ Błąd: " + (e?.message || e);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.style.opacity = "1";
+      saveBtn.textContent = "Zatwierdź ręcznie";
+    }
   }
 }
   
