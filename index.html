@@ -1812,32 +1812,43 @@ function updatePlayerPaymentQr({ receiver, accountRaw, amount, title, loading = 
 
 function generateTransferCode(nazwaPlatnosci) {
 
-  const klub = "WRS";
-  const numer = String(numerZalogowanego).padStart(4,"0");
+  const klub = clubId.toUpperCase();
+  const numer = String(parseInt(String(numerZalogowanego || "").trim(), 10));
 
   const txt = String(nazwaPlatnosci || "").toLowerCase();
 
-  const typ = txt.startsWith("składka") ? "S" : "Z";
-
-  const miesiace = [
-    "styczeń","luty","marzec","kwiecień","maj","czerwiec",
-    "lipiec","sierpień","wrzesień","październik","listopad","grudzień"
-  ];
+  const typ = txt.startsWith("składka") || txt.startsWith("skladka") ? "S" : "Z";
 
   const rokMatch = txt.match(/20\d{2}/);
   const rok = rokMatch ? rokMatch[0] : "";
 
+  const miesiace = {
+    "styczeń":"01","styczen":"01",
+    "luty":"02",
+    "marzec":"03",
+    "kwiecień":"04","kwiecien":"04",
+    "maj":"05",
+    "czerwiec":"06",
+    "lipiec":"07",
+    "sierpień":"08","sierpien":"08",
+    "wrzesień":"09","wrzesien":"09",
+    "październik":"10","pazdziernik":"10",
+    "listopad":"11",
+    "grudzień":"12","grudzien":"12"
+  };
+
   let miesiac = "01";
 
-  miesiace.forEach((m,i)=>{
-    if(txt.includes(m)){
-      miesiac = String(i+1).padStart(2,"0");
+  for (const m in miesiace) {
+    if (txt.includes(m)) {
+      miesiac = miesiace[m];
+      break;
     }
-  });
+  }
 
-  const rrrrmm = rok + miesiac;
+  const period = rok + miesiac;
 
-  return `${klub}|${numer}|${typ}|${rrrrmm}`;
+  return `${klub}|${numer}|${typ}|${period}`;
 }  
 
 function closePlayerPaymentPopup() {
