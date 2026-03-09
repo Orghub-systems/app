@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V38';
+  window.APP_BUILD = 'BETA APP V39';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -4081,6 +4081,7 @@ function renderAdminSystemPrzelewTile_(p) {
 
   let confirmBtn = "";
   let manualBtn = "";
+  let splitBtn = "";
 
   if (status === "MATCH_CANDIDATE" && kind && period && !suggestedIsMixed) {
     if (suggestedNo && suggestedNameRaw) {
@@ -4112,6 +4113,16 @@ function renderAdminSystemPrzelewTile_(p) {
     `;
   }
 
+  if (status === "MIXED_REVIEW" && suggestedNo && suggestedParts.length) {
+    splitBtn = `
+      <button class="full-btn"
+        style="margin-top:10px; background:#b86a00; border-color:#ff9d00;"
+        onclick="adminSplitMixedPayment(${rowNo}, '${suggestedNo}')">
+        Rozbij płatność
+      </button>
+    `;
+  }
+
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
       <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
@@ -4134,6 +4145,7 @@ function renderAdminSystemPrzelewTile_(p) {
       ${accountingHtml}
       ${confirmBtn}
       ${manualBtn}
+      ${splitBtn}
     </div>
   `;
 }
@@ -4353,6 +4365,31 @@ async function adminSaveManualSystemPrzelew() {
     }
   }
 }
+
+async function adminSplitMixedPayment(row, playerNo) {
+
+  try {
+
+    const res = await apiClubPost({
+      action: "system_przelewy_split",
+      sheet_row: row,
+      player_no: playerNo
+    });
+
+    if (!res || res.success === false) {
+      alert("❌ " + (res?.error || "Błąd"));
+      return;
+    }
+
+    alert("✅ Płatność rozbita i zaksięgowana");
+
+    await adminOpenSystemPrzelewy();
+
+  } catch (e) {
+    alert("❌ Błąd: " + (e?.message || e));
+  }
+
+}  
   
   // =================== 67 ADMIN: RAPORTY ===================
 
