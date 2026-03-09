@@ -1811,34 +1811,41 @@ function updatePlayerPaymentQr({ receiver, accountRaw, amount, title, loading = 
 }
 
 function generateTransferCode(nazwaPlatnosci) {
-
-  const klub = clubId.toUpperCase();
-  const numer = String(parseInt(String(numerZalogowanego || "").trim(), 10));
+  const klub = String(clubId || "").trim().toUpperCase();
+  const numer = String(parseInt(String(numerZalogowanego || "").trim(), 10) || "").trim();
 
   const txt = String(nazwaPlatnosci || "").toLowerCase();
 
-  const typ = txt.startsWith("składka") || txt.startsWith("skladka") ? "S" : "Z";
+  const typ =
+    txt.startsWith("składka") || txt.startsWith("skladka")
+      ? "S"
+      : "Z";
+
+  const miesiace = {
+    "styczeń": "01",
+    "styczen": "01",
+    "luty": "02",
+    "marzec": "03",
+    "kwiecień": "04",
+    "kwiecien": "04",
+    "maj": "05",
+    "czerwiec": "06",
+    "lipiec": "07",
+    "sierpień": "08",
+    "sierpien": "08",
+    "wrzesień": "09",
+    "wrzesien": "09",
+    "październik": "10",
+    "pazdziernik": "10",
+    "listopad": "11",
+    "grudzień": "12",
+    "grudzien": "12"
+  };
 
   const rokMatch = txt.match(/20\d{2}/);
   const rok = rokMatch ? rokMatch[0] : "";
 
-  const miesiace = {
-    "styczeń":"01","styczen":"01",
-    "luty":"02",
-    "marzec":"03",
-    "kwiecień":"04","kwiecien":"04",
-    "maj":"05",
-    "czerwiec":"06",
-    "lipiec":"07",
-    "sierpień":"08","sierpien":"08",
-    "wrzesień":"09","wrzesien":"09",
-    "październik":"10","pazdziernik":"10",
-    "listopad":"11",
-    "grudzień":"12","grudzien":"12"
-  };
-
   let miesiac = "01";
-
   for (const m in miesiace) {
     if (txt.includes(m)) {
       miesiac = miesiace[m];
@@ -1848,8 +1855,10 @@ function generateTransferCode(nazwaPlatnosci) {
 
   const period = rok + miesiac;
 
-  return `${klub}|${numer}|${typ}|${period}`;
-}  
+  // WAŻNE: separator "|" rozwala tytuł w QR,
+  // więc używamy "-" zamiast "|"
+  return `${klub}-${numer}-${typ}-${period}`;
+} 
 
 function closePlayerPaymentPopup() {
   const popup = document.getElementById("playerPaymentPopup");
