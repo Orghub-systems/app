@@ -1565,13 +1565,12 @@ function urlBase64ToUint8Array_(base64String) {
 
 /* =================== Generator do przelewów =================== */
   
-function playerPayNow(nazwa, kwota) {
+async function playerPayNow(nazwa, kwota) {
   const popup = document.getElementById("playerPaymentPopup");
   if (!popup) return;
 
   const decodedName = decodeURIComponent(String(nazwa || ""));
   const safeKwota = Number(kwota || 0);
-
   const titleCode = generateTransferCode(decodedName);
 
   const nameEl = document.getElementById("playerPaymentPopupName");
@@ -1582,15 +1581,30 @@ function playerPayNow(nazwa, kwota) {
 
   if (nameEl) nameEl.textContent = decodedName;
   if (amountEl) amountEl.textContent = safeKwota + " zł";
-
-  // TYMCZASOWY numer konta – później podmienimy na klubowy z danych
-  const konto = "00 0000 0000 0000 0000 0000 0000";
-  if (accountEl) accountEl.textContent = konto;
-
   if (titleEl) titleEl.textContent = titleCode;
   if (msgEl) msgEl.textContent = "";
 
   popup.style.display = "flex";
+
+  let branding;
+  try {
+    branding = await apiClubGet("branding");
+  } catch (e) {
+    if (accountEl) accountEl.textContent = "❌ Błąd pobierania danych klubu";
+    if (msgEl) msgEl.textContent = "❌ Nie udało się pobrać danych do przelewu";
+    return;
+  }
+
+  const odbiorca = String(branding?.bank_receiver || branding?.club_name || "").trim();
+  const kontoRaw = String(branding?.bank_account || "").replace(/\s+/g, "");
+  const kontoFormatted = kontoRaw.replace(/(.{4})/g, "$1 ").trim();
+
+  if (accountEl) {
+    accountEl.textContent = odbiorca
+      ? `${odbiorca}\n${kontoFormatted || "Brak numeru konta"}`
+      : (kontoFormatted || "Brak numeru konta");
+    accountEl.style.whiteSpace = "pre-line";
+  }
 
   const copyTitleBtn = document.getElementById("playerPaymentCopyTitleBtn");
   if (copyTitleBtn) {
@@ -1607,7 +1621,7 @@ function playerPayNow(nazwa, kwota) {
   const copyAllBtn = document.getElementById("playerPaymentCopyAllBtn");
   if (copyAllBtn) {
     copyAllBtn.onclick = async () => {
-      const txt = `Numer konta: ${konto}
+      const txt = `${odbiorca ? "Odbiorca: " + odbiorca + "\n" : ""}Numer konta: ${kontoFormatted}
 Kwota: ${safeKwota} zł
 Tytuł: ${titleCode}`;
 
@@ -1620,6 +1634,8 @@ Tytuł: ${titleCode}`;
     };
   }
 }
+
+window.playerPayNow = playerPayNow;
 
 function generateTransferCode(nazwaPlatnosci) {
 
