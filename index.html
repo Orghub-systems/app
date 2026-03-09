@@ -876,6 +876,49 @@ input[type="number"] {
     <div id="adminSystemPrzelewyBody"></div>
   </div>
 </div>
+
+<!-- 26. UPLOAD WYCIĄGU BANKOWEGO (ADMIN) -->
+
+<div class="card" style="margin-bottom:14px;">
+
+  <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+  ">
+
+    <div style="font-weight:600;">
+      Import wyciągu bankowego
+    </div>
+
+    <button class="btn-green"
+            onclick="adminUploadBankFile()">
+      Wgraj wyciąg
+    </button>
+
+  </div>
+
+  <!-- ukryty input pliku -->
+  <input
+    id="adminBankFileInput"
+    type="file"
+    accept=".xls,.xlsx,.csv"
+    style="display:none"
+    onchange="adminHandleBankFileSelect(event)"
+  >
+
+  <!-- komunikat importu -->
+  <div id="adminBankImportMsg"
+       style="
+         margin-top:10px;
+         font-size:13px;
+         color:#aaa;
+       ">
+  </div>
+
+</div>
     
     </div><!-- /app -->
 
