@@ -3988,9 +3988,18 @@ function renderAdminSystemPrzelewTile_(p) {
 
   const sender = escapeHtml_(String(p.sender_name || "—"));
   const title  = escapeHtml_(String(p.raw_title || "—"));
-  const kind   = escapeHtml_(String(p.matched_payment_kind || ""));
-  const period = escapeHtml_(String(p.matched_period || ""));
+  const kind   = String(p.matched_payment_kind || "").trim().toUpperCase();
+  const period = String(p.matched_period || "").trim();
   const rowNo  = Number(p.sheet_row || 0);
+
+  const confirmBtn =
+    status === "MATCH_CANDIDATE" && kind && period
+      ? `<button class="full-btn"
+          style="margin-top:10px;"
+          onclick="adminConfirmSystemPrzelew(${rowNo}, '${kind}', '${period}')">
+          Zatwierdź płatność
+        </button>`
+      : "";
 
   return `
     <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
@@ -4011,42 +4020,13 @@ function renderAdminSystemPrzelewTile_(p) {
       <div style="margin-top:4px; font-size:15px; font-weight:700; word-break:break-word;">${title}</div>
 
       <div style="height:1px; background:#333; margin:12px 0;"></div>
-const confirmBtn =
-  status === "MATCH_CANDIDATE" && kind && period
-    ? `<button class="full-btn"
-        style="margin-top:10px;"
-        onclick="adminConfirmSystemPrzelew(${rowNo}, '${kind}', '${period}')">
-        Zatwierdź płatność
-      </button>`
-    : "";
 
-return `
-  <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
-    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-      <div style="flex:1;">
-        <div style="opacity:.85; font-size:13px;">Wiersz: ${rowNo}</div>
-        <div style="font-size:18px; font-weight:800; margin-top:4px;">${amount} zł</div>
-        <div style="margin-top:6px; font-size:14px; opacity:.95;">${sender}</div>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:14px;">
+        <div><b>Typ:</b> ${kind || "—"}</div>
+        <div><b>Okres:</b> ${period || "—"}</div>
       </div>
-      <div style="text-align:right;">
-        ${badge}
-      </div>
-    </div>
 
-    <div style="height:1px; background:#333; margin:12px 0;"></div>
-
-    <div style="opacity:.8; font-size:13px;">Tytuł przelewu</div>
-    <div style="margin-top:4px; font-size:15px; font-weight:700; word-break:break-word;">${title}</div>
-
-    <div style="height:1px; background:#333; margin:12px 0;"></div>
-
-    <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:14px;">
-      <div><b>Typ:</b> ${kind || "—"}</div>
-      <div><b>Okres:</b> ${period || "—"}</div>
-    </div>
-
-    ${confirmBtn}
-
+      ${confirmBtn}
     </div>
   `;
 }
@@ -4058,6 +4038,32 @@ function escapeHtml_(txt) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+async function adminConfirmSystemPrzelew(row, kind, period) {
+  const player = prompt("Podaj numer zawodnika:");
+  if (!player) return;
+
+  try {
+    const res = await apiClubPost({
+      action: "system_przelewy_confirm",
+      sheet_row: row,
+      player_no: String(player).trim(),
+      payment_kind: kind,
+      period: period
+    });
+
+    if (!res || res.success === false) {
+      alert("❌ " + (res?.error || "Błąd"));
+      return;
+    }
+
+    alert("✅ Płatność zaksięgowana");
+    await adminOpenSystemPrzelewy();
+
+  } catch (e) {
+    alert("❌ Błąd: " + (e?.message || e));
+  }
 }
   
   // =================== 67 ADMIN: RAPORTY ===================
