@@ -1710,17 +1710,45 @@ async function playerPayNow(nazwa, kwota) {
 }
 
 function buildPlayerPaymentQrPayload({ receiver, accountRaw, amount, title }) {
-  const safeReceiver = String(receiver || "").trim();
-  const safeAccount = String(accountRaw || "").replace(/\s+/g, "");
-  const safeAmount = Number(amount || 0).toFixed(2);
-  const safeTitle = String(title || "").trim();
+  const safeReceiver = String(receiver || "")
+    .trim()
+    .replace(/\r?\n/g, " ")
+    .slice(0, 70);
 
-  return [
-    safeReceiver,
-    safeAccount,
-    safeAmount,
-    safeTitle
-  ].join("|");
+  const rawAccount = String(accountRaw || "").replace(/\s+/g, "");
+  const iban = rawAccount ? ("PL" + rawAccount) : "";
+
+  const safeTitle = String(title || "")
+    .trim()
+    .replace(/\r?\n/g, " ")
+    .slice(0, 140);
+
+  // EPC QR / SCT / v002
+  // Uwaga:
+  // - BIC w v002 może być puste
+  // - amount w EPC jest tylko w EUR, więc dla testu krajowego PLN go NIE wpisujemy
+  // - wrzucamy tytuł jako Remittance Information (unstructured)
+
+  const lines = [
+    "BCD",        // Service Tag
+    "002",        // Version
+    "1",          // UTF-8
+    "SCT",        // Identification
+    "",           // BIC (puste w v002)
+    safeReceiver, // Beneficiary name
+    iban,         // IBAN
+    "",           // Amount (pomijamy, bo EPC przewiduje EUR)
+    "",           // Purpose
+    "",           // Structured remittance
+    safeTitle     // Unstructured remittance
+  ];
+
+  // Usuń końcowe puste linie, ale zachowaj puste pola pośrednie
+  while (lines.length && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
+
+  return lines.join("\n");
 }
 
 function updatePlayerPaymentQr({ receiver, accountRaw, amount, title, loading = false, error = false }) {
