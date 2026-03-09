@@ -2001,8 +2001,8 @@ function hideBusy() {
 
 /* =================== 40 NAWIGACJA / ROUTER =================== */
 function ukryjWszystkie() {
-  document.querySelectorAll(".container").forEach(v => {
-    if (v.id === "app") return; // ✅ NIE chowamy wrappera
+  document.querySelectorAll(".container, .view").forEach(v => {
+    if (v.id === "app") return; // nie chowamy głównego wrappera
     v.classList.add("hidden");
   });
 }
