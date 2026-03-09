@@ -3994,6 +3994,19 @@ function renderAdminSystemPrzelewTile_(p) {
   const period = String(p.matched_period || "").trim();
   const rowNo  = Number(p.sheet_row || 0);
 
+  const suggestedNo = String(p.suggested_player_no || "").trim();
+  const suggestedName = escapeHtml_(String(p.suggested_player_name || "").trim());
+  const suggestedScore = Number(p.suggested_score || 0);
+
+  const suggestionHtml =
+    suggestedNo && suggestedName
+      ? `<div style="margin-top:10px; padding:8px 10px; border:1px solid #444; border-radius:10px; background:rgba(255,255,255,.04);">
+           <div style="font-size:13px; opacity:.8;">Sugestia systemu</div>
+           <div style="margin-top:4px; font-size:15px; font-weight:700;">#${suggestedNo} — ${suggestedName}</div>
+           <div style="margin-top:2px; font-size:12px; opacity:.75;">Pewność: ${suggestedScore}</div>
+         </div>`
+      : "";
+
   const confirmBtn =
     status === "MATCH_CANDIDATE" && kind && period
       ? `<button class="full-btn"
@@ -4028,6 +4041,7 @@ function renderAdminSystemPrzelewTile_(p) {
         <div><b>Okres:</b> ${period || "—"}</div>
       </div>
 
+      ${suggestionHtml}
       ${confirmBtn}
     </div>
   `;
