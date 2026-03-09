@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V32';
+  window.APP_BUILD = 'BETA APP V33';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1203,6 +1203,7 @@ input[type="number"] {
 
   <!-- ====================== Popup przelewu zawodnika ============================ -->
   
+<!-- ====================== Popup przelewu zawodnika ============================ -->
 <div id="playerPaymentPopup" style="
   position: fixed;
   inset: 0;
@@ -1224,6 +1225,35 @@ input[type="number"] {
 
       <div style="opacity:.9; font-size:14px;">Kwota</div>
       <div id="playerPaymentPopupAmount" style="font-size:18px; font-weight:800; margin-top:4px;">—</div>
+
+      <div style="height:1px; background:#333; margin:12px 0;"></div>
+
+      <div style="opacity:.9; font-size:14px;">Kod QR</div>
+      <div style="margin-top:8px; display:flex; justify-content:center;">
+        <div style="
+          background:#fff;
+          border-radius:14px;
+          padding:10px;
+          width:190px;
+          min-height:190px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          box-sizing:border-box;
+        ">
+          <img
+            id="playerPaymentPopupQr"
+            alt="Kod QR przelewu"
+            style="display:none; width:170px; height:170px; object-fit:contain;"
+          >
+          <div
+            id="playerPaymentPopupQrPlaceholder"
+            style="font-size:13px; color:#666; text-align:center; line-height:1.35;"
+          >
+            Ładowanie QR...
+          </div>
+        </div>
+      </div>
 
       <div style="height:1px; background:#333; margin:12px 0;"></div>
 
@@ -1600,6 +1630,14 @@ async function playerPayNow(nazwa, kwota) {
   if (accountEl) accountEl.textContent = "Ładowanie...";
   if (msgEl) msgEl.textContent = "";
 
+  updatePlayerPaymentQr({
+    receiver: "",
+    accountRaw: "",
+    amount: safeKwota,
+    title: titleCode,
+    loading: true
+  });
+
   popup.style.display = "flex";
 
   let branding;
@@ -1609,6 +1647,14 @@ async function playerPayNow(nazwa, kwota) {
     if (receiverEl) receiverEl.textContent = "❌ Błąd pobierania danych";
     if (accountEl) accountEl.textContent = "❌ Błąd pobierania danych";
     if (msgEl) msgEl.textContent = "❌ Nie udało się pobrać danych do przelewu";
+
+    updatePlayerPaymentQr({
+      receiver: "",
+      accountRaw: "",
+      amount: safeKwota,
+      title: titleCode,
+      error: true
+    });
     return;
   }
 
@@ -1618,6 +1664,13 @@ async function playerPayNow(nazwa, kwota) {
 
   if (receiverEl) receiverEl.textContent = odbiorca || "Brak odbiorcy";
   if (accountEl) accountEl.textContent = kontoFormatted || "Brak numeru konta";
+
+  updatePlayerPaymentQr({
+    receiver: odbiorca,
+    accountRaw: kontoRaw,
+    amount: safeKwota,
+    title: titleCode
+  });
 
   const copyReceiverBtn = document.getElementById("playerPaymentCopyReceiverBtn");
   if (copyReceiverBtn) {
@@ -1656,9 +1709,79 @@ async function playerPayNow(nazwa, kwota) {
   }
 }
 
-window.playerPayNow = playerPayNow;
+function buildPlayerPaymentQrPayload({ receiver, accountRaw, amount, title }) {
+  const safeReceiver = String(receiver || "").trim();
+  const safeAccount = String(accountRaw || "").replace(/\s+/g, "");
+  const safeAmount = Number(amount || 0).toFixed(2);
+  const safeTitle = String(title || "").trim();
 
-window.playerPayNow = playerPayNow;
+  return [
+    safeReceiver,
+    safeAccount,
+    safeAmount,
+    safeTitle
+  ].join("|");
+}
+
+function updatePlayerPaymentQr({ receiver, accountRaw, amount, title, loading = false, error = false }) {
+  const qrImg = document.getElementById("playerPaymentPopupQr");
+  const placeholder = document.getElementById("playerPaymentPopupQrPlaceholder");
+  if (!qrImg || !placeholder) return;
+
+  if (loading) {
+    qrImg.style.display = "none";
+    qrImg.removeAttribute("src");
+    placeholder.style.display = "block";
+    placeholder.textContent = "Ładowanie QR...";
+    return;
+  }
+
+  if (error) {
+    qrImg.style.display = "none";
+    qrImg.removeAttribute("src");
+    placeholder.style.display = "block";
+    placeholder.textContent = "Nie udało się wygenerować QR";
+    return;
+  }
+
+  const hasData =
+    String(receiver || "").trim() &&
+    String(accountRaw || "").replace(/\s+/g, "") &&
+    Number(amount || 0) > 0 &&
+    String(title || "").trim();
+
+  if (!hasData) {
+    qrImg.style.display = "none";
+    qrImg.removeAttribute("src");
+    placeholder.style.display = "block";
+    placeholder.textContent = "Brak danych do QR";
+    return;
+  }
+
+  const payload = buildPlayerPaymentQrPayload({
+    receiver,
+    accountRaw,
+    amount,
+    title
+  });
+
+  const qrUrl =
+    "https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=" +
+    encodeURIComponent(payload);
+
+  qrImg.onload = () => {
+    qrImg.style.display = "block";
+    placeholder.style.display = "none";
+  };
+
+  qrImg.onerror = () => {
+    qrImg.style.display = "none";
+    placeholder.style.display = "block";
+    placeholder.textContent = "Nie udało się wczytać QR";
+  };
+
+  qrImg.src = qrUrl;
+}
 
 function generateTransferCode(nazwaPlatnosci) {
 
@@ -1690,9 +1813,25 @@ function generateTransferCode(nazwaPlatnosci) {
   return `${klub}|${numer}|${typ}|${rrrrmm}`;
 }  
 
-function closePlayerPaymentPopup(){
+function closePlayerPaymentPopup() {
   const popup = document.getElementById("playerPaymentPopup");
   if (popup) popup.style.display = "none";
+
+  const msgEl = document.getElementById("playerPaymentPopupMsg");
+  if (msgEl) msgEl.textContent = "";
+
+  const qrImg = document.getElementById("playerPaymentPopupQr");
+  const placeholder = document.getElementById("playerPaymentPopupQrPlaceholder");
+
+  if (qrImg) {
+    qrImg.style.display = "none";
+    qrImg.removeAttribute("src");
+  }
+
+  if (placeholder) {
+    placeholder.style.display = "block";
+    placeholder.textContent = "Ładowanie QR...";
+  }
 }
   
 /* =================== 20 PAMIĘĆ LOKALNA (localStorage) =================== */
