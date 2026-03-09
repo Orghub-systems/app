@@ -4123,8 +4123,16 @@ function renderAdminSystemPrzelewTile_(p) {
     `;
   }
 
+  const ignoreBtn = `
+    <button class="full-btn alt"
+      style="margin-top:10px;"
+      onclick="adminIgnoreSystemPrzelew(${rowNo})">
+      Ignoruj przelew
+    </button>
+  `;
+
   return `
-    <div class="card" style="background:${bg}; text-align:left; margin-top:10px;">
+    <div id="systemPrzelewRow_${rowNo}" class="card" style="background:${bg}; text-align:left; margin-top:10px;">
       <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
         <div style="flex:1;">
           <div style="opacity:.85; font-size:13px;">Wiersz: ${rowNo}</div>
@@ -4146,6 +4154,7 @@ function renderAdminSystemPrzelewTile_(p) {
       ${confirmBtn}
       ${manualBtn}
       ${splitBtn}
+      ${ignoreBtn}
     </div>
   `;
 }
@@ -4159,6 +4168,30 @@ function escapeHtml_(txt) {
     .replace(/'/g, "&#039;");
 }
 
+async function adminIgnoreSystemPrzelew(row) {
+  const ok = confirm("Oznaczyć ten przelew jako nieważny i ukryć go z listy?");
+  if (!ok) return;
+
+  try {
+    const res = await apiClubPost({
+      action: "system_przelewy_ignore",
+      sheet_row: row,
+      note: "Zignorowano z poziomu panelu admina"
+    });
+
+    if (!res || res.success === false) {
+      alert("❌ " + (res?.error || "Błąd"));
+      return;
+    }
+
+    alert("✅ Przelew oznaczony jako nieważny");
+    await adminOpenSystemPrzelewy();
+
+  } catch (e) {
+    alert("❌ Błąd: " + (e?.message || e));
+  }
+}
+  
 async function adminConfirmSystemPrzelew(row, suggestedPlayerNo, kind, period) {
   try {
     let numer = String(suggestedPlayerNo || "").trim();
@@ -4189,6 +4222,15 @@ async function adminConfirmSystemPrzelew(row, suggestedPlayerNo, kind, period) {
   } catch (e) {
     alert("❌ Błąd: " + (e?.message || e));
   }
+}
+
+function adminUpdateSystemPrzelewyCount_() {
+  const msg = document.getElementById("adminSystemPrzelewyMsg");
+  const body = document.getElementById("adminSystemPrzelewyBody");
+  if (!msg || !body) return;
+
+  const count = body.querySelectorAll('[id^="systemPrzelewRow_"]').length;
+  msg.textContent = `Do obsługi: ${count}`;
 }
   
 /* ---------------------    Ręczne księgowanie   ---------------------------*/
