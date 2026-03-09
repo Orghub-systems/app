@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP V39';
+  window.APP_BUILD = 'BETA APP v1.40';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -4220,8 +4220,7 @@ async function adminConfirmSystemPrzelew(row, suggestedPlayerNo, kind, period) {
       return;
     }
 
-    alert("✅ Płatność zaksięgowana");
-    await adminOpenSystemPrzelewy();
+    adminRemoveSystemPrzelewRow_(row);
 
   } catch (e) {
     alert("❌ Błąd: " + (e?.message || e));
@@ -4346,7 +4345,6 @@ function adminCloseManualSystemPrzelew() {
   modal.classList.add("hidden");
   modal.style.display = "none";
 }
-
 async function adminSaveManualSystemPrzelew() {
   const row = Number(window.__adminSystemPrzelewManual?.row || 0);
   const playerSelectEl = document.getElementById("adminSystemPrzelewManualPlayerSelect");
@@ -4399,7 +4397,7 @@ async function adminSaveManualSystemPrzelew() {
     }
 
     adminCloseManualSystemPrzelew();
-    await adminOpenSystemPrzelewy();
+    adminRemoveSystemPrzelewRow_(row);
 
   } catch (e) {
     if (msgEl) msgEl.textContent = "❌ Błąd: " + (e?.message || e);
@@ -4411,7 +4409,7 @@ async function adminSaveManualSystemPrzelew() {
     }
   }
 }
-
+  
 async function adminSplitMixedPayment(row, playerNo) {
   try {
     const numer = String(playerNo || "").trim();
@@ -4431,12 +4429,23 @@ async function adminSplitMixedPayment(row, playerNo) {
       return;
     }
 
-    alert("✅ Płatność rozbita i zaksięgowana");
-    await adminOpenSystemPrzelewy();
+    adminRemoveSystemPrzelewRow_(row);
 
   } catch (e) {
     alert("❌ Błąd: " + (e?.message || e));
   }
+}
+
+function adminRemoveSystemPrzelewRow_(row) {
+  const rowNum = Number(row || 0);
+  if (!(rowNum >= 2)) return;
+
+  const el = document.getElementById(`systemPrzelewRow_${rowNum}`);
+  if (el) {
+    el.remove();
+  }
+
+  adminUpdateSystemPrzelewyCount_();
 }
   
   // =================== 67 ADMIN: RAPORTY ===================
