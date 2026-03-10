@@ -4,7 +4,8 @@
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#000000">
-  <link id="pwaManifestLink" rel="manifest" href="manifest.webmanifest">
+  <link id="pwaManifestLink" rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
 
 <script>
 (function () {
@@ -521,12 +522,13 @@ input[type="number"] {
 <h1 style="margin:0 0 40px 0;">Logowanie</h1>
 
 
-      <div class="login-box">
+      <form class="login-box" onsubmit="zaloguj(); return false;">
         <input id="numer" type="text" placeholder="Numer / Inicjały">
         <input id="haslo" type="password" placeholder="Hasło">
-        <button class="full-btn" onclick="zaloguj()">Zaloguj</button>
-        <button class="full-btn alt" onclick="pokazRejestracjaSelect()">Rejestracja</button>
-      </div>
+      
+        <button type="submit" class="full-btn">Zaloguj</button>
+        <button type="button" class="full-btn alt" onclick="pokazRejestracjaSelect()">Rejestracja</button>
+      </form>
       <p id="komunikat"></p>
     </div>
 
