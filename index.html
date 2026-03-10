@@ -3935,6 +3935,7 @@ window.__adminPendingPayCol = null;
 window.__adminPendingPayLabel = "";
   
 function adminConfirmPayment(colNum, label) {
+  console.log("adminConfirmPayment CLICK", { colNum, label, selectedNr: window.__adminSelectedNr });
   const nr  = String(window.__adminSelectedNr || "").trim();
   const col = Number(colNum);
 
