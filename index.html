@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP v1.41';
+  window.APP_BUILD = 'BETA APP v1.42';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -3548,7 +3548,6 @@ function adminOpenZawodnik(nr, nazwisko) {
       console.warn("Prefetch admin failed:", e);
     }
   })();
-  // =================== /PREFETCH ADMIN ===================
 }
 
 // =================== GRUPY ===================
@@ -4492,6 +4491,122 @@ function adminRemoveSystemPrzelewRow_(row) {
   }
 
   adminUpdateSystemPrzelewyCount_();
+}
+
+   // =================== ADMIN: ŁADOWANIE PLIKU Z BANKU ===================
+
+  function adminUploadBankFile() {
+  const input = document.getElementById("adminBankFileInput");
+  const msg = document.getElementById("adminBankImportMsg");
+
+  if (msg) {
+    msg.textContent = "";
+  }
+
+  if (!input) {
+    console.error("❌ Brak inputa #adminBankFileInput");
+    if (msg) msg.textContent = "Błąd: brak pola wyboru pliku.";
+    return;
+  }
+
+  input.value = "";
+  input.click();
+}
+
+function adminHandleBankFileSelect(event) {
+  const file = event && event.target && event.target.files
+    ? event.target.files[0]
+    : null;
+
+  const msg = document.getElementById("adminBankImportMsg");
+
+  if (!file) {
+    if (msg) msg.textContent = "Nie wybrano pliku.";
+    return;
+  }
+
+  const fileName = String(file.name || "");
+  const lowerName = fileName.toLowerCase();
+
+  const allowed =
+    lowerName.endsWith(".xls") ||
+    lowerName.endsWith(".xlsx") ||
+    lowerName.endsWith(".csv");
+
+  if (!allowed) {
+    if (msg) msg.textContent = "Nieobsługiwany format pliku. Dozwolone: XLS, XLSX, CSV.";
+    return;
+  }
+
+  if (msg) {
+    msg.textContent = "Wczytuję plik...";
+  }
+
+  adminSendBankFileToServer(file);
+}
+
+function adminSendBankFileToServer(file) {
+  const msg = document.getElementById("adminBankImportMsg");
+
+  if (!file) {
+    if (msg) msg.textContent = "Błąd: brak pliku do wysłania.";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = async function(e) {
+    try {
+      const result = e && e.target ? e.target.result : "";
+      const base64 = String(result || "").split(",")[1] || "";
+
+      if (!base64) {
+        throw new Error("Nie udało się odczytać pliku.");
+      }
+
+      if (msg) {
+        msg.textContent = "Wysyłam plik do serwera...";
+      }
+
+      const response = await apiClubPost("system_przelewy_upload_import", {
+        filename: file.name,
+        mimeType: file.type || "",
+        fileBase64: base64
+      });
+
+      if (!response || response.success !== true) {
+        throw new Error(
+          (response && (response.message || response.error)) ||
+          "Import nie powiódł się."
+        );
+      }
+
+      const added = Number(response.added || 0);
+      const duplicates = Number(response.duplicates || 0);
+
+      if (msg) {
+        msg.textContent = `Import zakończony. Dodano: ${added}, duplikaty: ${duplicates}.`;
+      }
+
+      if (typeof adminOpenSystemPrzelewy === "function") {
+        adminOpenSystemPrzelewy();
+      } else if (typeof loadAdminSystemPrzelewy === "function") {
+        loadAdminSystemPrzelewy();
+      }
+    } catch (err) {
+      console.error("❌ Upload/import wyciągu error:", err);
+      if (msg) {
+        msg.textContent = "Błąd importu: " + (err && err.message ? err.message : err);
+      }
+    }
+  };
+
+  reader.onerror = function() {
+    console.error("❌ FileReader error");
+    if (msg) msg.textContent = "Nie udało się odczytać pliku.";
+  };
+
+  reader.readAsDataURL(file);
 }
   
   // =================== 67 ADMIN: RAPORTY ===================
