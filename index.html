@@ -4569,6 +4569,8 @@ function adminSendBankFileToServer(file) {
       }
 
       const response = await apiClubPost("system_przelewy_upload_import", {
+        action: "system_przelewy_upload_import",
+        mode: "system_przelewy_upload_import",
         filename: file.name,
         mimeType: file.type || "",
         fileBase64: base64
