@@ -4551,7 +4551,7 @@ function adminHandleBankFileSelect(event) {
   }
 
     if (msg) {
-      msg.textContent = "Trwa import wyciągu bankowego...";
+      msg.innerHTML = "<div class='card' style='background:#222;'>⏳ Importuję wyciąg bankowy...</div>";
     }
 
   adminSendBankFileToServer(file);
@@ -4577,7 +4577,7 @@ function adminSendBankFileToServer(file) {
       }
 
       if (msg) {
-      msg.textContent = "Trwa import wyciągu bankowego...";
+      msg.innerHTML = "<div class='card' style='background:#222;'>⏳ Importuję wyciąg bankowy...</div>";
     }
 
       const response = await apiClubPost({
@@ -4611,7 +4611,7 @@ function adminSendBankFileToServer(file) {
       const duplicates = Number(response.duplicates || 0);
 
       if (msg) {
-      msg.textContent = "";
+      msg.innerHTML = "";
     }
 
       if (typeof adminOpenSystemPrzelewy === "function") {
