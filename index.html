@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP v1.42';
+  window.APP_BUILD = 'BETA APP v1.43';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -1412,6 +1412,22 @@ input[type="number"] {
       <button class="full-btn" id="adminSystemPrzelewManualSaveBtn" type="button" onclick="adminSaveManualSystemPrzelew()">Zatwierdź ręcznie</button>
       <button class="full-btn alt" type="button" style="margin-top:8px;" onclick="adminCloseManualSystemPrzelew()">Anuluj</button>
     </div>
+  </div>
+</div>
+
+<!-- =================== ADMIN: SYSTEM PRZELEWY — popup potwierdzenia załadowania pliku =================== -->
+
+  <div id="importResultPopup" class="modal hidden">
+  <div class="modal-content">
+
+    <h2>Import przelewów</h2>
+
+    <div id="importResultText"
+         style="margin:20px 0; white-space:pre-line; text-align:center;">
+    </div>
+
+    <button class="full-btn" onclick="closeImportPopup()">OK</button>
+
   </div>
 </div>
   
@@ -4575,6 +4591,10 @@ function adminSendBankFileToServer(file) {
         fileBase64: base64
       });
 
+      if (response && response.success) {
+      showImportResultPopup(response.added || 0, response.duplicates || 0);
+    }
+
       console.log("SYSTEM_PRZELEWY upload response:", response);   
 
       if (response && response.debug) {
@@ -4617,6 +4637,26 @@ function adminSendBankFileToServer(file) {
   };
 
   reader.readAsDataURL(file);
+}
+
+  function showImportResultPopup(added, duplicates) {
+  const txt =
+    "Dodano: " + added + "\n" +
+    "Duplikaty: " + duplicates;
+
+  const popup = document.getElementById("importResultPopup");
+  const text = document.getElementById("importResultText");
+
+  if (text) text.innerText = txt;
+  if (popup) popup.classList.remove("hidden");
+}
+
+  function closeImportPopup() {
+  const popup = document.getElementById("importResultPopup");
+  if (popup) popup.classList.add("hidden");
+
+  // odśwież listę przelewów
+  adminSystemPrzelewyLoad();
 }
   
   // =================== 67 ADMIN: RAPORTY ===================
