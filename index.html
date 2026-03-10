@@ -2375,6 +2375,29 @@ const COLOR_NAMES = {
 };
 
 /* ---------- Panel 1: Nazwa ---------- */
+function clubNameEditStart() {
+  const btn = document.getElementById("btnClubName");
+  const span = document.getElementById("clubNameText");
+  const input = document.getElementById("clubNameInput");
+  if (!btn || !span || !input) return;
+
+  span.classList.add("hidden");
+  input.classList.remove("hidden");
+  input.value = cfgDraft.clubName || "";
+  input.focus();
+  input.select();
+
+  if (input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); clubNameEditCommit(); }
+    if (e.key === "Escape") { e.preventDefault(); clubNameEditCancel(); }
+  });
+
+  input.addEventListener("blur", () => clubNameEditCommit());
+}
+
 function clubNameEditCommit() {
   const span = document.getElementById("clubNameText");
   const input = document.getElementById("clubNameInput");
@@ -2398,19 +2421,6 @@ function clubNameEditCommit() {
   input.classList.add("hidden");
   span.classList.remove("hidden");
   span.textContent = raw;
-}
-
-function clubNameEditCommit() {
-  const span = document.getElementById("clubNameText");
-  const input = document.getElementById("clubNameInput");
-  if (!span || !input) return;
-
-  const v = String(input.value || "").trim();
-  cfgDraft.clubName = v;
-
-  input.classList.add("hidden");
-  span.classList.remove("hidden");
-  span.textContent = v ? v : "Podaj nazwę klubu";
 }
 
 function clubNameEditCancel() {
