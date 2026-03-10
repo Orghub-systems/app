@@ -4580,6 +4580,8 @@ function adminSendBankFileToServer(file) {
       if (response && response.debug) {
       console.log("BANK HEADERS:", response.debug.headers);
       console.log("BANK PREVIEW ROWS:", response.debug.previewRows);
+      console.log("TRANSFERS DETECTED:", response.debug.transfersDetected);
+      console.log("SAMPLE TRANSFERS:", response.debug.sampleTransfers);
     }
       
       if (!response || response.success !== true) {
