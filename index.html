@@ -2143,7 +2143,13 @@ window.addEventListener("popstate", (event) => {
 
 function refreshClubBadge_() {
   const el = document.getElementById("clubIdBadge");
-  if (el) el.textContent = (clubId || "").toUpperCase();
+  if (!el) return;
+
+  const name = (clubId || "")
+    .replace(/_/g, " ")   // zamiana _ na spację
+    .toUpperCase();
+
+  el.textContent = name;
 }
 
 function applyTheme_(theme) {
