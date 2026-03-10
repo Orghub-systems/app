@@ -4550,9 +4550,9 @@ function adminHandleBankFileSelect(event) {
     return;
   }
 
-  if (msg) {
-    msg.textContent = "Wczytuję plik...";
-  }
+    if (msg) {
+      msg.textContent = "Trwa import wyciągu bankowego...";
+    }
 
   adminSendBankFileToServer(file);
 }
@@ -4577,8 +4577,8 @@ function adminSendBankFileToServer(file) {
       }
 
       if (msg) {
-        msg.textContent = "Wysyłam plik do serwera...";
-      }
+      msg.textContent = "Trwa import wyciągu bankowego...";
+    }
 
       const response = await apiClubPost({
         action: "system_przelewy_upload_import",
@@ -4611,8 +4611,8 @@ function adminSendBankFileToServer(file) {
       const duplicates = Number(response.duplicates || 0);
 
       if (msg) {
-        msg.textContent = `Import zakończony. Dodano: ${added}, duplikaty: ${duplicates}.`;
-      }
+      msg.textContent = "";
+    }
 
       if (typeof adminOpenSystemPrzelewy === "function") {
         adminOpenSystemPrzelewy();
@@ -4650,6 +4650,9 @@ function adminSendBankFileToServer(file) {
 function closeImportPopup() {
   const popup = document.getElementById("importResultPopup");
   if (popup) popup.classList.add("hidden");
+
+  const msg = document.getElementById("adminBankImportMsg");
+  if (msg) msg.textContent = "";
 
   if (typeof adminOpenSystemPrzelewyView === "function") {
     adminOpenSystemPrzelewyView();
