@@ -328,7 +328,7 @@ input[type="number"] {
   
 <script>
   // Ustaw globalnie dla Twojego dużego skryptu:
-  window.APP_BUILD = 'BETA APP v1.40';
+  window.APP_BUILD = 'BETA APP v1.41';
 
   const poprzednia = localStorage.getItem('wersjaApki');
   if (poprzednia !== window.APP_BUILD) {
@@ -504,8 +504,18 @@ input[type="number"] {
     <div id="loginView" class="container hidden">
 <img src="icon-512.png" class="logo" style="width:200px;margin-bottom:15px;" alt="Logo">
 
-<div style="width:220px; margin:0 auto 40px auto; text-align:center;">
-  <div id="clubIdBadge" style="font-size:32px; font-weight:900; letter-spacing:3px; line-height:1.1;"></div>
+<div style="max-width:90%; margin:0 auto 40px auto; text-align:center;">
+  <div id="clubIdBadge"
+       style="
+         font-size:32px;
+         font-weight:900;
+         letter-spacing:3px;
+         line-height:1.1;
+         white-space:normal;
+         overflow-wrap:anywhere;
+         word-break:break-word;
+       ">
+  </div>
 </div>
 
 <h1 style="margin:0 0 40px 0;">Logowanie</h1>
