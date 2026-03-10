@@ -15,11 +15,10 @@
     const link = document.getElementById("pwaManifestLink");
     if (!link) return;
 
-    // manifest.webmanifest jest w /app/ (ta sama ścieżka co index)
     if (clubId) {
-      link.href = "manifest.webmanifest?clubId=" + encodeURIComponent(clubId);
+      link.href = "manifest.json?clubId=" + encodeURIComponent(clubId);
     } else {
-      link.href = "manifest.webmanifest";
+      link.href = "manifest.json";
     }
   } catch (e) {}
 })();
