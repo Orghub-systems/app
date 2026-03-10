@@ -3979,6 +3979,16 @@ function adminConfirmPayment(colNum, label) {
   console.log("STEP 3 before open modal");
     
   modal.classList.remove("hidden");
+  modal.style.display = "flex";
+  modal.style.visibility = "visible";
+  modal.style.opacity = "1";
+  
+  console.log("STEP 4 modal style", {
+    className: modal.className,
+    display: getComputedStyle(modal).display,
+    visibility: getComputedStyle(modal).visibility,
+    opacity: getComputedStyle(modal).opacity
+  });
   }
 
 async function adminDoConfirmPayment() {
