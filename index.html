@@ -3866,21 +3866,6 @@ function renderAdminPayments_(res) {
     ${renderPaymentsSection_("Zajęcia dodatkowe", zajecia)}
   `;
 
-  // ✅ stabilny handler (bez inline onclick i bez ryzyka apostrofów)
-body.querySelectorAll("button.adminPayBtn").forEach(btn => {
-  btn.addEventListener("click", (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
-
-    const b = ev.currentTarget;
-    const col = Number(b?.dataset?.col);
-    const label = decodeURIComponent(String(b?.dataset?.label || ""));
-
-    requestAnimationFrame(() => adminConfirmPayment(col, label));
-  }, { capture: true });
-});
-
   if (msg) msg.textContent = "";
 }
 
@@ -3920,11 +3905,12 @@ function renderPaymentTile_(p) {
 
   const btn = (!paid)
     ? `<button class="full-btn adminPayBtn"
-          style="margin-top:10px;"
-          data-col="${Number.isFinite(colNum) ? colNum : ""}"
-          data-label="${labelData}">
-         Zarejestruj płatność
-       </button>`
+            style="margin-top:10px;"
+            data-col="${Number.isFinite(colNum) ? colNum : ""}"
+            data-label="${labelData}"
+            onclick="adminConfirmPayment(Number(this.dataset.col), decodeURIComponent(this.dataset.label || ''))">
+           Zarejestruj płatność
+         </button>`
     : "";
 
   return `
