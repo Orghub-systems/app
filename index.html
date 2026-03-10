@@ -3967,7 +3967,7 @@ function adminConfirmPayment(colNum, label) {
   yes.onclick = adminDoConfirmPayment;
   no.onclick  = adminCancelConfirmPayment;
 
-showModal("adminPayConfirmModal");
+modal.classList.remove("hidden");
 }
 
 async function adminDoConfirmPayment() {
