@@ -4550,8 +4550,9 @@ function adminHandleBankFileSelect(event) {
     return;
   }
 
-    if (msg) {
-      msg.innerHTML = "<div class='card' style='background:#222;'>⏳ Importuję wyciąg bankowy...</div>";
+    const body = document.getElementById("adminSystemPrzelewyBody");
+    if (body) {
+      body.innerHTML = "<div class='card' style='background:#222;'>⏳ Importuję wyciąg bankowy...</div>";
     }
 
   adminSendBankFileToServer(file);
@@ -4576,9 +4577,10 @@ function adminSendBankFileToServer(file) {
         throw new Error("Nie udało się odczytać pliku.");
       }
 
-      if (msg) {
-      msg.innerHTML = "<div class='card' style='background:#222;'>⏳ Importuję wyciąg bankowy...</div>";
-    }
+      const body = document.getElementById("adminSystemPrzelewyBody");
+      if (body) {
+        body.innerHTML = "<div class='card' style='background:#222;'>⏳ Importuję wyciąg bankowy...</div>";
+      }
 
       const response = await apiClubPost({
         action: "system_przelewy_upload_import",
