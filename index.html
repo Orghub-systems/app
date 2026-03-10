@@ -3945,12 +3945,21 @@ function adminConfirmPayment(colNum, label) {
 
   window.__adminPendingPayCol = col;
   window.__adminPendingPayLabel = String(label || "");
+  console.log("STEP 1 after pending values");
 
   const modal = document.getElementById("adminPayConfirmModal");
   const text  = document.getElementById("adminPayConfirmText");
   const msg   = document.getElementById("adminPayConfirmMsg");
   const yes   = document.getElementById("adminPayConfirmYesBtn");
   const no    = document.getElementById("adminPayConfirmNoBtn");
+
+  console.log("STEP 2 modal elems", {
+  modal: !!modal,
+  text: !!text,
+  msg: !!msg,
+  yes: !!yes,
+  no: !!no
+});
 
   if (!modal || !text || !yes || !no) {
     alert("❌ Brak elementów modala #adminPayConfirmModal w HTML.");
@@ -3966,9 +3975,11 @@ function adminConfirmPayment(colNum, label) {
   // akcje
   yes.onclick = adminDoConfirmPayment;
   no.onclick  = adminCancelConfirmPayment;
-
-modal.classList.remove("hidden");
-}
+  
+  console.log("STEP 3 before open modal");
+    
+  modal.classList.remove("hidden");
+  }
 
 async function adminDoConfirmPayment() {
   const yes = document.getElementById("adminPayConfirmYesBtn");
