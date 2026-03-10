@@ -4575,6 +4575,8 @@ function adminSendBankFileToServer(file) {
         fileBase64: base64
       });
 
+      console.log("SYSTEM_PRZELEWY upload response:", response);      
+      
       if (!response || response.success !== true) {
         throw new Error(
           (response && (response.message || response.error)) ||
