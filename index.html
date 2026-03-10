@@ -15,10 +15,12 @@
     const link = document.getElementById("pwaManifestLink");
     if (!link) return;
 
+    const workerBase = "https://still-shape-2aa3.orghubsystems.workers.dev";
+
     if (clubId) {
-      link.href = "manifest.json?clubId=" + encodeURIComponent(clubId);
+      link.href = workerBase + "/manifest.webmanifest?clubId=" + encodeURIComponent(clubId);
     } else {
-      link.href = "manifest.json";
+      link.href = workerBase + "/manifest.webmanifest?clubId=default";
     }
   } catch (e) {}
 })();
