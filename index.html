@@ -4575,7 +4575,12 @@ function adminSendBankFileToServer(file) {
         fileBase64: base64
       });
 
-      console.log("SYSTEM_PRZELEWY upload response:", response);      
+      console.log("SYSTEM_PRZELEWY upload response:", response);   
+
+      if (response && response.debug) {
+      console.log("BANK HEADERS:", response.debug.headers);
+      console.log("BANK PREVIEW ROWS:", response.debug.previewRows);
+    }
       
       if (!response || response.success !== true) {
         throw new Error(
