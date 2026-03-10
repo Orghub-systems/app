@@ -2375,27 +2375,29 @@ const COLOR_NAMES = {
 };
 
 /* ---------- Panel 1: Nazwa ---------- */
-function clubNameEditStart() {
-  const btn = document.getElementById("btnClubName");
+function clubNameEditCommit() {
   const span = document.getElementById("clubNameText");
   const input = document.getElementById("clubNameInput");
-  if (!btn || !span || !input) return;
+  if (!span || !input) return;
 
-  span.classList.add("hidden");
-  input.classList.remove("hidden");
-  input.value = cfgDraft.clubName || "";
-  input.focus();
-  input.select();
+  const raw = String(input.value || "").trim().toUpperCase();
+  const isValid = /^[A-Z0-9]{2,12}$/.test(raw);
 
-  if (input.dataset.bound === "1") return;
-  input.dataset.bound = "1";
+  if (!isValid) {
+    input.value = cfgDraft.clubName || "";
+    input.classList.add("hidden");
+    span.classList.remove("hidden");
+    span.textContent = cfgDraft.clubName ? cfgDraft.clubName : "Podaj nazwę klubu";
+    alert("Nazwa klubu musi być jednym słowem, bez spacji, maksymalnie 12 znaków.");
+    return;
+  }
 
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); clubNameEditCommit(); }
-    if (e.key === "Escape") { e.preventDefault(); clubNameEditCancel(); }
-  });
+  cfgDraft.clubName = raw;
+  input.value = raw;
 
-  input.addEventListener("blur", () => clubNameEditCommit());
+  input.classList.add("hidden");
+  span.classList.remove("hidden");
+  span.textContent = raw;
 }
 
 function clubNameEditCommit() {
